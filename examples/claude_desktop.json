@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "blockchainacademics": {
+      "command": "bca-mcp",
+      "args": [],
+      "env": {
+        "BCA_API_KEY": "bca_live_xxxxxxxxxxxxxxxx"
+      }
+    }
+  }
+}
