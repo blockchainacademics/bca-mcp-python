@@ -1,7 +1,8 @@
 """Async HTTP client for the Blockchain Academics API.
 
-Mirrors `src/client.ts`: reads `BCA_API_KEY` / `BCA_API_BASE_URL` from env,
-20s timeout, X-API-Key header, envelope-aware response parsing.
+Mirrors `src/client.ts`: reads `BCA_API_KEY` / `BCA_API_BASE` (with
+`BCA_API_BASE_URL` accepted as legacy fallback), 20s timeout, X-API-Key
+header, envelope-aware response parsing.
 """
 
 from __future__ import annotations
@@ -22,7 +23,7 @@ from bca_mcp.errors import (
 from bca_mcp.types import ResponseEnvelope
 
 DEFAULT_BASE = "https://api.blockchainacademics.com"
-USER_AGENT = "bca-mcp/0.1.0 (+https://github.com/blockchainacademics/bca-mcp-python)"
+USER_AGENT = "bca-mcp/0.2.0 (+https://github.com/blockchainacademics/bca-mcp-python)"
 
 
 class BcaClient:
@@ -35,7 +36,12 @@ class BcaClient:
         timeout_s: float = 20.0,
         transport: Optional[httpx.AsyncBaseTransport] = None,
     ) -> None:
-        raw_base = base_url or os.environ.get("BCA_API_BASE_URL") or DEFAULT_BASE
+        raw_base = (
+            base_url
+            or os.environ.get("BCA_API_BASE")
+            or os.environ.get("BCA_API_BASE_URL")
+            or DEFAULT_BASE
+        )
         self._base_url = raw_base.rstrip("/")
         self._api_key = api_key or os.environ.get("BCA_API_KEY")
         self._timeout = httpx.Timeout(timeout_s, connect=3.0)

@@ -4,7 +4,7 @@ The canonical crypto MCP server for AI agents — **Python edition**. 3,500+ edi
 
 Sibling of [`@blockchainacademics/mcp`](https://www.npmjs.com/package/@blockchainacademics/mcp) (TypeScript). Same REST API. Same attribution contract. Use whichever fits your stack.
 
-**v0.1.0 ships 8 read-only tools** — the most-used corpus + market endpoints. Later versions expand toward parity with the TS sibling (99 tools at v0.2.2). Starting narrow is deliberate: tight tool surface, sharp descriptions, low-risk publish.
+**v0.2.0 ships 8 read-only MCP tools + the `bca` CLI** — the most-used corpus + market endpoints, plus a terminal-first way to explore them. Later versions expand toward parity with the TS sibling (99 tools). Starting narrow on the MCP surface is deliberate: tight tools, sharp descriptions, low-risk publish.
 
 ## Why
 
@@ -27,7 +27,8 @@ Set the env var before launching the server:
 ```bash
 export BCA_API_KEY="bca_live_xxxxxxxxxxxxxxxx"
 # optional: override the default https://api.blockchainacademics.com
-export BCA_API_BASE_URL="https://api.blockchainacademics.com"
+export BCA_API_BASE="https://api.blockchainacademics.com"
+# BCA_API_BASE_URL is also accepted as a legacy alias
 ```
 
 > The server **fails fast at startup** if `BCA_API_KEY` is missing. Misconfigured hosts surface the problem immediately instead of on the first tool call.
@@ -78,6 +79,24 @@ Full worked example in [`examples/langchain_agent.py`](./examples/langchain_agen
 ## Use from Eliza
 
 See [`examples/eliza_plugin.md`](./examples/eliza_plugin.md) for integration notes — `bca-mcp` plugs into Eliza's MCP plugin surface as a stdio-transport server.
+
+## The `bca` CLI
+
+`pip install bca-mcp` also registers a terminal-first CLI. It talks to the same REST API as the MCP server — handy for debugging, quick lookups, and shell pipelines.
+
+```bash
+bca login                                # store API key in ~/.bca/config.toml (chmod 600)
+bca news search "bitcoin etf" -n 5       # recent articles, rich table + cite_url
+bca entity ethereum                      # dossier panel
+bca price BTC,ETH,SOL                    # spot + 24h change table
+bca market overview -n 10                # top-N by market cap
+bca indicator coverage-index bitcoin -w 30d
+bca explainer what-is-a-blockchain       # rendered markdown
+bca agent summarize-whitepaper --url https://ethereum.org/…
+bca version                              # CLI + live API version
+```
+
+Every command accepts `--json` for unformatted output suitable for `jq` pipelines. Env vars (`BCA_API_KEY`, `BCA_API_BASE`) take precedence over `~/.bca/config.toml`.
 
 ## Tool catalog (v0.1.0 — 8 tools)
 

@@ -4,6 +4,26 @@ All notable changes to `bca-mcp` are documented here.
 
 This project follows [Semantic Versioning](https://semver.org/) and [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.2.0] — 2026-04-21
+
+### Added
+- **`bca` CLI** bundled with the package — a Typer + Rich terminal UI over the same REST API the MCP server wraps. Registered as a console script (`pip install bca-mcp` gives you both `bca-mcp` and `bca`).
+  - `bca login` — stores API key in `~/.bca/config.toml` (chmod 600).
+  - `bca config show` — inspect config file location + masked key.
+  - `bca news search <query>` — rich table of articles with `cite_url`.
+  - `bca entity <slug>` — entity dossier panel.
+  - `bca price <tickers>` — spot + 24h change table.
+  - `bca market overview` — top-N by market cap.
+  - `bca indicator <name> <entity> --window {7d,30d,90d}` — proprietary indicator reads.
+  - `bca explainer <slug>` — academy lesson rendered as markdown.
+  - `bca agent <skill>` — kicks off async agent-backed jobs and polls to completion.
+  - `bca version` — shows CLI + live API version.
+  - Every command accepts `--json` for pipe-friendly output.
+- `BCA_API_BASE` is now the primary base-URL env var; `BCA_API_BASE_URL` is accepted as a legacy alias (matches the TypeScript sibling + `server.json` contract).
+
+### Changed
+- User-Agent bumped to `bca-mcp/0.2.0`.
+
 ## [0.1.0] — 2026-04-21
 
 ### Added
