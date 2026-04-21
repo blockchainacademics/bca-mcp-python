@@ -256,21 +256,29 @@ def test_missing_api_key_raises_auth_error(monkeypatch) -> None:
 
 
 EXPECTED_TOOL_NAMES = {
+    # content (6)
     "search_news",
     "get_article",
     "get_entity",
     "list_entity_mentions",
     "list_topics",
     "get_explainer",
+    # market (4)
     "get_price",
     "get_market_overview",
+    "get_ohlc",
+    "get_pair_data",
+    # onchain (3)
+    "get_wallet_profile",
+    "get_tx",
+    "get_token_holders",
 }
 
 
-def test_server_registers_exactly_8_tools_with_unique_names() -> None:
+def test_server_registers_expected_tools_with_unique_names() -> None:
     names = [t.name for t in TOOLS]
-    assert len(names) == 8, f"expected 8 tools, got {len(names)}: {names}"
-    assert len(set(names)) == 8, f"duplicate tool name: {names}"
+    assert len(names) == 13, f"expected 13 tools, got {len(names)}: {names}"
+    assert len(set(names)) == 13, f"duplicate tool name: {names}"
     assert set(names) == EXPECTED_TOOL_NAMES, (
         f"tool surface drifted: want {EXPECTED_TOOL_NAMES}, got {set(names)}"
     )

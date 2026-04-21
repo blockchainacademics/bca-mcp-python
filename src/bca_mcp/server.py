@@ -1,4 +1,4 @@
-"""MCP stdio server — registers the 8 BCA v0.1 tools.
+"""MCP stdio server — registers the BCA tool surface.
 
 Mirrors the behavior of the TypeScript sibling:
   * `list_tools` advertises name/description/input JSON Schema
@@ -8,15 +8,15 @@ Mirrors the behavior of the TypeScript sibling:
   * Startup **fail-fast** on missing `BCA_API_KEY` so misconfigured
     hosts surface the problem immediately (not on first tool call).
 
-v0.1 tool surface (8 tools — minimum viable parity with
-`@blockchainacademics/mcp` TS v0.1):
+Current tool surface (13 tools — v0.1 scaffold + batch 1 port):
 
     content (6) — search_news, get_article, get_entity,
                   list_entity_mentions, list_topics, get_explainer
-    market (2) — get_price, get_market_overview
+    market  (4) — get_price, get_market_overview, get_ohlc, get_pair_data
+    onchain (3) — get_wallet_profile, get_tx, get_token_holders
 
-The remaining ~91 tools from the TS v0.2.2 surface are deliberately
-deferred. v0.1 ships narrow on purpose; later versions expand.
+The remaining ~86 tools from the TS v0.2.2 surface land in batches 2-9
+per `PORT_MANIFEST.md`.
 """
 
 from __future__ import annotations
@@ -35,6 +35,7 @@ from bca_mcp.tools import content as _content
 from bca_mcp.tools import get_entity as _get_entity
 from bca_mcp.tools import get_explainer as _get_explainer
 from bca_mcp.tools import market as _market
+from bca_mcp.tools import onchain as _onchain
 from bca_mcp.tools import search_news as _search_news
 
 
@@ -84,7 +85,7 @@ TOOLS: tuple[ToolEntry, ...] = (
         input_schema=_get_explainer.input_json_schema(),
         run=_get_explainer.run,
     ),
-    # --- market (2) --------------------------------------------------------
+    # --- market (4) --------------------------------------------------------
     ToolEntry(
         name=_market.GET_PRICE_TOOL_NAME,
         description=_market.GET_PRICE_TOOL_DESCRIPTION,
@@ -96,6 +97,37 @@ TOOLS: tuple[ToolEntry, ...] = (
         description=_market.GET_MARKET_OVERVIEW_TOOL_DESCRIPTION,
         input_schema=_market.get_market_overview_input_schema(),
         run=_market.run_get_market_overview,
+    ),
+    ToolEntry(
+        name=_market.GET_OHLC_TOOL_NAME,
+        description=_market.GET_OHLC_TOOL_DESCRIPTION,
+        input_schema=_market.get_ohlc_input_schema(),
+        run=_market.run_get_ohlc,
+    ),
+    ToolEntry(
+        name=_market.GET_PAIR_DATA_TOOL_NAME,
+        description=_market.GET_PAIR_DATA_TOOL_DESCRIPTION,
+        input_schema=_market.get_pair_data_input_schema(),
+        run=_market.run_get_pair_data,
+    ),
+    # --- onchain (3) -------------------------------------------------------
+    ToolEntry(
+        name=_onchain.GET_WALLET_PROFILE_TOOL_NAME,
+        description=_onchain.GET_WALLET_PROFILE_TOOL_DESCRIPTION,
+        input_schema=_onchain.get_wallet_profile_input_schema(),
+        run=_onchain.run_get_wallet_profile,
+    ),
+    ToolEntry(
+        name=_onchain.GET_TX_TOOL_NAME,
+        description=_onchain.GET_TX_TOOL_DESCRIPTION,
+        input_schema=_onchain.get_tx_input_schema(),
+        run=_onchain.run_get_tx,
+    ),
+    ToolEntry(
+        name=_onchain.GET_TOKEN_HOLDERS_TOOL_NAME,
+        description=_onchain.GET_TOKEN_HOLDERS_TOOL_DESCRIPTION,
+        input_schema=_onchain.get_token_holders_input_schema(),
+        run=_onchain.run_get_token_holders,
     ),
 )
 
