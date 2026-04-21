@@ -8,14 +8,25 @@ Mirrors the behavior of the TypeScript sibling:
   * Startup **fail-fast** on missing `BCA_API_KEY` so misconfigured
     hosts surface the problem immediately (not on first tool call).
 
-Current tool surface (13 tools — v0.1 scaffold + batch 1 port):
+Current tool surface (37 tools — v0.1 scaffold + batches 1-5 port):
 
-    content (6) — search_news, get_article, get_entity,
-                  list_entity_mentions, list_topics, get_explainer
-    market  (4) — get_price, get_market_overview, get_ohlc, get_pair_data
-    onchain (3) — get_wallet_profile, get_tx, get_token_holders
+    content      (6) — search_news, get_article, get_entity,
+                       list_entity_mentions, list_topics, get_explainer
+    market       (4) — get_price, get_market_overview, get_ohlc, get_pair_data
+    onchain      (4) — get_wallet_profile, get_tx, get_token_holders,
+                       get_defi_protocol
+    sentiment    (5) — get_sentiment, get_social_pulse, get_fear_greed,
+                       get_social_signals, get_social_signals_detail
+    indicators   (6) — get_coverage_index, get_narrative_strength,
+                       get_sentiment_velocity, get_editorial_premium,
+                       get_kol_influence, get_risk_score
+    fundamentals (6) — get_tokenomics, get_audit_reports, get_team_info,
+                       get_roadmap, compare_protocols, check_rugpull_risk
+    agent_jobs   (6) — generate_due_diligence, generate_tokenomics_model,
+                       summarize_whitepaper, translate_contract,
+                       monitor_keyword, get_agent_job
 
-The remaining ~86 tools from the TS v0.2.2 surface land in batches 2-9
+The remaining ~62 tools from the TS v0.2.2 surface land in batches 6-9
 per `PORT_MANIFEST.md`.
 """
 
@@ -31,12 +42,16 @@ from mcp.server.stdio import stdio_server
 from mcp.types import TextContent, Tool
 
 from bca_mcp.errors import BcaError
+from bca_mcp.tools import agent_jobs as _agent_jobs
 from bca_mcp.tools import content as _content
+from bca_mcp.tools import fundamentals as _fundamentals
 from bca_mcp.tools import get_entity as _get_entity
 from bca_mcp.tools import get_explainer as _get_explainer
+from bca_mcp.tools import indicators as _indicators
 from bca_mcp.tools import market as _market
 from bca_mcp.tools import onchain as _onchain
 from bca_mcp.tools import search_news as _search_news
+from bca_mcp.tools import sentiment as _sentiment
 
 
 @dataclass(frozen=True)
@@ -110,7 +125,7 @@ TOOLS: tuple[ToolEntry, ...] = (
         input_schema=_market.get_pair_data_input_schema(),
         run=_market.run_get_pair_data,
     ),
-    # --- onchain (3) -------------------------------------------------------
+    # --- onchain (4) -------------------------------------------------------
     ToolEntry(
         name=_onchain.GET_WALLET_PROFILE_TOOL_NAME,
         description=_onchain.GET_WALLET_PROFILE_TOOL_DESCRIPTION,
@@ -128,6 +143,154 @@ TOOLS: tuple[ToolEntry, ...] = (
         description=_onchain.GET_TOKEN_HOLDERS_TOOL_DESCRIPTION,
         input_schema=_onchain.get_token_holders_input_schema(),
         run=_onchain.run_get_token_holders,
+    ),
+    ToolEntry(
+        name=_onchain.GET_DEFI_PROTOCOL_TOOL_NAME,
+        description=_onchain.GET_DEFI_PROTOCOL_TOOL_DESCRIPTION,
+        input_schema=_onchain.get_defi_protocol_input_schema(),
+        run=_onchain.run_get_defi_protocol,
+    ),
+    # --- sentiment + social (5) -------------------------------------------
+    ToolEntry(
+        name=_sentiment.GET_SENTIMENT_TOOL_NAME,
+        description=_sentiment.GET_SENTIMENT_TOOL_DESCRIPTION,
+        input_schema=_sentiment.get_sentiment_input_schema(),
+        run=_sentiment.run_get_sentiment,
+    ),
+    ToolEntry(
+        name=_sentiment.GET_SOCIAL_PULSE_TOOL_NAME,
+        description=_sentiment.GET_SOCIAL_PULSE_TOOL_DESCRIPTION,
+        input_schema=_sentiment.get_social_pulse_input_schema(),
+        run=_sentiment.run_get_social_pulse,
+    ),
+    ToolEntry(
+        name=_sentiment.GET_FEAR_GREED_TOOL_NAME,
+        description=_sentiment.GET_FEAR_GREED_TOOL_DESCRIPTION,
+        input_schema=_sentiment.get_fear_greed_input_schema(),
+        run=_sentiment.run_get_fear_greed,
+    ),
+    ToolEntry(
+        name=_sentiment.GET_SOCIAL_SIGNALS_TOOL_NAME,
+        description=_sentiment.GET_SOCIAL_SIGNALS_TOOL_DESCRIPTION,
+        input_schema=_sentiment.get_social_signals_input_schema(),
+        run=_sentiment.run_get_social_signals,
+    ),
+    ToolEntry(
+        name=_sentiment.GET_SOCIAL_SIGNALS_DETAIL_TOOL_NAME,
+        description=_sentiment.GET_SOCIAL_SIGNALS_DETAIL_TOOL_DESCRIPTION,
+        input_schema=_sentiment.get_social_signals_detail_input_schema(),
+        run=_sentiment.run_get_social_signals_detail,
+    ),
+    # --- indicators (6) ---------------------------------------------------
+    ToolEntry(
+        name=_indicators.GET_COVERAGE_INDEX_TOOL_NAME,
+        description=_indicators.GET_COVERAGE_INDEX_TOOL_DESCRIPTION,
+        input_schema=_indicators.get_coverage_index_input_schema(),
+        run=_indicators.run_get_coverage_index,
+    ),
+    ToolEntry(
+        name=_indicators.GET_NARRATIVE_STRENGTH_TOOL_NAME,
+        description=_indicators.GET_NARRATIVE_STRENGTH_TOOL_DESCRIPTION,
+        input_schema=_indicators.get_narrative_strength_input_schema(),
+        run=_indicators.run_get_narrative_strength,
+    ),
+    ToolEntry(
+        name=_indicators.GET_SENTIMENT_VELOCITY_TOOL_NAME,
+        description=_indicators.GET_SENTIMENT_VELOCITY_TOOL_DESCRIPTION,
+        input_schema=_indicators.get_sentiment_velocity_input_schema(),
+        run=_indicators.run_get_sentiment_velocity,
+    ),
+    ToolEntry(
+        name=_indicators.GET_EDITORIAL_PREMIUM_TOOL_NAME,
+        description=_indicators.GET_EDITORIAL_PREMIUM_TOOL_DESCRIPTION,
+        input_schema=_indicators.get_editorial_premium_input_schema(),
+        run=_indicators.run_get_editorial_premium,
+    ),
+    ToolEntry(
+        name=_indicators.GET_KOL_INFLUENCE_TOOL_NAME,
+        description=_indicators.GET_KOL_INFLUENCE_TOOL_DESCRIPTION,
+        input_schema=_indicators.get_kol_influence_input_schema(),
+        run=_indicators.run_get_kol_influence,
+    ),
+    ToolEntry(
+        name=_indicators.GET_RISK_SCORE_TOOL_NAME,
+        description=_indicators.GET_RISK_SCORE_TOOL_DESCRIPTION,
+        input_schema=_indicators.get_risk_score_input_schema(),
+        run=_indicators.run_get_risk_score,
+    ),
+    # --- fundamentals (6) --------------------------------------------------
+    ToolEntry(
+        name=_fundamentals.GET_TOKENOMICS_TOOL_NAME,
+        description=_fundamentals.GET_TOKENOMICS_TOOL_DESCRIPTION,
+        input_schema=_fundamentals.get_tokenomics_input_schema(),
+        run=_fundamentals.run_get_tokenomics,
+    ),
+    ToolEntry(
+        name=_fundamentals.GET_AUDIT_REPORTS_TOOL_NAME,
+        description=_fundamentals.GET_AUDIT_REPORTS_TOOL_DESCRIPTION,
+        input_schema=_fundamentals.get_audit_reports_input_schema(),
+        run=_fundamentals.run_get_audit_reports,
+    ),
+    ToolEntry(
+        name=_fundamentals.GET_TEAM_INFO_TOOL_NAME,
+        description=_fundamentals.GET_TEAM_INFO_TOOL_DESCRIPTION,
+        input_schema=_fundamentals.get_team_info_input_schema(),
+        run=_fundamentals.run_get_team_info,
+    ),
+    ToolEntry(
+        name=_fundamentals.GET_ROADMAP_TOOL_NAME,
+        description=_fundamentals.GET_ROADMAP_TOOL_DESCRIPTION,
+        input_schema=_fundamentals.get_roadmap_input_schema(),
+        run=_fundamentals.run_get_roadmap,
+    ),
+    ToolEntry(
+        name=_fundamentals.COMPARE_PROTOCOLS_TOOL_NAME,
+        description=_fundamentals.COMPARE_PROTOCOLS_TOOL_DESCRIPTION,
+        input_schema=_fundamentals.compare_protocols_input_schema(),
+        run=_fundamentals.run_compare_protocols,
+    ),
+    ToolEntry(
+        name=_fundamentals.CHECK_RUGPULL_RISK_TOOL_NAME,
+        description=_fundamentals.CHECK_RUGPULL_RISK_TOOL_DESCRIPTION,
+        input_schema=_fundamentals.check_rugpull_risk_input_schema(),
+        run=_fundamentals.run_check_rugpull_risk,
+    ),
+    # --- agent jobs (6) ----------------------------------------------------
+    ToolEntry(
+        name=_agent_jobs.GENERATE_DUE_DILIGENCE_TOOL_NAME,
+        description=_agent_jobs.GENERATE_DUE_DILIGENCE_TOOL_DESCRIPTION,
+        input_schema=_agent_jobs.generate_due_diligence_input_schema(),
+        run=_agent_jobs.run_generate_due_diligence,
+    ),
+    ToolEntry(
+        name=_agent_jobs.GENERATE_TOKENOMICS_MODEL_TOOL_NAME,
+        description=_agent_jobs.GENERATE_TOKENOMICS_MODEL_TOOL_DESCRIPTION,
+        input_schema=_agent_jobs.generate_tokenomics_model_input_schema(),
+        run=_agent_jobs.run_generate_tokenomics_model,
+    ),
+    ToolEntry(
+        name=_agent_jobs.SUMMARIZE_WHITEPAPER_TOOL_NAME,
+        description=_agent_jobs.SUMMARIZE_WHITEPAPER_TOOL_DESCRIPTION,
+        input_schema=_agent_jobs.summarize_whitepaper_input_schema(),
+        run=_agent_jobs.run_summarize_whitepaper,
+    ),
+    ToolEntry(
+        name=_agent_jobs.TRANSLATE_CONTRACT_TOOL_NAME,
+        description=_agent_jobs.TRANSLATE_CONTRACT_TOOL_DESCRIPTION,
+        input_schema=_agent_jobs.translate_contract_input_schema(),
+        run=_agent_jobs.run_translate_contract,
+    ),
+    ToolEntry(
+        name=_agent_jobs.MONITOR_KEYWORD_TOOL_NAME,
+        description=_agent_jobs.MONITOR_KEYWORD_TOOL_DESCRIPTION,
+        input_schema=_agent_jobs.monitor_keyword_input_schema(),
+        run=_agent_jobs.run_monitor_keyword,
+    ),
+    ToolEntry(
+        name=_agent_jobs.GET_AGENT_JOB_TOOL_NAME,
+        description=_agent_jobs.GET_AGENT_JOB_TOOL_DESCRIPTION,
+        input_schema=_agent_jobs.get_agent_job_input_schema(),
+        run=_agent_jobs.run_get_agent_job,
     ),
 )
 
@@ -159,7 +322,7 @@ def _assert_api_key_present() -> None:
 
 
 def build_server(check_env: bool = True) -> Server:
-    """Construct the MCP `Server` with the 8 v0.1 tool handlers wired up.
+    """Construct the MCP `Server` with the 37-tool surface wired up.
 
     Args:
         check_env: If True (default), raise at construction time when

@@ -39,6 +39,13 @@ EVM_TX_HASH_REGEX = r"^0x[a-fA-F0-9]{64}$"
 # Alphanumeric — used for EVM-or-Solana addresses/hashes where the tool
 # accepts either family and backend re-validates per chain.
 ALNUM_REGEX = r"^[A-Za-z0-9]+$"
+# Ticker — 1..12 alphanumerics (mirror `src/schema.ts::tickerSchema`).
+TICKER_REGEX = r"^[A-Za-z0-9]{1,12}$"
+
+# Rolling-window enum shared across sentiment + indicator tools. Mirrors
+# the zod `z.enum(["1d","7d","30d","90d"])` declaration used in
+# `src/tools/sentiment.ts` + `src/tools/indicators.ts`.
+Window = Literal["1d", "7d", "30d", "90d"]
 
 
 class ResponseEnvelope(TypedDict, Generic[T], total=False):

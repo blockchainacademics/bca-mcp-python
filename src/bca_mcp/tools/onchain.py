@@ -3,8 +3,8 @@
 Wraps `/v1/onchain/*` — Etherscan V2, Helius, DefiLlama free tiers.
 All query-string shape in backend (see
 `blockchainacademics-api/app/api/v1/onchain.py`). Ports `src/tools/onchain.ts`
-— `get_wallet_profile`, `get_tx`, `get_token_holders` in batch 1.
-(`get_defi_protocol` lands in batch 4.)
+— `get_wallet_profile`, `get_tx`, `get_token_holders` (batch 1),
+`get_defi_protocol` (batch 3).
 """
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from bca_mcp.client import get_client
-from bca_mcp.types import EvmChain, OnchainChain, ResponseEnvelope
+from bca_mcp.types import SLUG_REGEX, EvmChain, OnchainChain, ResponseEnvelope
 
 # --- get_wallet_profile ----------------------------------------------------
 
@@ -133,4 +133,37 @@ async def run_get_token_holders(args: dict[str, Any]) -> ResponseEnvelope[Any]:
             "chain": parsed.chain,
             "limit": parsed.limit,
         },
+    )
+
+
+# --- get_defi_protocol -----------------------------------------------------
+
+GET_DEFI_PROTOCOL_TOOL_NAME = "get_defi_protocol"
+
+GET_DEFI_PROTOCOL_TOOL_DESCRIPTION = (
+    "DeFi protocol snapshot: TVL, chains, volume, fees. Via DefiLlama. "
+    "Free tier."
+)
+
+
+class GetDefiProtocolInput(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    protocol: str = Field(
+        min_length=1,
+        max_length=240,
+        pattern=SLUG_REGEX,
+        description="DefiLlama protocol slug (e.g. 'aave', 'uniswap').",
+    )
+
+
+def get_defi_protocol_input_schema() -> dict[str, Any]:
+    return GetDefiProtocolInput.model_json_schema()
+
+
+async def run_get_defi_protocol(args: dict[str, Any]) -> ResponseEnvelope[Any]:
+    parsed = GetDefiProtocolInput.model_validate(args)
+    return await get_client().request(
+        "/v1/onchain/defi",
+        {"protocol": parsed.protocol},
     )

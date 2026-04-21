@@ -268,17 +268,45 @@ EXPECTED_TOOL_NAMES = {
     "get_market_overview",
     "get_ohlc",
     "get_pair_data",
-    # onchain (3)
+    # onchain (4)
     "get_wallet_profile",
     "get_tx",
     "get_token_holders",
+    "get_defi_protocol",
+    # sentiment + social (5)
+    "get_sentiment",
+    "get_social_pulse",
+    "get_fear_greed",
+    "get_social_signals",
+    "get_social_signals_detail",
+    # indicators (6)
+    "get_coverage_index",
+    "get_narrative_strength",
+    "get_sentiment_velocity",
+    "get_editorial_premium",
+    "get_kol_influence",
+    "get_risk_score",
+    # fundamentals (6)
+    "get_tokenomics",
+    "get_audit_reports",
+    "get_team_info",
+    "get_roadmap",
+    "compare_protocols",
+    "check_rugpull_risk",
+    # agent_jobs (6)
+    "generate_due_diligence",
+    "generate_tokenomics_model",
+    "summarize_whitepaper",
+    "translate_contract",
+    "monitor_keyword",
+    "get_agent_job",
 }
 
 
 def test_server_registers_expected_tools_with_unique_names() -> None:
     names = [t.name for t in TOOLS]
-    assert len(names) == 13, f"expected 13 tools, got {len(names)}: {names}"
-    assert len(set(names)) == 13, f"duplicate tool name: {names}"
+    assert len(names) == 37, f"expected 37 tools, got {len(names)}: {names}"
+    assert len(set(names)) == 37, f"duplicate tool name: {names}"
     assert set(names) == EXPECTED_TOOL_NAMES, (
         f"tool surface drifted: want {EXPECTED_TOOL_NAMES}, got {set(names)}"
     )
