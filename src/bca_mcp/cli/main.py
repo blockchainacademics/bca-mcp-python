@@ -65,6 +65,8 @@ def login(
     ),
 ) -> None:
     """Store your BCA API key in ~/.bca/config.toml (chmod 600)."""
+    import os
+
     cfg = read_config()
     if api_key is None:
         api_key = typer.prompt("BCA API key", hide_input=True)
@@ -73,7 +75,20 @@ def login(
         raise typer.Exit(code=1)
     cfg["api_key"] = api_key.strip()
     if api_base:
-        cfg["api_base"] = api_base.strip().rstrip("/")
+        cleaned = api_base.strip().rstrip("/")
+        # HIGH: refuse to persist a non-HTTPS base URL unless the operator
+        # has explicitly opted in via BCA_ALLOW_INSECURE_BASE=1. Mirrors the
+        # same gate inside BcaClient so CLI config and runtime agree.
+        if (
+            not cleaned.startswith("https://")
+            and os.environ.get("BCA_ALLOW_INSECURE_BASE") != "1"
+        ):
+            err_console.print(
+                f"[red]Refusing to save non-HTTPS api_base='{cleaned}'.[/red] "
+                "Set BCA_ALLOW_INSECURE_BASE=1 to override for local dev."
+            )
+            raise typer.Exit(code=1)
+        cfg["api_base"] = cleaned
     write_config(cfg)
     console.print(f"[green]Saved[/green] to [bold]{CONFIG_FILE}[/bold]")
 

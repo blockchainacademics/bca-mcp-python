@@ -57,7 +57,7 @@ def input_json_schema() -> dict[str, Any]:
 async def run(args: dict[str, Any]) -> ResponseEnvelope[SearchNewsResult]:
     parsed = SearchNewsInput.model_validate(args)
     client = get_client()
-    return await client.request(
+    res = await client.request(
         "/v1/articles/search",
         {
             "q": parsed.query,
@@ -67,3 +67,20 @@ async def run(args: dict[str, Any]) -> ResponseEnvelope[SearchNewsResult]:
             "limit": parsed.limit,
         },
     )
+    # A-3: wrap third-party article summaries so an LLM consumer treats them
+    # as data, not instructions. Only the `summary` field flows from external
+    # article bodies; titles/slugs are editorial metadata. Mirrors the TS
+    # sibling at `src/tools/search_news.ts:56-64`.
+    data = res.get("data") if isinstance(res, dict) else None
+    articles = data.get("articles") if isinstance(data, dict) else None
+    if isinstance(articles, list):
+        for a in articles:
+            if isinstance(a, dict):
+                summary = a.get("summary")
+                if isinstance(summary, str) and summary:
+                    a["summary"] = (
+                        '<untrusted_content source="search_news">\n'
+                        f"{summary}\n"
+                        "</untrusted_content>"
+                    )
+    return res

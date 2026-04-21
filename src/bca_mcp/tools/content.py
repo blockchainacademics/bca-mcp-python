@@ -26,6 +26,20 @@ from bca_mcp.client import get_client
 from bca_mcp.types import ResponseEnvelope
 
 
+def _wrap_untrusted(source: str, value: Any) -> Any:
+    """Fence a free-text field that originated from a third-party article so
+    downstream LLM consumers treat it as data, not instructions. Mirrors
+    `wrapUntrusted()` in `src/tools/content.ts`.
+    """
+    if not isinstance(value, str) or not value:
+        return value
+    return (
+        f'<untrusted_content source="{source}">\n'
+        f"{value}\n"
+        "</untrusted_content>"
+    )
+
+
 # --- get_article -----------------------------------------------------------
 
 GET_ARTICLE_TOOL_NAME = "get_article"
@@ -54,9 +68,18 @@ def get_article_input_schema() -> dict[str, Any]:
 
 async def run_get_article(args: dict[str, Any]) -> ResponseEnvelope[Any]:
     parsed = GetArticleInput.model_validate(args)
-    return await get_client().request(
+    res = await get_client().request(
         f"/v1/articles/{quote(parsed.slug, safe='')}",
     )
+    # A-3: wrap third-party article body/excerpt fields before the LLM
+    # consumes them. Mirrors TS sibling (`content.ts:34-43`).
+    data = res.get("data") if isinstance(res, dict) else None
+    if isinstance(data, dict):
+        for key in ("body", "excerpt", "body_markdown", "summary"):
+            v = data.get(key)
+            if isinstance(v, str):
+                data[key] = _wrap_untrusted("get_article", v)
+    return res
 
 
 # --- list_entity_mentions --------------------------------------------------
@@ -99,10 +122,26 @@ async def run_list_entity_mentions(
     args: dict[str, Any],
 ) -> ResponseEnvelope[Any]:
     parsed = ListEntityMentionsInput.model_validate(args)
-    return await get_client().request(
+    res = await get_client().request(
         f"/v1/entities/{quote(parsed.slug, safe='')}/mentions",
         {"limit": parsed.limit, "since": parsed.since},
     )
+    # A-3: mention rows may surface third-party excerpts. Mirror TS sibling
+    # (`content.ts:64-78`).
+    data = res.get("data") if isinstance(res, dict) else None
+    mentions: Any
+    if isinstance(data, dict):
+        mentions = data.get("mentions", data)
+    else:
+        mentions = data
+    if isinstance(mentions, list):
+        for m in mentions:
+            if isinstance(m, dict):
+                for key in ("excerpt", "snippet", "body"):
+                    v = m.get(key)
+                    if isinstance(v, str):
+                        m[key] = _wrap_untrusted("list_entity_mentions", v)
+    return res
 
 
 # --- list_topics -----------------------------------------------------------

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json as _json
 import os
+import sys
 from typing import Any, Mapping, Optional
 
 import httpx
@@ -24,6 +25,28 @@ from bca_mcp.types import ResponseEnvelope
 
 DEFAULT_BASE = "https://api.blockchainacademics.com"
 USER_AGENT = "bca-mcp/0.2.0 (+https://github.com/blockchainacademics/bca-mcp-python)"
+
+# HIGH: cap response body size to prevent a malicious or compromised upstream
+# from exhausting host memory. 10 MiB is well above any legitimate envelope
+# this API returns (largest real responses — agent-job outputs — are ~200 KB).
+# Mirrors `MAX_BODY_BYTES` in `src/client.ts`.
+MAX_BODY_BYTES = 10 * 1024 * 1024
+
+# Module-level guard so we only warn once per process when a non-default
+# BCA_API_BASE is in use. Exposed via `reset_nondefault_warning()` so tests
+# can reset state between cases.
+_nondefault_base_warned = False
+
+
+def reset_nondefault_warning() -> None:
+    """Reset the one-time non-default BCA_API_BASE warning flag.
+
+    Tests that exercise the warning path call this between cases so the
+    first client built in each test sees `_nondefault_base_warned=False`.
+    Mirrors `__resetNonDefaultBaseWarning()` in the TS sibling.
+    """
+    global _nondefault_base_warned
+    _nondefault_base_warned = False
 
 
 class BcaClient:
@@ -42,10 +65,37 @@ class BcaClient:
             or os.environ.get("BCA_API_BASE_URL")
             or DEFAULT_BASE
         )
-        self._base_url = raw_base.rstrip("/")
+        resolved = raw_base.rstrip("/")
+
+        # HIGH: refuse non-HTTPS base URLs unless the operator has explicitly
+        # opted in via BCA_ALLOW_INSECURE_BASE=1. Without this guard an
+        # attacker who controls the env (malicious shell profile, hostile
+        # MCP client config, compromised CI secret) can set
+        # BCA_API_BASE=http://attacker.local and intercept the user's
+        # X-API-Key header on the first outbound request.
+        if (
+            not resolved.startswith("https://")
+            and os.environ.get("BCA_ALLOW_INSECURE_BASE") != "1"
+        ):
+            raise BcaBadRequestError(
+                f"Refusing to use non-HTTPS BCA_API_BASE='{resolved}'. "
+                "Set BCA_ALLOW_INSECURE_BASE=1 to override for local dev."
+            )
+
+        self._base_url = resolved
+        self._is_nondefault_base = resolved != DEFAULT_BASE
         self._api_key = api_key or os.environ.get("BCA_API_KEY")
         self._timeout = httpx.Timeout(timeout_s, connect=3.0)
         self._transport = transport  # test injection
+
+    def _warn_nondefault_base_once(self) -> None:
+        global _nondefault_base_warned
+        if self._is_nondefault_base and not _nondefault_base_warned:
+            _nondefault_base_warned = True
+            print(
+                f"warning: using non-default BCA_API_BASE='{self._base_url}'",
+                file=sys.stderr,
+            )
 
     def _build_client(self) -> httpx.AsyncClient:
         kwargs: dict[str, Any] = {
@@ -84,6 +134,12 @@ class BcaClient:
     ) -> ResponseEnvelope[Any]:
         if not self._api_key:
             raise BcaAuthError("BCA_API_KEY env var is not set")
+
+        # HIGH: emit a one-time warning whenever the operator is pointing this
+        # client at something other than the canonical production API. This
+        # runs on first call (not ctor) so tests that build-then-discard a
+        # client against a mock transport don't spam stderr.
+        self._warn_nondefault_base_once()
 
         url = self._base_url + (path if path.startswith("/") else "/" + path)
 
@@ -134,6 +190,18 @@ class BcaClient:
             raise BcaUpstreamError(
                 res.status_code,
                 f"BCA API responded {res.status_code}",
+            )
+
+        # MEDIUM: cap body size. A compromised upstream could otherwise stream
+        # an unbounded response and exhaust host memory. httpx has already
+        # materialised `res.content`; we size-check it here and fail fast
+        # with a clear BcaUpstreamError (rather than silently truncating).
+        raw = res.content  # bytes
+        if len(raw) > MAX_BODY_BYTES:
+            raise BcaUpstreamError(
+                res.status_code,
+                f"response exceeded {MAX_BODY_BYTES} byte cap "
+                f"({len(raw)} bytes received)",
             )
 
         try:
