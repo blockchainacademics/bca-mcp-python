@@ -8,7 +8,10 @@ Mirrors the behavior of the TypeScript sibling:
   * Startup **fail-fast** on missing `BCA_API_KEY` so misconfigured
     hosts surface the problem immediately (not on first tool call).
 
-Current tool surface (98 tools — full parity with TS v0.3.0):
+Current tool surface — Python sibling ships a curated subset of the TS
+canonical surface (TS v0.3.1 exposes 99 tools; see ``bca-mcp-ts/server.json``
+``tool_count``). Python currently mirrors 98 of those and emits the same
+canonical JSON:API envelope ``{data, attribution.citations[], meta}``:
 
     content      (6)  — search_news, get_article, get_entity,
                         list_entity_mentions, list_topics, get_explainer
@@ -294,7 +297,7 @@ TOOLS: tuple[ToolEntry, ...] = (
         input_schema=_agent_jobs.get_agent_job_input_schema(),
         run=_agent_jobs.run_get_agent_job,
     ),
-    # --- extended surface (61) --- full parity with TS v0.3.0 ---------------
+    # --- extended surface (61) --- mirrors TS sibling extended.ts -----------
     # Directories (13) · Chains (4) · Compute (2) · Memes (4) ·
     # Microstructure (5) · Narrative (5) · Regulatory (4) · Security (4) ·
     # Services POST (3) · History (4) · Corpus meta (7) ·
