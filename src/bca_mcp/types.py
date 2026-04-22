@@ -48,12 +48,41 @@ TICKER_REGEX = r"^[A-Za-z0-9]{1,12}$"
 Window = Literal["1d", "7d", "30d", "90d"]
 
 
+EnvelopeStatus = Literal["complete", "unseeded", "partial", "error"]
+
+
 class ResponseEnvelope(TypedDict, Generic[T], total=False):
     data: T
+    status: EnvelopeStatus  # optional for tool authors; middleware default-fills to "complete"
     cite_url: Optional[str]
     as_of: Optional[str]  # ISO 8601
     source_hash: Optional[str]
     meta: Optional[dict[str, Any]]
+
+
+def resolve_envelope_status(
+    data: Any, explicit: Optional[EnvelopeStatus] = None
+) -> EnvelopeStatus:
+    """Mirror of TS `resolveEnvelopeStatus`.
+
+    Tool authors may set `status` explicitly; otherwise we auto-detect
+    "unseeded" from empty payloads, falling back to "complete". Middleware
+    uses this to guarantee every wire response carries a status field.
+    """
+    if explicit:
+        return explicit
+    if data is None:
+        return "unseeded"
+    if isinstance(data, list) and len(data) == 0:
+        return "unseeded"
+    if isinstance(data, dict):
+        if len(data) == 0:
+            return "unseeded"
+        for key in ("articles", "entities", "items", "results", "rows", "events"):
+            v = data.get(key)
+            if isinstance(v, list) and len(v) == 0:
+                return "unseeded"
+    return "complete"
 
 
 class Article(TypedDict, total=False):

@@ -8,26 +8,27 @@ Mirrors the behavior of the TypeScript sibling:
   * Startup **fail-fast** on missing `BCA_API_KEY` so misconfigured
     hosts surface the problem immediately (not on first tool call).
 
-Current tool surface (37 tools — v0.1 scaffold + batches 1-5 port):
+Current tool surface (98 tools — full parity with TS v0.2.3):
 
-    content      (6) — search_news, get_article, get_entity,
-                       list_entity_mentions, list_topics, get_explainer
-    market       (4) — get_price, get_market_overview, get_ohlc, get_pair_data
-    onchain      (4) — get_wallet_profile, get_tx, get_token_holders,
-                       get_defi_protocol
-    sentiment    (5) — get_sentiment, get_social_pulse, get_fear_greed,
-                       get_social_signals, get_social_signals_detail
-    indicators   (6) — get_coverage_index, get_narrative_strength,
-                       get_sentiment_velocity, get_editorial_premium,
-                       get_kol_influence, get_risk_score
-    fundamentals (6) — get_tokenomics, get_audit_reports, get_team_info,
-                       get_roadmap, compare_protocols, check_rugpull_risk
-    agent_jobs   (6) — generate_due_diligence, generate_tokenomics_model,
-                       summarize_whitepaper, translate_contract,
-                       monitor_keyword, get_agent_job
-
-The remaining ~62 tools from the TS v0.2.2 surface land in batches 6-9
-per `PORT_MANIFEST.md`.
+    content      (6)  — search_news, get_article, get_entity,
+                        list_entity_mentions, list_topics, get_explainer
+    market       (4)  — get_price, get_market_overview, get_ohlc, get_pair_data
+    onchain      (4)  — get_wallet_profile, get_tx, get_token_holders,
+                        get_defi_protocol
+    sentiment    (5)  — get_sentiment, get_social_pulse, get_fear_greed,
+                        get_social_signals, get_social_signals_detail
+    indicators   (6)  — get_coverage_index, get_narrative_strength,
+                        get_sentiment_velocity, get_editorial_premium,
+                        get_kol_influence, get_risk_score
+    fundamentals (6)  — get_tokenomics, get_audit_reports, get_team_info,
+                        get_roadmap, compare_protocols, check_rugpull_risk
+    agent_jobs   (6)  — generate_due_diligence, generate_tokenomics_model,
+                        summarize_whitepaper, translate_contract,
+                        monitor_keyword, get_agent_job
+    extended    (61)  — directories, chains, compute, memes,
+                        microstructure, narrative, regulatory, security,
+                        services POST, history, corpus meta, memos+theses,
+                        currencies — mirrors ``src/tools/extended.ts``
 """
 
 from __future__ import annotations
@@ -42,8 +43,10 @@ from mcp.server.stdio import stdio_server
 from mcp.types import TextContent, Tool
 
 from bca_mcp.errors import BcaError
+from bca_mcp.types import resolve_envelope_status
 from bca_mcp.tools import agent_jobs as _agent_jobs
 from bca_mcp.tools import content as _content
+from bca_mcp.tools import extended as _extended
 from bca_mcp.tools import fundamentals as _fundamentals
 from bca_mcp.tools import get_entity as _get_entity
 from bca_mcp.tools import get_explainer as _get_explainer
@@ -292,6 +295,20 @@ TOOLS: tuple[ToolEntry, ...] = (
         input_schema=_agent_jobs.get_agent_job_input_schema(),
         run=_agent_jobs.run_get_agent_job,
     ),
+    # --- extended surface (61) --- full parity with TS v0.2.3 ---------------
+    # Directories (13) · Chains (4) · Compute (2) · Memes (4) ·
+    # Microstructure (5) · Narrative (5) · Regulatory (4) · Security (4) ·
+    # Services POST (3) · History (4) · Corpus meta (7) ·
+    # Memos + theses (4) · Currencies (2)
+    *(
+        ToolEntry(
+            name=_name,
+            description=_description,
+            input_schema=_schema,
+            run=_runner,
+        )
+        for (_name, _description, _schema, _runner) in _extended.EXTENDED_TOOL_ENTRIES
+    ),
 )
 
 
@@ -322,7 +339,7 @@ def _assert_api_key_present() -> None:
 
 
 def build_server(check_env: bool = True) -> Server:
-    """Construct the MCP `Server` with the 37-tool surface wired up.
+    """Construct the MCP `Server` with the 98-tool surface wired up.
 
     Args:
         check_env: If True (default), raise at construction time when
@@ -358,12 +375,19 @@ def build_server(check_env: bool = True) -> Server:
             envelope = await tool.run(arguments or {})
             # Attribution surfacing: cite_url / as_of / source_hash always
             # present (null when upstream omits) so downstream agents can
-            # detect provenance. `status=integration_pending` and
-            # `status=upstream_error` envelope bodies pass through here as
-            # successful tool responses (the MCP client decides how to
-            # surface them) — the HTTP layer already accepted a 2xx.
+            # detect provenance. `status` is always present on the wire —
+            # middleware default-fills to "complete", auto-detects "unseeded"
+            # on empty payloads, and respects explicit values set by tool
+            # authors (e.g. "partial", "error"). Legacy upstream statuses
+            # like "integration_pending" / "upstream_error" flow through
+            # envelope.meta for the MCP client to surface as it sees fit.
+            status = resolve_envelope_status(
+                envelope.get("data"),
+                envelope.get("status"),
+            )
             payload = {
                 "data": envelope.get("data"),
+                "status": status,
                 "attribution": {
                     "cite_url": envelope.get("cite_url"),
                     "as_of": envelope.get("as_of"),

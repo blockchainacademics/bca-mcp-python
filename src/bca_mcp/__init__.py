@@ -14,7 +14,7 @@ from bca_mcp.errors import (
     BcaUpstreamError,
 )
 
-__version__ = "0.2.0"
+__version__ = "0.2.3"
 
 __all__ = [
     "__version__",

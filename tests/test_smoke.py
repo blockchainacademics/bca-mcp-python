@@ -300,13 +300,88 @@ EXPECTED_TOOL_NAMES = {
     "translate_contract",
     "monitor_keyword",
     "get_agent_job",
+    # --- extended (61) — full parity with TS v0.2.3 -----------------------
+    # directories (13)
+    "list_stablecoins",
+    "list_nft_communities",
+    "list_yields",
+    "list_aggregators",
+    "list_mcps",
+    "list_trading_bots",
+    "list_vcs",
+    "list_jobs",
+    "list_smart_contract_templates",
+    "get_smart_contract_template",
+    "list_marketing_templates",
+    "get_marketing_template",
+    "build_custom_indicator",
+    # chains (4)
+    "get_solana_ecosystem",
+    "get_l2_comparison",
+    "get_bitcoin_l2_status",
+    "get_ton_ecosystem",
+    # compute (2)
+    "get_compute_pricing",
+    "get_ai_crypto_metrics",
+    # memes (4)
+    "track_pumpfun",
+    "track_bonkfun",
+    "check_memecoin_risk",
+    "get_degen_leaderboard",
+    # microstructure (5)
+    "get_funding_rates",
+    "get_options_flow",
+    "get_liquidation_heatmap",
+    "get_exchange_flows",
+    "predict_listing",
+    # narrative (5)
+    "track_narrative",
+    "get_ai_agent_tokens",
+    "get_depin_projects",
+    "get_rwa_tokens",
+    "get_prediction_markets",
+    # regulatory (4)
+    "get_regulatory_status",
+    "track_sec_filings",
+    "get_mica_status",
+    "get_tax_rules",
+    # security (4)
+    "check_exploit_history",
+    "check_phishing_domain",
+    "get_bug_bounty_programs",
+    "scan_contract",
+    # services POST (3)
+    "book_kol_campaign",
+    "request_custom_research",
+    "submit_listing",
+    # history (4)
+    "get_history_prices",
+    "get_history_sentiment",
+    "get_history_correlation",
+    "get_history_coverage",
+    # corpus meta (7)
+    "list_entities",
+    "get_topic",
+    "search_academy",
+    "get_trending",
+    "get_unified_feed",
+    "list_sources",
+    "get_recent_stories",
+    # memos + theses (4)
+    "list_memos",
+    "get_memo",
+    "list_theses",
+    "get_thesis",
+    # currencies (2)
+    "list_currencies",
+    "get_currency_feed",
 }
 
 
 def test_server_registers_expected_tools_with_unique_names() -> None:
     names = [t.name for t in TOOLS]
-    assert len(names) == 37, f"expected 37 tools, got {len(names)}: {names}"
-    assert len(set(names)) == 37, f"duplicate tool name: {names}"
+    assert len(names) == 98, f"expected 98 tools, got {len(names)}: {names}"
+    assert len(set(names)) == 98, f"duplicate tool name: {names}"
     assert set(names) == EXPECTED_TOOL_NAMES, (
         f"tool surface drifted: want {EXPECTED_TOOL_NAMES}, got {set(names)}"
     )

@@ -24,7 +24,7 @@ from bca_mcp.errors import (
 from bca_mcp.types import ResponseEnvelope
 
 DEFAULT_BASE = "https://api.blockchainacademics.com"
-USER_AGENT = "bca-mcp/0.2.0 (+https://github.com/blockchainacademics/bca-mcp-python)"
+USER_AGENT = "bca-mcp/0.2.3 (+https://github.com/blockchainacademics/bca-mcp-python)"
 
 # HIGH: cap response body size to prevent a malicious or compromised upstream
 # from exhausting host memory. 10 MiB is well above any legitimate envelope
