@@ -4,11 +4,35 @@ These intentionally mirror `src/types.ts` in the TypeScript sibling. We use
 `TypedDict` (not pydantic) because the client deliberately passes upstream
 JSON through without re-validating — the upstream contract is the source of
 truth and we don't want to reject forward-compatible fields.
+
+Canonical response envelope (locked 2026-04-22, v0.3.0):
+
+    {
+      "data": { ... },
+      "attribution": {
+        "citations": [
+          { "cite_url": "...", "as_of": "...", "source_hash": "sha256:..." }
+        ]
+      },
+      "meta": {
+        "status": "complete" | "unseeded" | "partial" | "stale",
+        "request_id": "req_...",
+        "pageInfo": { "hasNextPage": bool, "hasPreviousPage": bool,
+                      "startCursor": str|None, "endCursor": str|None },
+        "diagnostic": { ... }   // optional
+      }
+    }
+
+Rules:
+  * `attribution.citations[]` is array-only — no singular shorthand.
+  * `meta.status` enum: complete | unseeded | partial | stale. NO "error".
+  * `meta.request_id` is always a string.
+  * Rate-limit info lives in HTTP headers, not the body.
 """
 
 from __future__ import annotations
 
-from typing import Any, Generic, List, Literal, Optional, TypedDict, TypeVar
+from typing import Any, Dict, Generic, List, Literal, Optional, TypedDict, TypeVar
 
 T = TypeVar("T")
 
@@ -48,26 +72,88 @@ TICKER_REGEX = r"^[A-Za-z0-9]{1,12}$"
 Window = Literal["1d", "7d", "30d", "90d"]
 
 
-EnvelopeStatus = Literal["complete", "unseeded", "partial", "error"]
+# --- canonical envelope shapes --------------------------------------------
+
+# Envelope status enum. NOTE: "error" is NOT a valid status — upstream
+# errors surface through the transport layer (HTTP status, BcaError raises)
+# and never as a successful-looking body.
+Status = Literal["complete", "unseeded", "partial", "stale"]
+
+# Back-compat alias — older tool modules imported `EnvelopeStatus`. Keep
+# the alias so the import surface stays stable, but point at the new
+# canonical enum.
+EnvelopeStatus = Status
+
+
+class Citation(TypedDict, total=False):
+    """Single provenance record. All fields optional individually but at
+    least one citation should be emitted when the backend has provenance
+    data available."""
+
+    cite_url: Optional[str]
+    as_of: Optional[str]  # ISO 8601
+    source_hash: Optional[str]  # typically "sha256:<hex>"
+
+
+class PageInfo(TypedDict):
+    """Relay-style cursor pagination descriptor. Always present on the
+    wire — non-paginated payloads emit the zero-pagination default
+    (no-next, no-prev, null cursors)."""
+
+    hasNextPage: bool
+    hasPreviousPage: bool
+    startCursor: Optional[str]
+    endCursor: Optional[str]
+
+
+class EnvelopeMeta(TypedDict, total=False):
+    """Canonical meta block. `status`, `request_id`, and `pageInfo` are
+    always present; `diagnostic` is an optional free-form bag the backend
+    uses for observability (trace IDs, timing, upstream codes)."""
+
+    status: Status
+    request_id: str
+    pageInfo: PageInfo
+    diagnostic: Dict[str, Any]  # optional
+
+
+class Attribution(TypedDict):
+    """Provenance block — always array-shaped. Use `citations: []` when
+    there is no provenance rather than omitting the key."""
+
+    citations: List[Citation]
 
 
 class ResponseEnvelope(TypedDict, Generic[T], total=False):
+    """Canonical JSON:API-inspired envelope. All three top-level keys
+    (`data`, `attribution`, `meta`) are present on every response the
+    REST API and MCP server now emit (locked 2026-04-22)."""
+
     data: T
-    status: EnvelopeStatus  # optional for tool authors; middleware default-fills to "complete"
-    cite_url: Optional[str]
-    as_of: Optional[str]  # ISO 8601
-    source_hash: Optional[str]
-    meta: Optional[dict[str, Any]]
+    attribution: Attribution
+    meta: EnvelopeMeta
+
+
+def default_page_info() -> PageInfo:
+    """Canonical zero-pagination default for non-paginated payloads."""
+
+    return {
+        "hasNextPage": False,
+        "hasPreviousPage": False,
+        "startCursor": None,
+        "endCursor": None,
+    }
 
 
 def resolve_envelope_status(
-    data: Any, explicit: Optional[EnvelopeStatus] = None
-) -> EnvelopeStatus:
+    data: Any, explicit: Optional[Status] = None
+) -> Status:
     """Mirror of TS `resolveEnvelopeStatus`.
 
     Tool authors may set `status` explicitly; otherwise we auto-detect
-    "unseeded" from empty payloads, falling back to "complete". Middleware
-    uses this to guarantee every wire response carries a status field.
+    "unseeded" from empty payloads, falling back to "complete". The
+    server's call_tool wrapper uses this to guarantee every wire
+    response carries a status field.
     """
     if explicit:
         return explicit

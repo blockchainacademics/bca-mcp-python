@@ -26,8 +26,30 @@ def unwrap(envelope: dict[str, Any]) -> Any:
 
 
 def cite_footer(envelope: dict[str, Any]) -> None:
-    cite = envelope.get("cite_url") if isinstance(envelope, dict) else None
-    as_of = envelope.get("as_of") if isinstance(envelope, dict) else None
+    """Render provenance footer from the canonical envelope.
+
+    Reads from `attribution.citations[0]` (v0.3.0 canonical shape) and
+    falls back to the legacy flat `cite_url`/`as_of` keys for
+    forward/backward compatibility during the rollout window.
+    """
+    cite: Any = None
+    as_of: Any = None
+
+    if isinstance(envelope, dict):
+        attribution = envelope.get("attribution")
+        if isinstance(attribution, dict):
+            citations = attribution.get("citations")
+            if isinstance(citations, list) and citations:
+                first = citations[0]
+                if isinstance(first, dict):
+                    cite = first.get("cite_url")
+                    as_of = first.get("as_of")
+        # Legacy fallbacks (pre-v0.3.0 flat shape).
+        if cite is None:
+            cite = envelope.get("cite_url")
+        if as_of is None:
+            as_of = envelope.get("as_of")
+
     if cite or as_of:
         bits: list[str] = []
         if cite:

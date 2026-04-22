@@ -63,11 +63,13 @@ def test_get_sentiment_rejects_invalid_slug_and_window() -> None:
 
 
 @pytest.mark.asyncio
-async def test_get_social_pulse_passes_through_integration_pending(
+async def test_get_social_pulse_upgrades_integration_pending_to_unseeded(
     httpx_mock,
 ) -> None:
-    """The backend currently returns an integration_pending envelope —
-    the Python client should pass it through unchanged (mirrors TS)."""
+    """Legacy `integration_pending` bodies are canonicalized to
+    `status=unseeded` by the client shim; the raw legacy value is
+    preserved in `meta.diagnostic.legacy_status` so callers can still
+    distinguish truly-unseeded from integration-pending upstreams."""
     httpx_mock.add_response(
         url=(
             "https://api.blockchainacademics.com/v1/sentiment/social"
@@ -82,8 +84,12 @@ async def test_get_social_pulse_passes_through_integration_pending(
     )
     set_client(BcaClient(api_key="k"))
     out = await run_get_social_pulse({"entity_slug": "solana"})
-    assert out.get("status") == "integration_pending"
-    assert out.get("data") is None
+    assert out["meta"]["status"] == "unseeded"
+    assert out["data"] is None
+    assert (
+        (out["meta"].get("diagnostic") or {}).get("legacy_status")
+        == "integration_pending"
+    )
 
 
 def test_get_social_pulse_input_validates_slug() -> None:
