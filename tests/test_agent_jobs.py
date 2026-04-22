@@ -219,6 +219,112 @@ async def test_get_agent_job_wraps_translate_contract_output(httpx_mock) -> None
     assert output["other"] == "metadata not wrapped"
 
 
+# --- H-3 webhook SSRF guard ----------------------------------------------
+
+
+def test_validate_webhook_url_rejects_non_https() -> None:
+    from bca_mcp.tools.agent_jobs import _validate_webhook_url
+
+    with pytest.raises(ValueError, match="https://"):
+        _validate_webhook_url("http://example.com/hook")
+
+
+def test_validate_webhook_url_rejects_bare_ipv4() -> None:
+    from bca_mcp.tools.agent_jobs import _validate_webhook_url
+
+    with pytest.raises(ValueError, match="bare IP"):
+        _validate_webhook_url("https://127.0.0.1/hook")
+
+
+def test_validate_webhook_url_rejects_bare_ipv6() -> None:
+    from bca_mcp.tools.agent_jobs import _validate_webhook_url
+
+    with pytest.raises(ValueError, match="bare IP"):
+        _validate_webhook_url("https://[::1]/hook")
+
+
+def test_validate_webhook_url_rejects_rfc1918(monkeypatch) -> None:
+    """A hostname whose A-record points into 10/8 must be rejected."""
+    from bca_mcp.tools import agent_jobs
+
+    def _fake_getaddrinfo(host, _port, *_, **__):
+        return [(None, None, None, None, ("10.0.0.7", 0))]
+
+    monkeypatch.setattr(agent_jobs.socket, "getaddrinfo", _fake_getaddrinfo)
+    with pytest.raises(ValueError, match="non-public"):
+        agent_jobs._validate_webhook_url("https://internal.example.com/hook")
+
+
+def test_validate_webhook_url_rejects_imds_address(monkeypatch) -> None:
+    """169.254.169.254 (cloud IMDS) is link-local → must be rejected."""
+    from bca_mcp.tools import agent_jobs
+
+    def _fake_getaddrinfo(host, _port, *_, **__):
+        return [(None, None, None, None, ("169.254.169.254", 0))]
+
+    monkeypatch.setattr(agent_jobs.socket, "getaddrinfo", _fake_getaddrinfo)
+    with pytest.raises(ValueError, match="non-public"):
+        agent_jobs._validate_webhook_url("https://metadata.example.com/hook")
+
+
+def test_validate_webhook_url_checks_all_returned_ips(monkeypatch) -> None:
+    """If ANY resolved IP is private, reject — don't just peek at the first.
+    This is the DNS-rebinding defense.
+    """
+    from bca_mcp.tools import agent_jobs
+
+    def _fake_getaddrinfo(host, _port, *_, **__):
+        return [
+            (None, None, None, None, ("8.8.8.8", 0)),         # public
+            (None, None, None, None, ("192.168.1.10", 0)),    # private
+        ]
+
+    monkeypatch.setattr(agent_jobs.socket, "getaddrinfo", _fake_getaddrinfo)
+    with pytest.raises(ValueError, match="non-public"):
+        agent_jobs._validate_webhook_url("https://dual.example.com/hook")
+
+
+def test_validate_webhook_url_accepts_public_host(monkeypatch) -> None:
+    from bca_mcp.tools import agent_jobs
+
+    def _fake_getaddrinfo(host, _port, *_, **__):
+        return [(None, None, None, None, ("8.8.8.8", 0))]
+
+    monkeypatch.setattr(agent_jobs.socket, "getaddrinfo", _fake_getaddrinfo)
+    # Must not raise.
+    agent_jobs._validate_webhook_url("https://public.example.com/hook")
+
+
+@pytest.mark.asyncio
+async def test_run_monitor_keyword_rejects_loopback_webhook(monkeypatch) -> None:
+    """Integration: run_monitor_keyword must raise before making the POST
+    when the webhook URL fails the SSRF guard.
+    """
+    from bca_mcp.tools import agent_jobs
+
+    def _fake_getaddrinfo(host, _port, *_, **__):
+        return [(None, None, None, None, ("127.0.0.1", 0))]
+
+    monkeypatch.setattr(agent_jobs.socket, "getaddrinfo", _fake_getaddrinfo)
+    set_client(BcaClient(api_key="k"))
+    with pytest.raises(ValueError, match="non-public"):
+        await agent_jobs.run_monitor_keyword(
+            {"keyword": "x", "webhook_url": "https://my.host/hook"}
+        )
+
+
+def test_monitor_keyword_schema_rejects_http_scheme() -> None:
+    """Schema-level guard: http:// is rejected before runtime SSRF check."""
+    from pydantic import ValidationError
+
+    from bca_mcp.tools.agent_jobs import MonitorKeywordInput
+
+    with pytest.raises(ValidationError):
+        MonitorKeywordInput.model_validate(
+            {"keyword": "x", "webhook_url": "http://example.com/hook"}
+        )
+
+
 @pytest.mark.asyncio
 async def test_get_agent_job_summarize_does_not_fence_translate_fields(
     httpx_mock,

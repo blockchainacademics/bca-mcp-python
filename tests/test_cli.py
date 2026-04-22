@@ -25,7 +25,11 @@ def _isolate_env(monkeypatch, tmp_path):
     monkeypatch.setattr(cli_config, "CONFIG_FILE", cfg_dir / "config.toml")
     monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setenv("BCA_API_KEY", "bca_test_key")
-    monkeypatch.setenv("BCA_API_BASE", "https://api.test.local")
+    # H-1: BCA_API_BASE is allowlisted, so tests must use an allowed host.
+    # Staging is the canonical non-default allowed value.
+    monkeypatch.setenv(
+        "BCA_API_BASE", "https://staging-api.blockchainacademics.com"
+    )
     yield
 
 

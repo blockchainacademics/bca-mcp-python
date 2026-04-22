@@ -1,9 +1,11 @@
 """Security regression tests for the BCA HTTP client.
 
-Covers three defensive guards that must stay intact to match the TS sibling:
+Covers the defensive guards that must stay intact to match the TS sibling:
 
-  1. BCA_API_BASE must be HTTPS unless BCA_ALLOW_INSECURE_BASE=1 — a hostile
-     env var otherwise steals the X-API-Key on first request.
+  1. (v0.3.1) BCA_API_BASE is pinned to an allowlist — prod, staging, or
+     loopback dev only. Any other value — HTTP or HTTPS — is rejected at
+     construction with ``ValueError``. Closes H-1 (SSRF + X-API-Key exfil
+     via env var override).
   2. Non-default bases emit a one-time stderr warning; `reset_nondefault_warning()`
      lets tests reset that latch between cases.
   3. Response bodies larger than 10 MiB raise BcaUpstreamError instead of
@@ -21,37 +23,67 @@ from bca_mcp.client import (
     reset_nondefault_warning,
     set_client,
 )
-from bca_mcp.errors import BcaBadRequestError, BcaUpstreamError
+from bca_mcp.errors import BcaUpstreamError
 
 
-# --- scheme gate ----------------------------------------------------------
+# --- allowlist gate (H-1) -------------------------------------------------
 
 
 def test_rejects_http_base_url_from_argument() -> None:
-    with pytest.raises(BcaBadRequestError, match="non-HTTPS"):
+    # http://attacker.local is neither loopback nor an allowed host.
+    with pytest.raises(ValueError, match="Refusing to use BCA_API_BASE"):
         BcaClient(base_url="http://attacker.local", api_key="k")
 
 
 def test_rejects_http_base_url_from_env(monkeypatch) -> None:
     monkeypatch.setenv("BCA_API_BASE", "http://attacker.local")
-    monkeypatch.delenv("BCA_ALLOW_INSECURE_BASE", raising=False)
-    with pytest.raises(BcaBadRequestError, match="non-HTTPS"):
+    with pytest.raises(ValueError, match="Refusing to use BCA_API_BASE"):
         BcaClient(api_key="k")
 
 
-def test_legacy_env_var_also_scheme_checked(monkeypatch) -> None:
+def test_legacy_env_var_also_allowlisted(monkeypatch) -> None:
     monkeypatch.delenv("BCA_API_BASE", raising=False)
     monkeypatch.setenv("BCA_API_BASE_URL", "http://legacy.local")
-    monkeypatch.delenv("BCA_ALLOW_INSECURE_BASE", raising=False)
-    with pytest.raises(BcaBadRequestError, match="non-HTTPS"):
+    with pytest.raises(ValueError, match="Refusing to use BCA_API_BASE"):
         BcaClient(api_key="k")
 
 
-def test_allow_insecure_base_env_opens_gate(monkeypatch) -> None:
-    monkeypatch.setenv("BCA_ALLOW_INSECURE_BASE", "1")
-    # Must not raise.
+def test_rejects_unrelated_https_base(monkeypatch) -> None:
+    # H-1 regression: even an HTTPS attacker-controlled host must be
+    # rejected — the prior HTTPS-only gate would have let this through.
+    monkeypatch.setenv("BCA_API_BASE", "https://evil.example.com")
+    with pytest.raises(ValueError, match="Refusing to use BCA_API_BASE"):
+        BcaClient(api_key="k")
+
+
+def test_allowlist_accepts_staging(monkeypatch) -> None:
+    monkeypatch.setenv(
+        "BCA_API_BASE", "https://staging-api.blockchainacademics.com"
+    )
+    c = BcaClient(api_key="k")
+    assert c._base_url == "https://staging-api.blockchainacademics.com"
+
+
+def test_allowlist_accepts_localhost_with_port() -> None:
     c = BcaClient(base_url="http://localhost:8080", api_key="k")
     assert c._base_url == "http://localhost:8080"
+
+
+def test_allowlist_accepts_127_0_0_1_with_port() -> None:
+    c = BcaClient(base_url="http://127.0.0.1:3000", api_key="k")
+    assert c._base_url == "http://127.0.0.1:3000"
+
+
+def test_allowlist_accepts_localhost_without_port() -> None:
+    c = BcaClient(base_url="http://localhost", api_key="k")
+    assert c._base_url == "http://localhost"
+
+
+def test_allowlist_rejects_loopback_with_suspicious_suffix() -> None:
+    # An attacker might try `http://localhost.attacker.com` banking on a
+    # naive prefix match. Must reject.
+    with pytest.raises(ValueError, match="Refusing to use BCA_API_BASE"):
+        BcaClient(base_url="http://localhost.attacker.com", api_key="k")
 
 
 def test_default_https_base_is_accepted() -> None:
@@ -66,17 +98,17 @@ def test_default_https_base_is_accepted() -> None:
 async def test_nondefault_base_warns_once(httpx_mock, capsys) -> None:
     reset_nondefault_warning()
     httpx_mock.add_response(
-        url="https://staging.blockchainacademics.com/v1/topics",
+        url="https://staging-api.blockchainacademics.com/v1/topics",
         json={"data": []},
         status_code=200,
     )
     httpx_mock.add_response(
-        url="https://staging.blockchainacademics.com/v1/topics",
+        url="https://staging-api.blockchainacademics.com/v1/topics",
         json={"data": []},
         status_code=200,
     )
     c = BcaClient(
-        base_url="https://staging.blockchainacademics.com",
+        base_url="https://staging-api.blockchainacademics.com",
         api_key="k",
     )
     await c.request("/v1/topics")
@@ -84,7 +116,7 @@ async def test_nondefault_base_warns_once(httpx_mock, capsys) -> None:
     err = capsys.readouterr().err
     # Warning must appear exactly once across the two calls.
     assert err.count("non-default BCA_API_BASE") == 1
-    assert "staging.blockchainacademics.com" in err
+    assert "staging-api.blockchainacademics.com" in err
 
 
 @pytest.mark.asyncio

@@ -12,13 +12,99 @@ be marked untrusted before the LLM consumes it — matches TS A-3 logic at
 
 from __future__ import annotations
 
+import ipaddress
+import socket
 from typing import Any, Literal, Optional
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 
 from pydantic import BaseModel, Field
 
 from bca_mcp.client import get_client
 from bca_mcp.types import SLUG_REGEX, ResponseEnvelope
+
+
+# H-3 (v0.3.1): webhook SSRF guard. An attacker could otherwise register a
+# keyword monitor with `webhook_url=http://169.254.169.254/...` (cloud IMDS)
+# or `http://127.0.0.1:<internal>` and have the BCA backend fire credentialed
+# requests against the operator's internal network. We validate at the MCP
+# layer so bad values never reach the API:
+#
+#   * HTTPS scheme only (no http, no ftp, no file, no gopher).
+#   * Hostname only — bare IP literals are rejected outright.
+#   * Every IP that `getaddrinfo` returns for the hostname must be public
+#     (not private / loopback / link-local / unspecified / reserved /
+#     multicast). DNS rebinding defense: check ALL returned IPs, not just
+#     the first — if any resolves to a private range, reject.
+#
+# Mirrors the TS sibling's `_validateWebhookUrl` so both servers reject
+# the same set of inputs.
+def _validate_webhook_url(url: str) -> None:
+    """Raise ``ValueError`` if ``url`` is not a safe public HTTPS webhook."""
+    try:
+        parsed = urlparse(url)
+    except ValueError as err:
+        raise ValueError(f"webhook_url is not a valid URL: {err}") from err
+
+    if parsed.scheme != "https":
+        raise ValueError(
+            f"webhook_url must use https:// (got scheme='{parsed.scheme}')."
+        )
+
+    hostname = parsed.hostname
+    if not hostname:
+        raise ValueError("webhook_url must include a hostname.")
+
+    # Reject bare IP literals in the URL — webhooks should go to named hosts.
+    try:
+        ipaddress.ip_address(hostname)
+    except ValueError:
+        pass
+    else:
+        raise ValueError(
+            "webhook_url must not be a bare IP address; use a hostname."
+        )
+
+    # Resolve every IP the hostname maps to (A + AAAA) and ensure NONE of
+    # them are private, loopback, link-local, reserved, multicast, or
+    # unspecified. This is the DNS-rebinding defense.
+    try:
+        infos = socket.getaddrinfo(hostname, None)
+    except socket.gaierror as err:
+        raise ValueError(
+            f"webhook_url hostname '{hostname}' could not be resolved: {err}"
+        ) from err
+
+    seen: set[str] = set()
+    for info in infos:
+        sockaddr = info[4]
+        if not sockaddr:
+            continue
+        ip_str = sockaddr[0]
+        if ip_str in seen:
+            continue
+        seen.add(ip_str)
+        try:
+            ip = ipaddress.ip_address(ip_str)
+        except ValueError:
+            # Skip malformed entries — can't validate, can't reject safely.
+            continue
+        if (
+            ip.is_private
+            or ip.is_loopback
+            or ip.is_link_local
+            or ip.is_reserved
+            or ip.is_multicast
+            or ip.is_unspecified
+        ):
+            raise ValueError(
+                f"webhook_url resolves to non-public address {ip_str}; "
+                "RFC1918 / loopback / link-local / reserved targets are rejected."
+            )
+
+    if not seen:
+        raise ValueError(
+            f"webhook_url hostname '{hostname}' resolved to zero IPs."
+        )
 
 ContractLanguage = Literal["solidity", "vyper", "move", "rust-anchor"]
 
@@ -233,7 +319,7 @@ class MonitorKeywordInput(BaseModel):
     webhook_url: str = Field(
         min_length=1,
         max_length=2048,
-        pattern=r"^https?://",
+        pattern=r"^https://",
         description="HTTPS webhook URL for notifications (required).",
     )
     window_hours: int = Field(
@@ -252,6 +338,10 @@ async def run_monitor_keyword(
     args: dict[str, Any],
 ) -> ResponseEnvelope[Any]:
     parsed = MonitorKeywordInput.model_validate(args)
+    # H-3: SSRF guard. Reject non-HTTPS, bare IPs, and any hostname that
+    # resolves (A or AAAA) into a private / loopback / link-local / reserved
+    # range. Raises ValueError (surfaced as BCA_BAD_REQUEST by the server).
+    _validate_webhook_url(parsed.webhook_url)
     return await get_client().post(
         "/v1/agent-jobs/monitor-keyword",
         {
