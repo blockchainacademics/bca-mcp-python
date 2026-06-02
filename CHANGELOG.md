@@ -4,6 +4,37 @@ All notable changes to `bca-mcp` are documented here.
 
 This project follows [Semantic Versioning](https://semver.org/) and [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.4.0] — 2026-06-02
+
+Distribution release. Lockstep with `@blockchainacademics/mcp@0.4.0` on npm.
+
+### Security — MCP-TS-2 parity (closes redirect-hardening gap with TS sibling)
+
+- **`follow_redirects=False` on `httpx.AsyncClient`.** Mirrors
+  `~/bca-mcp-ts/src/client.ts` commit `895bfee` (2026-04-22). Without this
+  flag, a compromised or mis-configured upstream that responds with a 3xx
+  and an attacker-controlled `Location` header would cause `httpx` to
+  re-issue the request — `X-API-Key` and all — to the redirect target.
+- **Explicit 3xx rejection in `BcaClient._call()`.** Any 300–399 status now
+  raises `BcaUpstreamError`. The error message includes the status code
+  but masks the `Location` header so the attacker URL never leaks into
+  logs or LLM context.
+- **3 new regression tests** in `test_client_security.py`:
+  - `test_rejects_302_redirect`
+  - `test_rejects_301_permanent_redirect`
+  - `test_api_key_never_sent_to_redirect_target` (defense-in-depth — confirms
+    only ONE outbound request fires, to BCA, not the attacker)
+- The `BCA_API_BASE` allowlist from 0.3.1 already bounds the initial host;
+  this closes the redirect-based escape from that bound. Test suite:
+  **113 / 113 passing.**
+
+### Verified
+
+- Envelope canonicality + hybrid citations (the TS sibling 0.4.0 changes
+  land on the API surface, not the Python MCP layer — Python passes
+  through the canonical envelope unchanged).
+- 110 → 113 passing tests.
+
 ## [0.3.1] — 2026-04-22
 
 ### Security

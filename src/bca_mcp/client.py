@@ -306,6 +306,13 @@ class BcaClient:
                 "Accept": "application/json",
                 "User-Agent": USER_AGENT,
             },
+            # MCP-TS-2 parity (mirrors `~/bca-mcp-ts/src/client.ts` commit
+            # 895bfee, 2026-04-22): NEVER follow redirects automatically.
+            # An upstream that responds with a 3xx + attacker-controlled
+            # `Location` would otherwise cause httpx to re-issue the request
+            # — `X-API-Key` and all — to the redirect target. We reject 3xx
+            # explicitly in `_call()` below.
+            "follow_redirects": False,
         }
         if self._transport is not None:
             kwargs["transport"] = self._transport
@@ -369,6 +376,19 @@ class BcaClient:
                     res = await http.get(url, params=clean_params, headers=headers)
         except httpx.HTTPError as err:
             raise BcaNetworkError(err) from err
+
+        # MCP-TS-2 parity: reject any 3xx response explicitly. The
+        # `follow_redirects=False` flag on the AsyncClient prevents httpx
+        # from re-issuing the request to the `Location` target — but the
+        # caller would still get a 3xx body which they can't usefully act
+        # on. We mask the redirect target in the error message so the
+        # attacker-controlled URL doesn't leak into log lines / LLM
+        # context.
+        if 300 <= res.status_code < 400:
+            raise BcaUpstreamError(
+                res.status_code,
+                f"BCA API responded {res.status_code} (redirect refused)",
+            )
 
         if res.status_code in (401, 403):
             raise BcaAuthError()

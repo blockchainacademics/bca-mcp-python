@@ -165,3 +165,68 @@ async def test_undersize_response_body_passes(httpx_mock) -> None:
     c = BcaClient(api_key="k")
     out = await c.request("/v1/topics")
     assert out.get("data", {}).get("topics") == ["defi", "regulation"]
+
+
+# --- MCP-TS-2 parity: redirect hardening (v0.4.0) ------------------------
+
+
+@pytest.mark.asyncio
+async def test_rejects_302_redirect(httpx_mock) -> None:
+    """Upstream 302 must raise BcaUpstreamError — never follow.
+
+    Without `follow_redirects=False`, httpx would re-issue the request to
+    the attacker-controlled `Location`, leaking `X-API-Key` to the
+    redirect target. We mirror the TS sibling's commit `895bfee`:
+    explicit 3xx rejection.
+    """
+    httpx_mock.add_response(
+        url="https://api.blockchainacademics.com/v1/topics",
+        status_code=302,
+        headers={"Location": "https://attacker.example/exfil"},
+    )
+    c = BcaClient(api_key="k")
+    with pytest.raises(BcaUpstreamError) as exc_info:
+        await c.request("/v1/topics")
+    # 302 must surface, AND the attacker URL must NOT leak into the error
+    # message (only the status code + "redirect refused" tag).
+    assert "302" in str(exc_info.value)
+    assert "attacker.example" not in str(exc_info.value)
+    assert "redirect refused" in str(exc_info.value)
+
+
+@pytest.mark.asyncio
+async def test_rejects_301_permanent_redirect(httpx_mock) -> None:
+    httpx_mock.add_response(
+        url="https://api.blockchainacademics.com/v1/topics",
+        status_code=301,
+        headers={"Location": "https://attacker.example/perm"},
+    )
+    c = BcaClient(api_key="k")
+    with pytest.raises(BcaUpstreamError, match="301"):
+        await c.request("/v1/topics")
+
+
+@pytest.mark.asyncio
+async def test_api_key_never_sent_to_redirect_target(httpx_mock) -> None:
+    """Defense-in-depth: if a 3xx slipped past the rejection, httpx would
+    re-issue to Location — but `follow_redirects=False` is set on the
+    AsyncClient itself, so no second request fires. Verify by adding a
+    response for the Location URL and confirming the mock never sees it.
+    """
+    httpx_mock.add_response(
+        url="https://api.blockchainacademics.com/v1/topics",
+        status_code=303,
+        headers={"Location": "https://attacker.example/sink"},
+    )
+    # No httpx_mock.add_response for the attacker URL — if a redirect
+    # WERE followed, httpx would error with "no mock for that URL", which
+    # would also fail the test. Either way, the BcaUpstreamError is what
+    # we expect.
+    c = BcaClient(api_key="leaky-key-do-not-exfil")
+    with pytest.raises(BcaUpstreamError):
+        await c.request("/v1/topics")
+    # Confirm only ONE request was actually sent — to BCA, not the
+    # attacker.
+    requests = httpx_mock.get_requests()
+    assert len(requests) == 1
+    assert "api.blockchainacademics.com" in str(requests[0].url)
