@@ -4,6 +4,23 @@ All notable changes to `bca-mcp` are documented here.
 
 This project follows [Semantic Versioning](https://semver.org/) and [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.4.1] — 2026-06-02
+
+### Fixed
+
+- **Python 3.10 import crash.** 0.4.0 failed at import time on Python
+  3.10 with `TypeError: cannot inherit from both a TypedDict type and a
+  non-TypedDict base class` — `class ResponseEnvelope(TypedDict, Generic[T])`
+  is only valid on Python 3.11+. Bumped `requires-python` to `>=3.11`
+  so `pip install` / `uvx` resolve the correct interpreter from the
+  start. No source change required; 0.4.0 stays on PyPI for the audit
+  trail.
+
+### Lockstep
+
+- `@blockchainacademics/mcp@0.4.1` on npm carries the same version bump
+  (no functional delta on the TS side).
+
 ## [0.4.0] — 2026-06-02
 
 Distribution release. Lockstep with `@blockchainacademics/mcp@0.4.0` on npm.
