@@ -29,6 +29,7 @@ import httpx
 from bca_mcp.errors import (
     BcaAuthError,
     BcaBadRequestError,
+    BcaError,
     BcaNetworkError,
     BcaRateLimitError,
     BcaUpstreamError,
@@ -40,9 +41,10 @@ from bca_mcp.types import (
     default_page_info,
     resolve_envelope_status,
 )
+from bca_mcp._demo_key import BCA_DEMO_KEY_FALLBACK
 
 DEFAULT_BASE = "https://api.blockchainacademics.com"
-USER_AGENT = "bca-mcp/0.3.1 (+https://github.com/blockchainacademics/bca-mcp-python)"
+USER_AGENT = "bca-mcp/0.5.0 (+https://github.com/blockchainacademics/bca-mcp-python)"
 
 # H-1: strict allowlist of base URLs. Env vars and constructor args are both
 # validated against this list at startup. An attacker who controls
@@ -193,6 +195,21 @@ def _canonicalize_envelope(payload: Any) -> ResponseEnvelope[Any]:
             if diagnostic:
                 meta["diagnostic"] = diagnostic
 
+            # Tier / upgrade_url passthrough in the legacy-flat branch
+            # (added 2026-06-02 with the demo tier launch). The canonical
+            # branch passes the payload through unchanged so the same fields
+            # round-trip automatically there; here we re-build meta from
+            # scratch, so we must lift them out of legacy_meta explicitly.
+            if isinstance(legacy_meta, dict):
+                legacy_tier = legacy_meta.get("tier")
+                if isinstance(legacy_tier, str) and legacy_tier in {
+                    "demo", "free", "starter", "pro", "team", "enterprise",
+                }:
+                    meta["tier"] = legacy_tier
+                legacy_upgrade = legacy_meta.get("upgrade_url")
+                if isinstance(legacy_upgrade, str) and legacy_upgrade:
+                    meta["upgrade_url"] = legacy_upgrade
+
             return {
                 "data": payload.get("data"),
                 "attribution": attribution,
@@ -286,9 +303,27 @@ class BcaClient:
 
         self._base_url = resolved
         self._is_nondefault_base = resolved != DEFAULT_BASE
-        self._api_key = api_key or os.environ.get("BCA_API_KEY")
+
+        # Auth fallback chain (v0.5.0): explicit > env > demo. The demo key
+        # is public, rate-limited, and gated to a 10-tool allowlist by the
+        # backend. The fallback exists so `uvx bca-mcp` is a true zero-config
+        # first-run experience instead of a BCA_AUTH wall on every tool call.
+        user_key = api_key or os.environ.get("BCA_API_KEY")
+        self._api_key = user_key or BCA_DEMO_KEY_FALLBACK or None
+        self._using_demo_key = (
+            not user_key and bool(BCA_DEMO_KEY_FALLBACK)
+        )
+
         self._timeout = httpx.Timeout(timeout_s, connect=3.0)
         self._transport = transport  # test injection
+
+    @property
+    def using_demo_key(self) -> bool:
+        """True iff the client is falling back to the baked-in demo key.
+
+        Drives the one-time stderr banner emit in `run_stdio()`.
+        """
+        return self._using_demo_key
 
     def _warn_nondefault_base_once(self) -> None:
         global _nondefault_base_warned
@@ -341,8 +376,10 @@ class BcaClient:
         params: Optional[Mapping[str, Any]] = None,
         body: Optional[Mapping[str, Any]] = None,
     ) -> ResponseEnvelope[Any]:
-        if not self._api_key:
-            raise BcaAuthError("BCA_API_KEY env var is not set")
+        # No explicit no-key throw: the fallback chain in __init__ guarantees
+        # _api_key is set (user key or baked-in demo). If both are somehow
+        # empty (unbuilt dev tree with empty _demo_key.py), the upstream
+        # 401 path below surfaces a clean BcaAuthError.
 
         # HIGH: emit a one-time warning whenever the operator is pointing this
         # client at something other than the canonical production API. This
@@ -391,7 +428,44 @@ class BcaClient:
             )
 
         if res.status_code in (401, 403):
-            raise BcaAuthError()
+            # Peek at the body for BCA_TIER_LOCKED so demo-tier callers see
+            # the helpful signup URL from the backend instead of a generic
+            # auth error. The backend emits 403 + {"detail": "...", header
+            # X-BCA-Error-Code: BCA_TIER_LOCKED} when a demo key hits a
+            # non-allowlisted tool. We surface the detail verbatim — it
+            # includes the upgrade URL.
+            upstream_code: Optional[str] = None
+            upstream_msg: Optional[str] = None
+            try:
+                body_json = res.json()
+                if isinstance(body_json, dict):
+                    err = body_json.get("error")
+                    if isinstance(err, dict):
+                        c = err.get("code")
+                        m = err.get("message")
+                        if isinstance(c, str):
+                            upstream_code = c
+                        if isinstance(m, str):
+                            upstream_msg = m
+                    # FastAPI HTTPException uses {detail, ...}; check our
+                    # X-BCA-Error-Code header as the code source then.
+                    hdr_code = res.headers.get("x-bca-error-code")
+                    if upstream_code is None and hdr_code:
+                        upstream_code = hdr_code
+                    if upstream_msg is None:
+                        det = body_json.get("detail")
+                        if isinstance(det, str):
+                            upstream_msg = det
+            except (ValueError, _json.JSONDecodeError):
+                pass
+            if upstream_code == "BCA_TIER_LOCKED":
+                raise BcaError(
+                    "BCA_TIER_LOCKED",
+                    upstream_msg
+                    or "This tool requires a paid tier. Upgrade at https://brain.blockchainacademics.com/signup",
+                    res.status_code,
+                )
+            raise BcaAuthError(upstream_msg or "Invalid or missing BCA_API_KEY")
         if res.status_code == 429:
             ra = res.headers.get("retry-after")
             retry_after: Optional[int] = None

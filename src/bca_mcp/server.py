@@ -37,7 +37,7 @@ canonical JSON:API envelope ``{data, attribution.citations[], meta}``:
 from __future__ import annotations
 
 import json as _json
-import os
+import sys
 from dataclasses import dataclass
 from typing import Any, Awaitable, Callable, Sequence
 
@@ -359,33 +359,18 @@ def _fence_envelope_data(envelope: Any) -> Any:
     return out
 
 
-def _assert_api_key_present() -> None:
-    """Fail-fast if ``BCA_API_KEY`` is not set in the environment.
-
-    This runs at server construction so misconfigured MCP hosts get an
-    actionable error at startup instead of cryptic failures on the first
-    tool call. Matches the TS sibling's behavior of throwing at first
-    request — but we surface it earlier because stdio hosts buffer
-    startup stderr to the user log.
-    """
-    if not os.environ.get("BCA_API_KEY"):
-        raise RuntimeError(
-            "BCA_API_KEY is not set. Get a key at "
-            "https://brain.blockchainacademics.com/pricing and export it "
-            "before launching the MCP server."
-        )
-
-
 def build_server(check_env: bool = True) -> Server:
     """Construct the MCP `Server` with the 98-tool surface wired up.
 
     Args:
-        check_env: If True (default), raise at construction time when
-            BCA_API_KEY is missing. Tests pass ``False`` to exercise
-            the server without a live key.
+        check_env: Deprecated as of v0.5.0 (kept as no-op for one release
+            to preserve the test signature). Previously raised when
+            BCA_API_KEY was unset; now the client falls back to a baked-in
+            public demo key so first-run zero-config works. The demo banner
+            in `run_stdio()` informs the user when this fallback is active.
     """
-    if check_env:
-        _assert_api_key_present()
+    # check_env intentionally ignored — see docstring. Removed in v0.6.0.
+    _ = check_env
 
     server: Server = Server("bca-mcp")
 
@@ -440,6 +425,17 @@ def build_server(check_env: bool = True) -> Server:
 
 async def run_stdio() -> None:
     server = build_server()
+    # Demo-tier banner (v0.5.0): emit once on stderr when the client is
+    # using the baked-in demo fallback (no BCA_API_KEY). Stdout is owned
+    # by the stdio transport — must stay on stderr to avoid corrupting
+    # the MCP framing. Mirrors the TS sibling's emit in src/index.ts.
+    from bca_mcp.client import get_client
+    from bca_mcp._demo_banner import DEMO_BANNER
+
+    if get_client().using_demo_key:
+        sys.stderr.write(DEMO_BANNER)
+        sys.stderr.flush()
+
     async with stdio_server() as (read_stream, write_stream):
         await server.run(
             read_stream,
