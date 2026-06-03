@@ -16,11 +16,17 @@ LLMs hallucinate about crypto. BCA ships ground-truth editorial content with ful
 pip install bca-mcp
 # or, isolated:
 pipx install bca-mcp
+# or, ephemeral:
+uvx bca-mcp
 ```
 
-## Configure
+## Zero-config first run (no API key needed)
 
-Get an API key at **https://brain.blockchainacademics.com/pricing** (free tier: 1,000 calls/month; paid tiers unlock expanded rate limits and — in later versions — agent-backed research generation).
+`uvx bca-mcp` works out of the box. The package ships with a public demo key baked in that unlocks 10 marquee tools (`get_price`, `get_trending`, `get_fear_greed`, `get_market_overview`, `search_news`, `get_sentiment`, `get_entity`, `get_explainer`, `get_recent_stories`, `get_topic`). Shared global cap of 100 calls/day + 20/day per IP. On startup the server emits a one-time banner to stderr noting the demo mode is active.
+
+## Configure (unlock all 99 tools)
+
+Get a free API key at **https://brain.blockchainacademics.com/signup** (free tier: 2,000 calls/month per user; paid tiers unlock expanded rate limits and agent-backed research generation).
 
 Set the env var before launching the server:
 
@@ -31,11 +37,26 @@ export BCA_API_BASE="https://api.blockchainacademics.com"
 # BCA_API_BASE_URL is also accepted as a legacy alias
 ```
 
-> The server **fails fast at startup** if `BCA_API_KEY` is missing. Misconfigured hosts surface the problem immediately instead of on the first tool call.
+> When `BCA_API_KEY` is set the demo banner is suppressed and you get the full 99-tool surface. When it's unset, every response carries `meta.tier: "demo"` and `meta.upgrade_url` so your agent can detect the demo path.
 
 ## Use from Claude Desktop
 
-Add to `claude_desktop_config.json` (macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`):
+Add to `claude_desktop_config.json` (macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`).
+
+Zero-config demo path (no API key needed):
+
+```json
+{
+  "mcpServers": {
+    "blockchainacademics": {
+      "command": "python",
+      "args": ["-m", "bca_mcp"]
+    }
+  }
+}
+```
+
+Full 99-tool surface (add your key from brain.blockchainacademics.com/signup):
 
 ```json
 {
@@ -49,7 +70,7 @@ Add to `claude_desktop_config.json` (macOS: `~/Library/Application Support/Claud
 }
 ```
 
-Restart Claude Desktop — the 8 tools appear in the tool picker. If you installed via `pipx`, you can swap `"command": "bca-mcp"` with empty `args` (a console-script entry point is registered by the package).
+Restart Claude Desktop — the tools appear in the tool picker. If you installed via `pipx`, you can swap `"command": "bca-mcp"` with empty `args` (a console-script entry point is registered by the package).
 
 ## Use from LangChain
 
@@ -171,7 +192,8 @@ The server never crashes the stdio process. All failures surface as MCP response
 
 | Code | Meaning |
 |---|---|
-| `BCA_AUTH` | Missing/invalid `BCA_API_KEY` (HTTP 401/403) |
+| `BCA_AUTH` | Invalid `BCA_API_KEY` (HTTP 401/403) |
+| `BCA_TIER_LOCKED` | Tool not in your current tier's allowlist (HTTP 403). Demo tier sees this on 89 of the 99 tools — the error message includes the upgrade URL. |
 | `BCA_RATE_LIMIT` | Rate limit exceeded (HTTP 429 — honor `Retry-After`) |
 | `BCA_UPSTREAM` | BCA API returned 5xx or malformed JSON |
 | `BCA_NETWORK` | Network failure or 20s timeout exceeded |
