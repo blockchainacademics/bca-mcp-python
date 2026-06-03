@@ -4,6 +4,15 @@ All notable changes to `bca-mcp` are documented here.
 
 This project follows [Semantic Versioning](https://semver.org/) and [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.4.2] — 2026-06-02
+
+### Lockstep
+
+- Version bump only, to match `@blockchainacademics/mcp@0.4.2` on npm.
+  The TS sibling's `server.json` now declares both npm + PyPI packages
+  in a single MCP Registry entry; PyPI `bca-mcp` is referenced at
+  `0.4.2`.
+
 ## [0.4.1] — 2026-06-02
 
 ### Fixed
