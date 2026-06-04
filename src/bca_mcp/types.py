@@ -109,12 +109,19 @@ class PageInfo(TypedDict):
 class EnvelopeMeta(TypedDict, total=False):
     """Canonical meta block. `status`, `request_id`, and `pageInfo` are
     always present; `diagnostic` is an optional free-form bag the backend
-    uses for observability (trace IDs, timing, upstream codes)."""
+    uses for observability (trace IDs, timing, upstream codes).
+
+    `tier` and `upgrade_url` were added 2026-06-02 with the public demo-tier
+    launch. Backend-emitted on every authenticated response. Demo callers
+    always get `upgrade_url`; free callers get it above ~80% of daily cap.
+    """
 
     status: Status
     request_id: str
     pageInfo: PageInfo
     diagnostic: Dict[str, Any]  # optional
+    tier: str  # demo | free | starter | pro | team | enterprise
+    upgrade_url: str  # present on demo + near-cap free
 
 
 class Attribution(TypedDict):

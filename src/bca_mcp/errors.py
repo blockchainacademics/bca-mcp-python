@@ -14,6 +14,10 @@ BcaErrorCode = Literal[
     "BCA_UPSTREAM",
     "BCA_NETWORK",
     "BCA_BAD_REQUEST",
+    # Added 2026-06-02 with the demo tier. Backend returns 403 + this code
+    # when a demo-key caller hits a tool outside the 10-marquee allowlist.
+    # The upstream message includes the signup URL; client surfaces verbatim.
+    "BCA_TIER_LOCKED",
 ]
 
 
