@@ -4,6 +4,50 @@ All notable changes to `bca-mcp` are documented here.
 
 This project follows [Semantic Versioning](https://semver.org/) and [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.1] — 2026-06-04
+
+### Lockstep
+
+Version bump only, to match `@blockchainacademics/mcp@0.5.1` on npm.
+The TS sibling's 0.5.1 fixed an npx-symlink entry-point bug; Python
+does not have an equivalent bug (`__name__ == "__main__"` resolves
+correctly through PyPI console_scripts entry points), so this release
+is pure version alignment.
+
+`USER_AGENT` bumped to `bca-mcp/0.5.1` to match.
+
+## [0.5.0] — 2026-06-04
+
+### Added — public demo tier (zero-config first run)
+
+Sibling of `@blockchainacademics/mcp@0.5.0`. Byte-identical demo banner,
+identical fallback chain order, identical envelope/error additions.
+
+When `BCA_API_KEY` is unset, `BcaClient` falls back to a baked-in public
+demo key. The backend recognises it, applies a 10-tool allowlist, and
+rate-limits at 100/day global + 20/day per-IP. `uvx bca-mcp` is now a
+true zero-config demo instead of `build_server()` raising `RuntimeError`
+on import.
+
+- `EnvelopeMeta` TypedDict gains optional `tier` + `upgrade_url`
+  (passthrough on canonical and legacy-flat branches).
+- `BcaErrorCode` Literal extends with `BCA_TIER_LOCKED`. 401/403 handler
+  peeks at upstream body and surfaces the signup URL verbatim.
+- New `@property using_demo_key` drives a one-time stderr banner from
+  `run_stdio()` after `build_server()`.
+- `_assert_api_key_present()` removed. `build_server(check_env=...)`
+  retained as a deprecated no-op for one release (test signature
+  compat). Removed in 0.6.0.
+- Build infrastructure: `scripts/demo-key.txt` (committed) +
+  `scripts/gen_demo_key.py` write `src/bca_mcp/_demo_key.py` (gitignored)
+  before `python -m build`.
+
+### Fixed
+
+- `USER_AGENT` was hardcoded to `bca-mcp/0.3.1` since v0.3.1 (latent
+  bug that under-attributed all subsequent versions on the backend
+  rate-limit logs). Now `bca-mcp/0.5.0`.
+
 ## [0.4.2] — 2026-06-02
 
 ### Lockstep
