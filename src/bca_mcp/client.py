@@ -41,10 +41,18 @@ from bca_mcp.types import (
     default_page_info,
     resolve_envelope_status,
 )
-from bca_mcp._demo_key import BCA_DEMO_KEY_FALLBACK
+try:
+    from bca_mcp._demo_key import BCA_DEMO_KEY_FALLBACK
+except ImportError:
+    # Belt-and-suspenders: _demo_key.py is generated + gitignored, and 0.5.0/0.5.1
+    # shipped without it (hatchling excluded the ignored file) → import crashed for
+    # every pip/uvx user. If it's ever missing from the build again, fall back to
+    # the public demo key literal so `import bca_mcp` never fails. This value is
+    # public by design (rate-limited, 10-tool allowlist); source: scripts/demo-key.txt.
+    BCA_DEMO_KEY_FALLBACK = "bca_demo_a3e1cc71b2b32872cb32516ffc7e8ad8203acb9d"
 
 DEFAULT_BASE = "https://api.blockchainacademics.com"
-USER_AGENT = "bca-mcp/0.5.1 (+https://github.com/blockchainacademics/bca-mcp-python)"
+USER_AGENT = "bca-mcp/0.5.2 (+https://github.com/blockchainacademics/bca-mcp-python)"
 
 # H-1: strict allowlist of base URLs. Env vars and constructor args are both
 # validated against this list at startup. An attacker who controls

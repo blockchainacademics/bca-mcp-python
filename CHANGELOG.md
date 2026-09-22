@@ -4,6 +4,39 @@ All notable changes to `bca-mcp` are documented here.
 
 This project follows [Semantic Versioning](https://semver.org/) and [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.2] — 2026-09-22
+
+### Fixed
+
+- **Critical packaging bug: the published package crashed on import.** `client.py`
+  imports `bca_mcp._demo_key` at module load, but `_demo_key.py` is generated and
+  gitignored — hatchling excludes gitignored files, so **0.5.0 and 0.5.1 shipped
+  without it** and every `pip install bca-mcp` / `uvx bca-mcp` failed with
+  `ModuleNotFoundError: No module named 'bca_mcp._demo_key'`. (npm's
+  `@blockchainacademics/mcp` was unaffected.)
+
+### Changed
+
+- **Pinned `mcp>=1.0.0,<2.0.0`.** `mcp` 2.x removed the low-level
+  `Server.list_tools()` / `call_tool()` decorator API that `server.py` uses, so a
+  fresh install pulling `mcp` 2.x made the stdio server fail to start
+  (`AttributeError: 'Server' object has no attribute 'list_tools'`). This was
+  masked in 0.5.0/0.5.1 by the import crash. Migrating to the `mcp` 2.x API is a
+  tracked follow-up.
+- `pyproject.toml`: `[tool.hatch.build] artifacts = ["src/bca_mcp/_demo_key.py"]`
+  force-includes the generated demo-key module in the wheel + sdist.
+- `client.py`: the `_demo_key` import is now wrapped in `try/except ImportError`
+  with the public demo-key literal as a fallback, so import can never crash again
+  even if the generator wasn't run.
+- Added a GitHub Actions CI gate (`.github/workflows/ci.yml`) that builds the wheel,
+  installs it in a **clean venv**, and asserts `import bca_mcp` + the `bca-mcp`/`bca`
+  entry points work — the exact check that would have caught this before publish.
+- `USER_AGENT` → `bca-mcp/0.5.2`.
+
+### Action
+
+- Yank 0.5.0 and 0.5.1 from PyPI after 0.5.2 is confirmed installable.
+
 ## [0.5.1] — 2026-06-04
 
 ### Lockstep
