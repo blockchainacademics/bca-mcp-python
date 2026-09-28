@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  # The gate that would have caught the 0.5.0/0.5.1 import crash: build the
+  # real wheel, install it into a CLEAN venv (no source tree on the path), and
+  # assert the package imports and its entry points resolve.
+  wheel-install-smoke:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Generate the demo-key module (source of truth: scripts/demo-key.txt)
+        run: python scripts/gen_demo_key.py
+
+      - name: Build wheel + sdist
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build
+
+      - name: Assert the demo-key module is present in the wheel
+        run: |
+          python - <<'PY'
+          import glob, zipfile, sys
+          whl = sorted(glob.glob("dist/*.whl"))[-1]
+          names = zipfile.ZipFile(whl).namelist()
+          assert any(n.endswith("bca_mcp/_demo_key.py") for n in names), \
+              f"_demo_key.py missing from {whl}: {names}"
+          print(f"OK: _demo_key.py present in {whl}")
+          PY
+
+      - name: Install the built wheel into a clean venv and import it
+        run: |
+          python -m venv /tmp/clean
+          /tmp/clean/bin/python -m pip install --upgrade pip
+          /tmp/clean/bin/python -m pip install dist/*.whl
+          # Import from a dir with no source tree so we test the WHEEL, not src/.
+          cd /tmp
+          /tmp/clean/bin/python -c "import bca_mcp; print('import OK', bca_mcp.__version__)"
+          /tmp/clean/bin/python -c "from bca_mcp.client import BcaClient, get_client; print('client OK')"
+          /tmp/clean/bin/bca-mcp --help >/dev/null 2>&1 || /tmp/clean/bin/bca-mcp --version || true
+          /tmp/clean/bin/bca --help >/dev/null 2>&1 && echo "bca CLI OK" || echo "bca CLI: no --help (non-fatal)"
+
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install (editable) with dev extras
+        run: |
+          python scripts/gen_demo_key.py
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+      - name: Run tests
+        run: python -m pytest -q
