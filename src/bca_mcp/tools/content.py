@@ -22,6 +22,7 @@ from urllib.parse import quote
 
 from pydantic import BaseModel, Field
 
+from bca_mcp._untrusted import neutralize_fence_tokens
 from bca_mcp.client import get_client
 from bca_mcp.types import ResponseEnvelope
 
@@ -30,12 +31,15 @@ def _wrap_untrusted(source: str, value: Any) -> Any:
     """Fence a free-text field that originated from a third-party article so
     downstream LLM consumers treat it as data, not instructions. Mirrors
     `wrapUntrusted()` in `src/tools/content.ts`.
+
+    Any fence tag embedded in ``value`` is neutralized first so a literal
+    ``</untrusted_content>`` in the upstream text cannot close the fence early.
     """
     if not isinstance(value, str) or not value:
         return value
     return (
         f'<untrusted_content source="{source}">\n'
-        f"{value}\n"
+        f"{neutralize_fence_tokens(value)}\n"
         "</untrusted_content>"
     )
 

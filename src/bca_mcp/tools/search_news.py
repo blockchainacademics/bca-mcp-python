@@ -6,6 +6,7 @@ from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 
+from bca_mcp._untrusted import neutralize_fence_tokens
 from bca_mcp.client import get_client
 from bca_mcp.types import ResponseEnvelope, SearchNewsResult
 
@@ -78,9 +79,12 @@ async def run(args: dict[str, Any]) -> ResponseEnvelope[SearchNewsResult]:
             if isinstance(a, dict):
                 summary = a.get("summary")
                 if isinstance(summary, str) and summary:
+                    # Neutralize embedded fence tags first so a literal
+                    # </untrusted_content> in the summary can't escape the
+                    # fence (see bca_mcp._untrusted).
                     a["summary"] = (
                         '<untrusted_content source="search_news">\n'
-                        f"{summary}\n"
+                        f"{neutralize_fence_tokens(summary)}\n"
                         "</untrusted_content>"
                     )
     return res

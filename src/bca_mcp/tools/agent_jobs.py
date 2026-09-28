@@ -19,6 +19,7 @@ from urllib.parse import quote, urlparse
 
 from pydantic import BaseModel, Field
 
+from bca_mcp._untrusted import neutralize_fence_tokens
 from bca_mcp.client import get_client
 from bca_mcp.types import SLUG_REGEX, ResponseEnvelope
 
@@ -399,9 +400,12 @@ _TRANSLATE_UNTRUSTED_FIELDS = (
 
 
 def _fence_string(source: str, value: str) -> str:
+    # Neutralize any embedded fence tag before wrapping so attacker-controlled
+    # contract comments / whitepaper text containing a literal
+    # </untrusted_content> cannot break out of the fence (see bca_mcp._untrusted).
     return (
         f'<untrusted_content source="{source}">\n'
-        f"{value}\n"
+        f"{neutralize_fence_tokens(value)}\n"
         "</untrusted_content>"
     )
 

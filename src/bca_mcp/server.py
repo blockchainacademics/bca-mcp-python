@@ -45,6 +45,7 @@ from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import TextContent, Tool
 
+from bca_mcp._untrusted import neutralize_fence_tokens
 from bca_mcp.errors import BcaError
 from bca_mcp.tools import agent_jobs as _agent_jobs
 from bca_mcp.tools import content as _content
@@ -353,6 +354,11 @@ def _fence_envelope_data(envelope: Any) -> Any:
         return envelope
     data = envelope["data"]
     rendered = _json.dumps(data, indent=2, default=str)
+    # Neutralize any literal fence tag embedded in the upstream payload
+    # (json.dumps does NOT escape "<", ">" or "/") so a `</untrusted_content>`
+    # hiding inside a string value cannot close the fence early. See
+    # bca_mcp._untrusted for the rationale.
+    rendered = neutralize_fence_tokens(rendered)
     fenced = f"{_FENCE_OPEN}{rendered}{_FENCE_CLOSE}"
     out = dict(envelope)
     out["data"] = fenced
