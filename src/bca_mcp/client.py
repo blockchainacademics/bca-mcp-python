@@ -52,7 +52,7 @@ except ImportError:
     BCA_DEMO_KEY_FALLBACK = "bca_demo_a3e1cc71b2b32872cb32516ffc7e8ad8203acb9d"
 
 DEFAULT_BASE = "https://api.blockchainacademics.com"
-USER_AGENT = "bca-mcp/0.5.2 (+https://github.com/blockchainacademics/bca-mcp-python)"
+USER_AGENT = "bca-mcp/0.5.3 (+https://github.com/blockchainacademics/bca-mcp-python)"
 
 # H-1: strict allowlist of base URLs. Env vars and constructor args are both
 # validated against this list at startup. An attacker who controls

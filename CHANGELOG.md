@@ -4,6 +4,19 @@ All notable changes to `bca-mcp` are documented here.
 
 This project follows [Semantic Versioning](https://semver.org/) and [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.3] — 2026-09-28
+
+### Security
+
+- **Prompt-injection fence hardening.** Upstream text (news bodies, whitepapers,
+  contract source, entity dossiers) is wrapped in `<untrusted_content>` fences so
+  the host LLM treats it as data. That defence is only sound if the text can't
+  contain the fence's own closing token — an attacker embedding a literal
+  `</untrusted_content>` could otherwise close the fence early and inject
+  instructions. New `_untrusted.neutralize_fence_tokens()` rewrites any literal
+  fence tag (open/close, case/space/attribute tolerant) to an inert `&lt;…&gt;`
+  form before wrapping, at every fence site. Mirrors the TS sibling.
+
 ## [0.5.2] — 2026-09-22
 
 ### Fixed
