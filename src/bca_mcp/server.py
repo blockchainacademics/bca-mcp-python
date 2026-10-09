@@ -384,7 +384,7 @@ def _fence_envelope_data(envelope: Any) -> Any:
 
 
 def build_server(check_env: bool = True) -> Server:
-    """Construct the MCP `Server` with the 98-tool surface wired up.
+    """Construct the MCP `Server` with the 101-tool surface wired up.
 
     Args:
         check_env: Deprecated as of v0.5.0 (kept as no-op for one release
@@ -393,7 +393,7 @@ def build_server(check_env: bool = True) -> Server:
             public demo key so first-run zero-config works. The demo banner
             in `run_stdio()` informs the user when this fallback is active.
     """
-    # check_env intentionally ignored — see docstring. Removed in v0.6.0.
+    # check_env intentionally ignored — see docstring. Kept for compatibility; slated for removal in v0.7.0.
     _ = check_env
 
     server: Server = Server("bca-mcp")
