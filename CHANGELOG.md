@@ -4,6 +4,21 @@ All notable changes to `bca-mcp` are documented here.
 
 This project follows [Semantic Versioning](https://semver.org/) and [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.6.0] — 2026-10-09
+
+### Added — crypto Twitter intelligence (lockstep with @blockchainacademics/mcp 0.6.0)
+
+BCA's read of what crypto Twitter is saying, as analysis in our own words with X post URLs as citations (never reposted post text). Pro tier. 98 → 101 tools.
+
+- `get_ct_pulse`: last-24h takeaway, top stories, narratives, sourced numbers, notable posts. No topic = latest scheduled market snapshot.
+- `get_x_signals`: breaking stories surfaced on X before news outlets, by lane (security, news, keyword), with confidence and on-chain evidence flags.
+- `get_kol_consensus`: where credible CT voices stand on the most-covered tokens.
+
+### Changed
+
+- `get_social_pulse` is now live (was `integration_pending`).
+- `get_article` works without an API key (rate-limited per IP).
+
 ## [0.5.3] — 2026-09-28
 
 ### Security

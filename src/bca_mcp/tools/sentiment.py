@@ -5,15 +5,18 @@ Wraps `/v1/sentiment/*` and `/v1/social-signals/*`. Ports five tools from
 `get_fear_greed`) and `src/tools/extended.ts::Social signals` section
 (`get_social_signals`, `get_social_signals_detail`).
 
-`get_social_pulse` is currently flagged `integration_pending` upstream —
-the backend returns `{data: null, status: "integration_pending"}` and our
-client passes that envelope through unchanged (tested in
+`get_social_pulse` is live as of 0.6.0 (crypto Twitter sentiment). The
+client still passes an `integration_pending` envelope through unchanged
+when a backend source is unconfigured (tested in
 `tests/test_smoke.py::test_integration_pending_envelope_passes_through`).
+
+0.6.0 adds the crypto Twitter intelligence tools (`get_ct_pulse`,
+`get_x_signals`, `get_kol_consensus`), mirroring `src/tools/sentiment.ts`.
 """
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 from urllib.parse import quote
 
 from pydantic import BaseModel, Field
@@ -63,9 +66,10 @@ async def run_get_sentiment(args: dict[str, Any]) -> ResponseEnvelope[Any]:
 GET_SOCIAL_PULSE_TOOL_NAME = "get_social_pulse"
 
 GET_SOCIAL_PULSE_TOOL_DESCRIPTION = (
-    "Social velocity: mentions, engagement, sentiment across "
-    "Twitter/Reddit/Discord. Pro tier. Returns BCA_NOT_IMPLEMENTED if "
-    "social ingest not yet wired."
+    "How crypto Twitter is talking about an entity: CT sentiment score "
+    "(-1 to 1), label, mention trend, bull and bear points, narratives, and "
+    "notable posts. BCA analysis in its own words, with X post URLs as "
+    "citations. Pro tier."
 )
 
 
@@ -190,3 +194,114 @@ async def run_get_social_signals_detail(
     return await get_client().request(
         f"/v1/social-signals/{quote(parsed.symbol, safe='')}",
     )
+
+
+# --- get_ct_pulse ----------------------------------------------------------
+
+GET_CT_PULSE_TOOL_NAME = "get_ct_pulse"
+
+GET_CT_PULSE_TOOL_DESCRIPTION = (
+    "What crypto Twitter is saying in the last 24h: one-line takeaway, top "
+    "stories, narratives heating or cooling, hard numbers with their source "
+    "URL, and notable posts from credible accounts. Without a topic it "
+    "returns the latest scheduled market snapshot. BCA analysis plus X post "
+    "links, never reposted post text. Pro tier."
+)
+
+
+class GetCtPulseInput(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    topic: str | None = Field(
+        default=None,
+        min_length=2,
+        max_length=80,
+        pattern=r"^[A-Za-z0-9 $.\-]+$",
+        description=(
+            "Optional focus: a token, sector or theme (e.g. 'solana', "
+            "'restaking'). Omit for the whole market."
+        ),
+    )
+
+
+def get_ct_pulse_input_schema() -> dict[str, Any]:
+    return GetCtPulseInput.model_json_schema()
+
+
+async def run_get_ct_pulse(args: dict[str, Any]) -> ResponseEnvelope[Any]:
+    parsed = GetCtPulseInput.model_validate(args)
+    params = {"topic": parsed.topic} if parsed.topic else {}
+    return await get_client().request("/v1/social/ct-pulse", params)
+
+
+# --- get_x_signals ---------------------------------------------------------
+
+GET_X_SIGNALS_TOOL_NAME = "get_x_signals"
+
+GET_X_SIGNALS_TOOL_DESCRIPTION = (
+    "Breaking crypto stories surfaced on X before news outlets, from vetted "
+    "accounts (security researchers, exchanges, regulators, ETF analysts) "
+    "plus an open keyword sweep. Each story: headline, summary, event type, "
+    "the accounts and post URLs behind it, confidence, and whether on-chain "
+    "evidence was cited. Pro tier."
+)
+
+
+class GetXSignalsInput(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    lane: Literal["security", "news", "keyword"] | None = Field(
+        default=None,
+        description=(
+            "security = hacks/exploits/drains; news = exchanges, regulators, "
+            "ETF data; keyword = open search. Omit for all."
+        ),
+    )
+    hours: int = Field(default=24, ge=1, le=168, description="Lookback window in hours.")
+    limit: int = Field(default=50, ge=1, le=100, description="Max stories.")
+
+
+def get_x_signals_input_schema() -> dict[str, Any]:
+    return GetXSignalsInput.model_json_schema()
+
+
+async def run_get_x_signals(args: dict[str, Any]) -> ResponseEnvelope[Any]:
+    parsed = GetXSignalsInput.model_validate(args)
+    params: dict[str, Any] = {"hours": parsed.hours, "limit": parsed.limit}
+    if parsed.lane:
+        params["lane"] = parsed.lane
+    return await get_client().request("/v1/social/x-signals", params)
+
+
+# --- get_kol_consensus -----------------------------------------------------
+
+GET_KOL_CONSENSUS_TOOL_NAME = "get_kol_consensus"
+
+GET_KOL_CONSENSUS_TOOL_DESCRIPTION = (
+    "Where credible crypto Twitter analysts, traders and researchers stand "
+    "on the most-covered tokens over the last 24h: stance (bullish/bearish/"
+    "mixed/neutral), bull and bear account counts, key points, and post "
+    "links. Pro tier."
+)
+
+
+class GetKolConsensusInput(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    token: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=20,
+        pattern=r"^[A-Za-z0-9]+$",
+        description="Ticker (e.g. 'BTC'). Omit for every token in the latest snapshot.",
+    )
+
+
+def get_kol_consensus_input_schema() -> dict[str, Any]:
+    return GetKolConsensusInput.model_json_schema()
+
+
+async def run_get_kol_consensus(args: dict[str, Any]) -> ResponseEnvelope[Any]:
+    parsed = GetKolConsensusInput.model_validate(args)
+    params = {"token": parsed.token} if parsed.token else {}
+    return await get_client().request("/v1/social/kol-consensus", params)

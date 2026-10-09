@@ -176,6 +176,24 @@ TOOLS: tuple[ToolEntry, ...] = (
         run=_sentiment.run_get_fear_greed,
     ),
     ToolEntry(
+        name=_sentiment.GET_CT_PULSE_TOOL_NAME,
+        description=_sentiment.GET_CT_PULSE_TOOL_DESCRIPTION,
+        input_schema=_sentiment.get_ct_pulse_input_schema(),
+        run=_sentiment.run_get_ct_pulse,
+    ),
+    ToolEntry(
+        name=_sentiment.GET_X_SIGNALS_TOOL_NAME,
+        description=_sentiment.GET_X_SIGNALS_TOOL_DESCRIPTION,
+        input_schema=_sentiment.get_x_signals_input_schema(),
+        run=_sentiment.run_get_x_signals,
+    ),
+    ToolEntry(
+        name=_sentiment.GET_KOL_CONSENSUS_TOOL_NAME,
+        description=_sentiment.GET_KOL_CONSENSUS_TOOL_DESCRIPTION,
+        input_schema=_sentiment.get_kol_consensus_input_schema(),
+        run=_sentiment.run_get_kol_consensus,
+    ),
+    ToolEntry(
         name=_sentiment.GET_SOCIAL_SIGNALS_TOOL_NAME,
         description=_sentiment.GET_SOCIAL_SIGNALS_TOOL_DESCRIPTION,
         input_schema=_sentiment.get_social_signals_input_schema(),
