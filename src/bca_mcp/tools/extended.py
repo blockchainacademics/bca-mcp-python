@@ -189,6 +189,37 @@ class GetSmartContractTemplateInput(BaseModel):
     slug: str = Field(pattern=SLUG_REGEX, min_length=1, max_length=240)
 
 
+# Grants: the live directory behind blockchainacademics.com/grants. Agents
+# check every listing against its source page daily; expired deadlines are
+# never returned.
+class SearchGrantsInput(BaseModel):
+    model_config = {"extra": "forbid"}
+    q: Optional[str] = Field(default=None, min_length=2, max_length=100)
+    ecosystem: Optional[Literal["web3", "ai", "web2_cloud", "gov", "edu"]] = None
+    country: Optional[str] = Field(default=None, max_length=64)
+    min_amount: Optional[int] = Field(default=None, ge=0)
+    max_complexity: Optional[int] = Field(default=None, ge=1, le=5)
+    deadline_before: Optional[str] = Field(default=None, pattern=r"^\d{4}-\d{2}-\d{2}$")
+    has_deadline: Optional[bool] = None
+    limit: int = Field(default=20, ge=1, le=100)
+    offset: int = Field(default=0, ge=0)
+
+
+async def _run_search_grants(args: dict[str, Any]) -> ResponseEnvelope[Any]:
+    p = SearchGrantsInput.model_validate(args)
+    return await _gc().request("/v1/grants", p.model_dump(exclude_none=True))
+
+
+class GetGrantInput(BaseModel):
+    model_config = {"extra": "forbid"}
+    slug: str = Field(pattern=SLUG_REGEX, max_length=240)
+
+
+async def _run_get_grant(args: dict[str, Any]) -> ResponseEnvelope[Any]:
+    p = GetGrantInput.model_validate(args)
+    return await _gc().request(f"/v1/grants/{quote(p.slug, safe='')}")
+
+
 async def _run_get_smart_contract_template(args: dict[str, Any]) -> ResponseEnvelope[Any]:
     p = GetSmartContractTemplateInput.model_validate(args)
     return await _gc().request(
@@ -944,6 +975,16 @@ EXTENDED_TOOL_ENTRIES: tuple[tuple[str, str, dict[str, Any], Runner], ...] = (
         "list_jobs",
         "Aggregated crypto job board, deduped from Crypto Jobs List / Web3 Career / Wellfound / AngelList.",
         ListJobsInput, _run_list_jobs,
+    ),
+    _entry(
+        "search_grants",
+        "Live crypto, web3, AI and public-funding grants (200+ programs) with amounts, deadlines, eligibility and apply links. Verified against each funder's page weekly; expired rounds never returned. Soonest deadline first.",
+        SearchGrantsInput, _run_search_grants,
+    ),
+    _entry(
+        "get_grant",
+        "One grant program in full: funder, amount range, deadline, focus areas, geography, application complexity, summary, apply link, last verified date.",
+        GetGrantInput, _run_get_grant,
     ),
     _entry(
         "list_smart_contract_templates",

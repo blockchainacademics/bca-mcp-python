@@ -28,7 +28,7 @@ canonical JSON:API envelope ``{data, attribution.citations[], meta}``:
     agent_jobs   (6)  — generate_due_diligence, generate_tokenomics_model,
                         summarize_whitepaper, translate_contract,
                         monitor_keyword, get_agent_job
-    extended    (61)  — directories, chains, compute, memes,
+    extended    (63)  — directories, chains, compute, memes,
                         microstructure, narrative, regulatory, security,
                         services POST, history, corpus meta, memos+theses,
                         currencies — mirrors ``src/tools/extended.ts``
@@ -316,7 +316,7 @@ TOOLS: tuple[ToolEntry, ...] = (
         input_schema=_agent_jobs.get_agent_job_input_schema(),
         run=_agent_jobs.run_get_agent_job,
     ),
-    # --- extended surface (61) --- mirrors TS sibling extended.ts -----------
+    # --- extended surface (63) --- mirrors TS sibling extended.ts -----------
     # Directories (13) · Chains (4) · Compute (2) · Memes (4) ·
     # Microstructure (5) · Narrative (5) · Regulatory (4) · Security (4) ·
     # Services POST (3) · History (4) · Corpus meta (7) ·
@@ -384,7 +384,7 @@ def _fence_envelope_data(envelope: Any) -> Any:
 
 
 def build_server(check_env: bool = True) -> Server:
-    """Construct the MCP `Server` with the 101-tool surface wired up.
+    """Construct the MCP `Server` with the 103-tool surface wired up.
 
     Args:
         check_env: Deprecated as of v0.5.0 (kept as no-op for one release
