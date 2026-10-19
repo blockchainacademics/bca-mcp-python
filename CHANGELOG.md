@@ -4,6 +4,15 @@ All notable changes to `bca-mcp` are documented here.
 
 This project follows [Semantic Versioning](https://semver.org/) and [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.6.2] — 2026-10-19
+
+### Added — live crypto jobs (lockstep with @blockchainacademics/mcp 0.6.2)
+
+`list_jobs` now returns real data: 1,300+ open roles at 50+ crypto companies, collected every 6 hours from the companies' own job boards, with apply links to the company's own page. Both job tools are available on the demo tier. 103 → 104 tools.
+
+- `list_jobs`: filters now match the API (keyword, role category, remote, location, employment type, company); descriptions are opt-in to keep responses small.
+- `get_job`: one role in full, with apply link and BCA job page URL.
+
 ## [0.6.1] — 2026-10-19
 
 ### Added — grants (lockstep with @blockchainacademics/mcp 0.6.1)

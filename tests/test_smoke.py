@@ -322,6 +322,8 @@ EXPECTED_TOOL_NAMES = {
     # grants (0.6.1)
     "search_grants",
     "get_grant",
+    # jobs (0.6.2)
+    "get_job",
     "get_social_signals",
     "get_social_signals_detail",
     # indicators (6)
@@ -426,12 +428,12 @@ EXPECTED_TOOL_NAMES = {
 def test_server_registers_expected_tools_with_unique_names() -> None:
     names = [t.name for t in TOOLS]
     # Python MCP ships a parity subset (read-only where the TS sibling exposes
-    # the full surface). TS canonical count is 104 tools — see
-    # ``bca-mcp-ts/server.json`` (``tool_count``). Python currently mirrors 103
+    # the full surface). TS canonical count is 105 tools — see
+    # ``bca-mcp-ts/server.json`` (``tool_count``). Python currently mirrors 104
     # of those (missing ``get_as_of_snapshot`` from the content category).
     # Update both numbers in lock-step when new tools are ported.
-    assert len(names) == 103, f"expected 103 tools, got {len(names)}: {names}"
-    assert len(set(names)) == 103, f"duplicate tool name: {names}"
+    assert len(names) == 104, f"expected 104 tools, got {len(names)}: {names}"
+    assert len(set(names)) == 104, f"duplicate tool name: {names}"
     assert set(names) == EXPECTED_TOOL_NAMES, (
         f"tool surface drifted: want {EXPECTED_TOOL_NAMES}, got {set(names)}"
     )

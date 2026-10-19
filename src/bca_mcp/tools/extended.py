@@ -156,23 +156,33 @@ async def _run_list_vcs(args: dict[str, Any]) -> ResponseEnvelope[Any]:
 
 class ListJobsInput(BaseModel):
     model_config = {"extra": "forbid"}
+    q: Optional[str] = Field(default=None, min_length=2, max_length=100)
+    tag: Optional[Literal[
+        "engineering", "security", "data", "research", "product", "design", "marketing",
+        "sales-bd", "legal-compliance", "finance", "trading", "support", "operations", "other",
+    ]] = None
     remote: Optional[bool] = None
-    seniority: Optional[str] = Field(default=None, max_length=64)
-    chain: Optional[str] = Field(default=None, pattern=SLUG_REGEX, max_length=240)
-    limit: int = Field(default=50, ge=1, le=100)
+    location: Optional[str] = Field(default=None, min_length=2, max_length=100)
+    employment_type: Optional[Literal["full_time", "part_time", "contract", "internship"]] = None
+    company_slug: Optional[str] = Field(default=None, pattern=SLUG_REGEX, max_length=160)
+    include_description: bool = False
+    limit: int = Field(default=25, ge=1, le=100)
+    offset: int = Field(default=0, ge=0)
 
 
 async def _run_list_jobs(args: dict[str, Any]) -> ResponseEnvelope[Any]:
     p = ListJobsInput.model_validate(args)
-    return await _gc().request(
-        "/v1/directories/jobs",
-        {
-            "remote": p.remote,
-            "seniority": p.seniority,
-            "chain": p.chain,
-            "limit": p.limit,
-        },
-    )
+    return await _gc().request("/v1/directories/jobs", p.model_dump(exclude_none=True))
+
+
+class GetJobInput(BaseModel):
+    model_config = {"extra": "forbid"}
+    slug: str = Field(pattern=SLUG_REGEX, max_length=240)
+
+
+async def _run_get_job(args: dict[str, Any]) -> ResponseEnvelope[Any]:
+    p = GetJobInput.model_validate(args)
+    return await _gc().request(f"/v1/directories/jobs/{quote(p.slug, safe='')}")
 
 
 class ListSmartContractTemplatesInput(BaseModel):
@@ -973,8 +983,13 @@ EXTENDED_TOOL_ENTRIES: tuple[tuple[str, str, dict[str, Any], Runner], ...] = (
     ),
     _entry(
         "list_jobs",
-        "Aggregated crypto job board, deduped from Crypto Jobs List / Web3 Career / Wellfound / AngelList.",
+        "Live crypto jobs (1,300+ open roles at 50+ crypto companies: Coinbase, Binance, OKX, Ripple, Circle, Phantom, Uniswap...) collected every 6h from the companies' own job boards. Filter by role, remote, location, company, keyword. Apply links go to the company's own application page.",
         ListJobsInput, _run_list_jobs,
+    ),
+    _entry(
+        "get_job",
+        "One crypto job in full: description, company, location, remote, salary when published, apply link, BCA job page URL. Errors once the role is filled.",
+        GetJobInput, _run_get_job,
     ),
     _entry(
         "search_grants",
