@@ -7,6 +7,6 @@
 
 DEMO_BANNER = (
     "[bca-mcp] Running in DEMO mode. Limited to ~10 tools, shared rate cap.\n"
-    "[bca-mcp] Get a free key for full access: https://brain.blockchainacademics.com/signup?ref=mcp-first-run\n"
+    "[bca-mcp] Get a free key for full access: https://blockchainacademics.com/crypto-api/signup?ref=mcp-first-run\n"
     "[bca-mcp] Set: export BCA_API_KEY=bca_...   (or add to your client config)\n"
 )

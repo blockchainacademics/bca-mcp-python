@@ -612,7 +612,7 @@ async def test_canonical_envelope_passes_tier_and_upgrade_url_through(
                     "endCursor": None,
                 },
                 "tier": "demo",
-                "upgrade_url": "https://brain.blockchainacademics.com/signup?ref=mcp-demo-tier",
+                "upgrade_url": "https://blockchainacademics.com/crypto-api/signup?ref=mcp-demo-tier",
             },
         },
         status_code=200,
@@ -621,7 +621,7 @@ async def test_canonical_envelope_passes_tier_and_upgrade_url_through(
     out = await c.request("/v1/sentiment/fear-greed")
     assert out["meta"]["tier"] == "demo"
     assert out["meta"]["upgrade_url"] == (
-        "https://brain.blockchainacademics.com/signup?ref=mcp-demo-tier"
+        "https://blockchainacademics.com/crypto-api/signup?ref=mcp-demo-tier"
     )
 
 
@@ -639,7 +639,7 @@ async def test_legacy_flat_envelope_passes_tier_and_upgrade_url_through(
             "as_of": "2026-04-19T00:00:00Z",
             "meta": {
                 "tier": "free",
-                "upgrade_url": "https://brain.blockchainacademics.com/signup?ref=mcp-near-cap",
+                "upgrade_url": "https://blockchainacademics.com/crypto-api/signup?ref=mcp-near-cap",
             },
         },
         status_code=200,
@@ -648,7 +648,7 @@ async def test_legacy_flat_envelope_passes_tier_and_upgrade_url_through(
     out = await c.request("/v1/articles/search")
     assert out["meta"]["tier"] == "free"
     assert out["meta"]["upgrade_url"] == (
-        "https://brain.blockchainacademics.com/signup?ref=mcp-near-cap"
+        "https://blockchainacademics.com/crypto-api/signup?ref=mcp-near-cap"
     )
 
 
@@ -679,7 +679,7 @@ async def test_403_with_tier_locked_body_raises_bca_tier_locked(httpx_mock) -> N
 
     upstream_detail = (
         "This tool requires a free account. Sign up in 30 seconds: "
-        "https://brain.blockchainacademics.com/signup?ref=mcp-demo-locked"
+        "https://blockchainacademics.com/crypto-api/signup?ref=mcp-demo-locked"
     )
     httpx_mock.add_response(
         url="https://api.blockchainacademics.com/v1/onchain/wallet",
@@ -692,7 +692,7 @@ async def test_403_with_tier_locked_body_raises_bca_tier_locked(httpx_mock) -> N
         await c.request("/v1/onchain/wallet")
     assert exc.value.code == "BCA_TIER_LOCKED"
     assert "Sign up in 30 seconds" in str(exc.value)
-    assert "brain.blockchainacademics.com" in str(exc.value)
+    assert "blockchainacademics.com/crypto-api/signup" in str(exc.value)
 
 
 @pytest.mark.asyncio
@@ -742,7 +742,7 @@ def test_demo_banner_text_invariants() -> None:
     # ASCII-only — no chars above 0x7F.
     for ch in DEMO_BANNER:
         assert ord(ch) < 0x80, f"non-ASCII char {ch!r}"
-    assert "brain.blockchainacademics.com/signup" in DEMO_BANNER
+    assert "blockchainacademics.com/crypto-api/signup" in DEMO_BANNER
     assert "BCA_API_KEY" in DEMO_BANNER
     assert "DEMO mode" in DEMO_BANNER
 

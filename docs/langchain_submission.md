@@ -76,8 +76,8 @@ Changes:
 
 - Package: https://pypi.org/project/bca-mcp/
 - Source: https://github.com/blockchainacademics/bca-mcp-python
-- API docs: https://api.blockchainacademics.com/docs
-- Free API key: https://brain.blockchainacademics.com/pricing
+- API docs: https://blockchainacademics.com/crypto-api/docs
+- Free API key: https://blockchainacademics.com/crypto-api/pricing
 - TS sibling (already in MCP registry): https://www.npmjs.com/package/@blockchainacademics/mcp
 
 ## Test plan

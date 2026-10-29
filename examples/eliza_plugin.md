@@ -23,7 +23,7 @@ pip install bca-mcp
 
 ## Get an API key
 
-Sign up at **https://brain.blockchainacademics.com/pricing**. The free tier (1,000 calls/month) is enough to test and ship most agents.
+Sign up at **https://blockchainacademics.com/crypto-api/pricing**. The free tier (1,000 calls/month) is enough to test and ship most agents.
 
 ## Wire into Eliza's character config
 

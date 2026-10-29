@@ -4,7 +4,7 @@ The canonical crypto MCP server for AI agents — **Python edition**. 3,500+ edi
 
 Sibling of [`@blockchainacademics/mcp`](https://www.npmjs.com/package/@blockchainacademics/mcp) (TypeScript). Same REST API. Same attribution contract. Use whichever fits your stack.
 
-**v0.2.0 ships 8 read-only MCP tools + the `bca` CLI** — the most-used corpus + market endpoints, plus a terminal-first way to explore them. Later versions expand toward parity with the TS sibling (102 tools). Starting narrow on the MCP surface is deliberate: tight tools, sharp descriptions, low-risk publish.
+**v0.6 ships the full 105-tool catalog + the `bca` CLI** — the most-used corpus + market endpoints, plus a terminal-first way to explore them. Later versions expand toward parity with the TS sibling (102 tools). Starting narrow on the MCP surface is deliberate: tight tools, sharp descriptions, low-risk publish.
 
 ## Why
 
@@ -24,9 +24,9 @@ uvx bca-mcp
 
 `uvx bca-mcp` works out of the box. The package ships with a public demo key baked in that unlocks 10 marquee tools (`get_price`, `get_trending`, `get_fear_greed`, `get_market_overview`, `search_news`, `get_sentiment`, `get_entity`, `get_explainer`, `get_recent_stories`, `get_topic`). Shared global cap of 100 calls/day + 20/day per IP. On startup the server emits a one-time banner to stderr noting the demo mode is active.
 
-## Configure (unlock all 104 tools)
+## Configure (unlock all 105 tools)
 
-Get a free API key at **https://brain.blockchainacademics.com/signup** (free tier: 2,000 calls/month per user; paid tiers unlock expanded rate limits and agent-backed research generation).
+Get a free API key at **https://blockchainacademics.com/crypto-api/signup** (free tier: 2,000 calls/month per user; paid tiers unlock expanded rate limits and agent-backed research generation).
 
 Set the env var before launching the server:
 
@@ -56,7 +56,7 @@ Zero-config demo path (no API key needed):
 }
 ```
 
-Full 99-tool surface (add your key from brain.blockchainacademics.com/signup):
+Full 105-tool surface (add your key from blockchainacademics.com/crypto-api/signup):
 
 ```json
 {
@@ -119,7 +119,7 @@ bca version                              # CLI + live API version
 
 Every command accepts `--json` for unformatted output suitable for `jq` pipelines. Env vars (`BCA_API_KEY`, `BCA_API_BASE`) take precedence over `~/.bca/config.toml`.
 
-## Tool catalog (v0.1.0 — 8 tools)
+## Tool catalog (the first 8 tools; all 105 at https://blockchainacademics.com/crypto-api/tools)
 
 | Tool | Category | Endpoint | Tier |
 |---|---|---|---|
@@ -193,7 +193,7 @@ The server never crashes the stdio process. All failures surface as MCP response
 | Code | Meaning |
 |---|---|
 | `BCA_AUTH` | Invalid `BCA_API_KEY` (HTTP 401/403) |
-| `BCA_TIER_LOCKED` | Tool not in your current tier's allowlist (HTTP 403). Demo tier sees this on 90 of the 104 tools — the error message includes the upgrade URL. |
+| `BCA_TIER_LOCKED` | Tool not in your current tier's allowlist (HTTP 403). Demo tier sees this on 91 of the 105 tools — the error message includes the upgrade URL. |
 | `BCA_RATE_LIMIT` | Rate limit exceeded (HTTP 429 — honor `Retry-After`) |
 | `BCA_UPSTREAM` | BCA API returned 5xx or malformed JSON |
 | `BCA_NETWORK` | Network failure or 20s timeout exceeded |

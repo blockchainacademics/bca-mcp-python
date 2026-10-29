@@ -1,6 +1,6 @@
 [project]
 name = "bca-mcp"
-version = "0.6.2"
+version = "0.6.3"
 description = "Blockchain Academics MCP server + `bca` CLI — crypto news, entity dossiers, market data, proprietary indicators, and academy explainers for AI agents"
 readme = "README.md"
 license = "MIT"
@@ -43,6 +43,7 @@ dev = [
 
 [project.urls]
 Homepage = "https://blockchainacademics.com"
+Documentation = "https://blockchainacademics.com/crypto-api/docs"
 Repository = "https://github.com/blockchainacademics/bca-mcp-python"
 Issues = "https://github.com/blockchainacademics/bca-mcp-python/issues"
 

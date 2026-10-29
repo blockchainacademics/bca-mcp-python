@@ -470,7 +470,7 @@ class BcaClient:
                 raise BcaError(
                     "BCA_TIER_LOCKED",
                     upstream_msg
-                    or "This tool requires a paid tier. Upgrade at https://brain.blockchainacademics.com/signup",
+                    or "This tool requires a paid tier. Upgrade at https://blockchainacademics.com/crypto-api/signup",
                     res.status_code,
                 )
             raise BcaAuthError(upstream_msg or "Invalid or missing BCA_API_KEY")
