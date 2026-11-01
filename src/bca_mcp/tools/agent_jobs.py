@@ -398,7 +398,8 @@ GET_AGENT_JOB_TOOL_DESCRIPTION = (
     "Poll the status of an async agent job. Returns {status: "
     "queued|running|done|failed, result when done, error when failed}. "
     "monitor_keyword jobs answer unseeded with webhook_delivery not_active "
-    "(no watcher sends webhooks yet)."
+    "(no watcher sends webhooks yet). Jobs are visible only to the key that "
+    "started them. Pro tier."
 )
 
 
@@ -409,7 +410,10 @@ class GetAgentJobInput(BaseModel):
         min_length=1,
         max_length=128,
         pattern=r"^[A-Za-z0-9_-]+$",
-        description="Job ID returned from any generate_* tool.",
+        description=(
+            "Job ID returned by an agent tool (generate_*, summarize_whitepaper, "
+            "translate_contract, monitor_keyword)."
+        ),
     )
 
 

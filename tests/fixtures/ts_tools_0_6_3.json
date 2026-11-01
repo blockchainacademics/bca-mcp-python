@@ -1,5 +1,5 @@
 {
- "source": "names: tools/list of @blockchainacademics/mcp 0.6.3 (bca-mcp-ts one-domain, probe of 2026-10-31). constraints (type, enum, minimum, maximum, default, items): the tools/list of the bca-mcp-ts fix/probe-2026-10-31 working tree on 2026-11-01 (pass 2: bounds equal the fixed API's on mcp-fix/integration, the new optional parameters, indicator and social windows), dumped with tsx from a scratch copy of src/.",
+ "source": "names and constraints (type, enum, minimum, maximum, default, items): the tools/list of @blockchainacademics/mcp 0.6.3 at bca-mcp-ts fix/probe-2026-10-31 commit 17eadf7 (pass 2 plus the parity review of 2026-11-01), dumped over stdio from a clean build with no key.",
  "names": [
   "search_news",
   "get_entity",

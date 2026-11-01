@@ -1460,7 +1460,7 @@ EXTENDED_TOOL_ENTRIES: tuple[tuple[str, str, dict[str, Any], Runner], ...] = (
     ),
     _entry(
         "get_mica_status",
-        "EU MiCA applicability by country (the 27 EU Member States, and EEA states once seeded), with national authorities. Without a country (or with EU), every Member State, partial while some have no row; a country outside the EU and EEA lists answers unseeded. Per project status is not tracked yet. Pro tier.",
+        "EU MiCA applicability by country (the 27 EU Member States, and EEA states once seeded), with national authorities. Without a country (or with EU), every Member State, partial while some have no row; a country outside the EU and EEA lists answers unseeded unless BCA has a reviewed row for it. Per project status is not tracked yet. Pro tier.",
         GetMicaStatusInput, _run_get_mica_status,
     ),
     _entry(
