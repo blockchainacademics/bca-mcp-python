@@ -7,10 +7,11 @@ import functools
 from typing import Any, Awaitable, Callable
 
 import typer
+from pydantic import ValidationError
 from rich.console import Console
 from rich.markup import escape
 
-from bca_mcp.errors import BcaAuthError, BcaError
+from bca_mcp.errors import BcaAuthError, BcaError, format_validation_error
 
 err_console = Console(stderr=True)
 
@@ -54,6 +55,15 @@ def handle_errors(
             raise typer.Exit(code=1)
         except BcaError as exc:
             err_console.print(f"[red]Error ({exc.code}):[/red] {_error_text(exc)}")
+            raise typer.Exit(code=1)
+        except ValidationError as exc:
+            # The commands validate through the MCP tool models, so a bad
+            # argument is reported the way the tools report it.
+            name = getattr(fn, "__name__", "command").replace("_", " ")
+            err_console.print(
+                f"[red]Error (BCA_BAD_REQUEST):[/red] "
+                f"{escape(format_validation_error(name, exc))}"
+            )
             raise typer.Exit(code=1)
         except KeyboardInterrupt:
             err_console.print("[dim]Interrupted.[/dim]")

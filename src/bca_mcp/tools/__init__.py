@@ -1,30 +1,30 @@
-"""BCA MCP tool modules — v0.1 scaffold with 8 read-only tools.
+"""BCA MCP tool modules: the 105 tools, the same names as the TS sibling.
 
-v0.1 ships narrow on purpose: the 8 most-used corpus + market tools,
-identical in shape to the TS sibling's `@blockchainacademics/mcp@0.1`.
-Later versions port the remaining ~91 tools from `@blockchainacademics/mcp@0.2.2`.
+Category map (server.py registers them in this order):
 
-Category map for the full target surface (parity with TS v0.2.2):
-
-    content    — search_news [*], get_article [*], get_entity [*],
-                 list_entity_mentions [*], list_topics [*], get_explainer [*],
-                 get_as_of_snapshot
-    market     — get_price [*], get_market_overview [*], get_ohlc,
-                 get_pair_data
-    sentiment  — get_fear_greed, get_sentiment, get_social_pulse
-    indicators — get_coverage_index, get_narrative_strength, get_risk_score,
-                 get_sentiment_velocity, get_editorial_premium,
-                 get_kol_influence
-    onchain    — get_wallet_profile, get_tx, get_token_holders,
+    content      search_news, get_article, get_entity, list_entity_mentions,
+                 list_topics, get_explainer, get_as_of_snapshot
+    market       get_price, get_market_overview, get_ohlc, get_pair_data
+    onchain      get_wallet_profile, get_tx, get_token_holders,
                  get_defi_protocol
-    agent_jobs — generate_due_diligence, generate_tokenomics_model,
+    sentiment    get_sentiment, get_social_pulse, get_fear_greed,
+                 get_ct_pulse, get_x_signals, get_kol_consensus,
+                 get_social_signals, get_social_signals_detail
+    indicators   get_coverage_index, get_narrative_strength,
+                 get_sentiment_velocity, get_editorial_premium,
+                 get_kol_influence, get_risk_score
+    fundamentals get_tokenomics, get_audit_reports, get_team_info,
+                 get_roadmap, compare_protocols, check_rugpull_risk
+    agent_jobs   generate_due_diligence, generate_tokenomics_model,
                  summarize_whitepaper, translate_contract, monitor_keyword,
                  get_agent_job
-    extended   — 60+ directories, fundamentals, chain-specific,
-                 microstructure, narrative, regulatory, security, services,
-                 history, memos, theses, social signals, currencies
+    extended     directories, chains, compute, memes, microstructure,
+                 narrative, regulatory, security, services, history,
+                 corpus meta, memos and theses, currencies
 
-[*] = shipped in v0.1.
+Each input model mirrors the API route it calls (mcp-fix/integration,
+2026-11-01): the same parameter bounds, mapped to the API's query names
+where a tool's name differs.
 """
 
 from bca_mcp.tools import (

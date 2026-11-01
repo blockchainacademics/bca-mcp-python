@@ -65,11 +65,18 @@ EVM_TX_HASH_REGEX = r"^0x[a-fA-F0-9]{64}$"
 ALNUM_REGEX = r"^[A-Za-z0-9]+$"
 # Ticker — 1..12 alphanumerics (mirror `src/schema.ts::tickerSchema`).
 TICKER_REGEX = r"^[A-Za-z0-9]{1,12}$"
+# ISO 3166 alpha-2 country code, any case: what the API's regulatory routes
+# take (EL and UK are accepted there as GR and GB).
+ISO2_COUNTRY_REGEX = r"^[A-Za-z]{2}$"
 
 # Rolling-window enum shared across sentiment + indicator tools. Mirrors
 # the zod `z.enum(["1d","7d","30d","90d"])` declaration used in
 # `src/tools/sentiment.ts` + `src/tools/indicators.ts`.
 Window = Literal["1d", "7d", "30d", "90d"]
+
+# Windows of the tweet-derived routes (/v1/trending, /v1/social-signals):
+# the API answers 400 for anything else.
+SocialWindow = Literal["1h", "6h", "24h", "7d"]
 
 
 # --- canonical envelope shapes --------------------------------------------
@@ -179,15 +186,21 @@ def resolve_envelope_status(
 
 
 class Article(TypedDict, total=False):
+    """One article row of /v1/articles/search (``data.results[]``)."""
+
     slug: str
     title: str
-    summary: str
-    published_at: str
-    url: str
-    entities: List[str]
+    summary: Optional[str]
+    author: Optional[str]
+    source_name: Optional[str]
+    source_url: Optional[str]
+    canonical_url: Optional[str]
+    published_at: Optional[str]
     topics: List[str]
-    author: str
-    cite_url: str
+    tickers: List[str]
+    entities: List[str]
+    sentiment_bucket: Optional[str]
+    sentiment_score: Optional[float]
 
 
 class ArticleRef(TypedDict, total=False):
@@ -203,29 +216,41 @@ class EntitySentiment(TypedDict, total=False):
 
 
 class Entity(TypedDict, total=False):
+    """One dossier as /v1/entities/{slug} serves it (under ``data.result``)."""
+
     slug: str
-    name: str
-    kind: str  # "chain" | "project" | "person" | "ticker" | "organization" | ...
-    ticker: str
-    aliases: List[str]
-    summary: str
-    articles: List[ArticleRef]
-    sentiment: Optional[EntitySentiment]
-    cite_url: str
+    kind: str  # "chain" | "project" | "person" | "ticker"
+    display_name: str
+    ticker: Optional[str]
+    chain: Optional[str]
+    website: Optional[str]
+    twitter: Optional[str]
+    summary: Optional[str]
+    mention_count: Optional[int]
+    first_seen_at: Optional[str]
+    last_mentioned_at: Optional[str]
+    derived_fields: List[str]
+    resolved_from_alias: str  # only when the slug was an alias
 
 
 class Explainer(TypedDict, total=False):
+    """A course or a lesson from /v1/academy (under ``data.result``)."""
+
     slug: str
-    course: str
+    course_slug: str
     title: str
     summary: str
-    body_markdown: str
+    body_md: str  # lessons only
     level: str  # "beginner" | "intermediate" | "advanced" | ...
     topics: List[str]
-    url: str
-    cite_url: str
+    site_url: str
+    result_type: str  # "lesson" when the slug named a lesson
 
 
 class SearchNewsResult(TypedDict, total=False):
-    articles: List[Article]
+    query: Optional[str]
+    count: int
     total: int
+    limit: int
+    offset: int
+    results: List[Article]

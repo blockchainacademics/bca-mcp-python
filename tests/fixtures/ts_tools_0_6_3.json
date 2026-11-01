@@ -1,5 +1,5 @@
 {
- "source": "names: tools/list of @blockchainacademics/mcp 0.6.3 (bca-mcp-ts one-domain, probe of 2026-10-31). constraints: the one-domain zod schemas (type, enum, minimum, maximum, default, items), except book_kol_campaign, request_custom_research and submit_listing, which follow the API request models in blockchainacademics-api app/api/v1/services.py.",
+ "source": "names: tools/list of @blockchainacademics/mcp 0.6.3 (bca-mcp-ts one-domain, probe of 2026-10-31). constraints (type, enum, minimum, maximum, default, items): the tools/list of the bca-mcp-ts fix/probe-2026-10-31 working tree on 2026-11-01 (pass 2: bounds equal the fixed API's on mcp-fix/integration, the new optional parameters, indicator and social windows), dumped with tsx from a scratch copy of src/.",
  "names": [
   "search_news",
   "get_entity",
@@ -119,6 +119,9 @@
     "entity": {
      "type": "string"
     },
+    "ticker": {
+     "type": "string"
+    },
     "since": {
      "type": "string"
     },
@@ -130,6 +133,11 @@
      "minimum": 1,
      "maximum": 50,
      "default": 10
+    },
+    "offset": {
+     "type": "integer",
+     "minimum": 0,
+     "default": 0
     }
    }
   },
@@ -179,8 +187,13 @@
     "limit": {
      "type": "integer",
      "minimum": 1,
-     "maximum": 200,
+     "maximum": 100,
      "default": 50
+    },
+    "offset": {
+     "type": "integer",
+     "minimum": 0,
+     "default": 0
     }
    }
   },
@@ -350,6 +363,11 @@
    "properties": {
     "protocol": {
      "type": "string"
+    },
+    "history_days": {
+     "type": "integer",
+     "minimum": 0,
+     "maximum": 90
     }
    }
   },
@@ -456,7 +474,6 @@
     "window": {
      "type": "string",
      "enum": [
-      "1d",
       "7d",
       "30d",
       "90d"
@@ -476,7 +493,6 @@
     "window": {
      "type": "string",
      "enum": [
-      "1d",
       "7d",
       "30d",
       "90d"
@@ -496,10 +512,8 @@
     "window": {
      "type": "string",
      "enum": [
-      "1d",
       "7d",
-      "30d",
-      "90d"
+      "30d"
      ],
      "default": "7d"
     }
@@ -516,8 +530,6 @@
     "window": {
      "type": "string",
      "enum": [
-      "1d",
-      "7d",
       "30d",
       "90d"
      ],
@@ -536,8 +548,6 @@
     "window": {
      "type": "string",
      "enum": [
-      "1d",
-      "7d",
       "30d",
       "90d"
      ],
@@ -594,13 +604,13 @@
      "maximum": 3650,
      "default": 365
     },
+    "unlock_shock_pct": {
+     "type": "number",
+     "minimum": 0,
+     "maximum": 100
+    },
     "scenarios": {
      "type": "array",
-     "default": [
-      "base",
-      "bull",
-      "bear"
-     ],
      "items": {
       "type": "string",
       "enum": [
@@ -618,6 +628,9 @@
    ],
    "properties": {
     "url": {
+     "type": "string"
+    },
+    "language": {
      "type": "string"
     },
     "length": {
@@ -720,7 +733,9 @@
      "type": "string"
     },
     "min_apy": {
-     "type": "number"
+     "type": "number",
+     "minimum": 0,
+     "maximum": 1000
     },
     "limit": {
      "type": "integer",
@@ -742,6 +757,14 @@
       "bridge",
       "yield"
      ]
+    },
+    "chain": {
+     "type": "string"
+    },
+    "limit": {
+     "type": "integer",
+     "minimum": 1,
+     "maximum": 200
     }
    }
   },
@@ -1036,6 +1059,13 @@
   "track_pumpfun": {
    "required": [],
    "properties": {
+    "mode": {
+     "type": "string",
+     "enum": [
+      "trending",
+      "new"
+     ]
+    },
     "limit": {
      "type": "integer",
      "minimum": 1,
@@ -1105,6 +1135,14 @@
    "properties": {
     "symbol": {
      "type": "string"
+    },
+    "limit": {
+     "type": "integer",
+     "minimum": 1,
+     "maximum": 200
+    },
+    "expiry": {
+     "type": "string"
     }
    }
   },
@@ -1132,8 +1170,7 @@
       "1d",
       "7d",
       "30d"
-     ],
-     "default": "7d"
+     ]
     }
    }
   },
@@ -1144,6 +1181,14 @@
    "properties": {
     "entity_slug": {
      "type": "string"
+    },
+    "exchange": {
+     "type": "string",
+     "enum": [
+      "binance",
+      "coinbase",
+      "upbit"
+     ]
     }
    }
   },
@@ -1158,9 +1203,9 @@
     "window": {
      "type": "string",
      "enum": [
-      "1d",
       "7d",
-      "30d"
+      "30d",
+      "90d"
      ],
      "default": "7d"
     }
@@ -1202,6 +1247,14 @@
   "get_prediction_markets": {
    "required": [],
    "properties": {
+    "venue": {
+     "type": "string",
+     "enum": [
+      "polymarket",
+      "kalshi",
+      "all"
+     ]
+    },
     "topic": {
      "type": "string"
     },
@@ -1234,10 +1287,11 @@
    }
   },
   "get_mica_status": {
-   "required": [
-    "entity_slug"
-   ],
+   "required": [],
    "properties": {
+    "country": {
+     "type": "string"
+    },
     "entity_slug": {
      "type": "string"
     }
@@ -1260,6 +1314,18 @@
    "properties": {
     "entity_slug": {
      "type": "string"
+    },
+    "chain": {
+     "type": "string"
+    },
+    "min_usd_loss": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "limit": {
+     "type": "integer",
+     "minimum": 1,
+     "maximum": 200
     }
    }
   },
@@ -1276,8 +1342,12 @@
   "get_bug_bounty_programs": {
    "required": [],
    "properties": {
+    "chain": {
+     "type": "string"
+    },
     "min_payout": {
-     "type": "number"
+     "type": "number",
+     "minimum": 0
     },
     "limit": {
      "type": "integer",
@@ -1443,8 +1513,15 @@
     "days": {
      "type": "integer",
      "minimum": 1,
-     "maximum": 3650,
+     "maximum": 365,
      "default": 365
+    },
+    "granularity": {
+     "type": "string",
+     "enum": [
+      "hourly",
+      "daily"
+     ]
     }
    }
   },
@@ -1459,14 +1536,13 @@
     "days": {
      "type": "integer",
      "minimum": 1,
-     "maximum": 3650,
+     "maximum": 365,
      "default": 365
     }
    }
   },
   "get_history_correlation": {
    "required": [
-    "peer",
     "symbol"
    ],
    "properties": {
@@ -1479,7 +1555,7 @@
     "days": {
      "type": "integer",
      "minimum": 7,
-     "maximum": 3650,
+     "maximum": 365,
      "default": 365
     }
    }
@@ -1495,7 +1571,7 @@
     "days": {
      "type": "integer",
      "minimum": 1,
-     "maximum": 3650,
+     "maximum": 365,
      "default": 365
     }
    }
@@ -1518,8 +1594,13 @@
     "limit": {
      "type": "integer",
      "minimum": 1,
-     "maximum": 200,
+     "maximum": 100,
      "default": 50
+    },
+    "offset": {
+     "type": "integer",
+     "minimum": 0,
+     "default": 0
     }
    }
   },
@@ -1546,6 +1627,11 @@
      "minimum": 1,
      "maximum": 50,
      "default": 10
+    },
+    "offset": {
+     "type": "integer",
+     "minimum": 0,
+     "default": 0
     }
    }
   },
@@ -1556,6 +1642,7 @@
      "type": "string",
      "enum": [
       "1h",
+      "6h",
       "24h",
       "7d"
      ],
@@ -1582,7 +1669,20 @@
   },
   "list_sources": {
    "required": [],
-   "properties": {}
+   "properties": {
+    "type": {
+     "type": "string"
+    },
+    "limit": {
+     "type": "integer",
+     "minimum": 1,
+     "maximum": 500
+    },
+    "offset": {
+     "type": "integer",
+     "minimum": 0
+    }
+   }
   },
   "get_recent_stories": {
    "required": [],
@@ -1624,6 +1724,8 @@
      "enum": [
       "active",
       "closed",
+      "invalidated",
+      "pending",
       "all"
      ],
      "default": "active"
@@ -1649,6 +1751,18 @@
   "get_social_signals": {
    "required": [],
    "properties": {
+    "window": {
+     "type": "string",
+     "enum": [
+      "1h",
+      "6h",
+      "24h",
+      "7d"
+     ]
+    },
+    "currencies": {
+     "type": "string"
+    },
     "limit": {
      "type": "integer",
      "minimum": 1,
@@ -1664,6 +1778,15 @@
    "properties": {
     "symbol": {
      "type": "string"
+    },
+    "window": {
+     "type": "string",
+     "enum": [
+      "1h",
+      "6h",
+      "24h",
+      "7d"
+     ]
     }
    }
   },
@@ -1673,7 +1796,7 @@
     "limit": {
      "type": "integer",
      "minimum": 1,
-     "maximum": 500,
+     "maximum": 200,
      "default": 100
     }
    }

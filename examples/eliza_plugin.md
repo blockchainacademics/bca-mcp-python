@@ -77,7 +77,7 @@ Eliza auto-routes tool calls based on the agent's planning prompt; no additional
 
 ## Attribution contract
 
-Eliza agents that surface BCA content to users **must** preserve the `cite_url` from each response's `attribution` block. The BCA license covers free redistribution of summary + link; full-body republication requires the Enterprise tier. Pass `cite_url` to your agent's response template so every BCA-sourced claim ships with its source link.
+Eliza agents that surface BCA content to users **must** preserve the source link from each response's `attribution` block: `attribution.citations[0].cite_url`, the primary source. The BCA license covers free redistribution of summary + link; full-body republication requires the Enterprise tier. Pass that `cite_url` to your agent's response template so every BCA-sourced claim ships with its source link. Each response also carries `meta.status` (`complete`, `partial`, `stale` or `unseeded`, with the reason in `meta.diagnostic`), so the agent can say when an answer is incomplete.
 
 ## Troubleshooting
 
@@ -85,7 +85,7 @@ Eliza agents that surface BCA content to users **must** preserve the `cite_url` 
 
 **Timeouts.** Default is 20s. The BCA API is typically <500ms for corpus reads, longer for market-data aggregation. If you see `BCA_NETWORK` timeouts frequently, check your host's outbound network policy, since Eliza agents sometimes run in restrictive network namespaces.
 
-**Stale data.** Every response ships `as_of`. If your agent's outputs look old, compare `as_of` to wall-clock; most corpus endpoints refresh every ~20min. Market endpoints refresh continuously.
+**Stale data.** Every citation carries `as_of`, and an answer older than its tool promises comes back with `meta.status: "stale"` (`meta.diagnostic.as_of` and `age_seconds` say how old). The article corpus refreshes about every 30 minutes; market endpoints refresh continuously.
 
 ## TypeScript sibling
 

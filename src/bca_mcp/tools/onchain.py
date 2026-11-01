@@ -9,7 +9,7 @@ All query-string shape in backend (see
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 
@@ -21,8 +21,11 @@ from bca_mcp.types import SLUG_REGEX, EvmChain, OnchainChain, ResponseEnvelope
 GET_WALLET_PROFILE_TOOL_NAME = "get_wallet_profile"
 
 GET_WALLET_PROFILE_TOOL_DESCRIPTION = (
-    "Wallet summary: native balance, ERC-20/SPL token list, labels. "
-    "Starter tier. Use for wallet research and clustering."
+    "Wallet summary: native balance (wei and the chain coin, for example "
+    "ETH) and up to 25 token holdings. EVM holdings are the net of the "
+    "newest 1,000 token transfers with likely spam dropped (partial when "
+    "older history exists); Solana holdings are current SPL balances. No "
+    "address labels. Starter tier."
 )
 
 
@@ -30,10 +33,10 @@ class GetWalletProfileInput(BaseModel):
     model_config = {"extra": "forbid"}
 
     address: str = Field(
-        min_length=1,
-        max_length=128,
-        pattern=r"^[A-Za-z0-9]+$",
-        description="Wallet address (EVM 0x… or Solana base58).",
+        min_length=32,
+        max_length=64,
+        pattern=r"^(0x[a-fA-F0-9]{40}|[1-9A-HJ-NP-Za-km-z]{32,44})$",
+        description="Wallet address (EVM 0x plus 40 hex, or Solana base58).",
     )
     chain: OnchainChain = Field(
         default="ethereum",
@@ -60,8 +63,10 @@ async def run_get_wallet_profile(args: dict[str, Any]) -> ResponseEnvelope[Any]:
 GET_TX_TOOL_NAME = "get_tx"
 
 GET_TX_TOOL_DESCRIPTION = (
-    "Decode a transaction: sender, receiver, value, decoded events, status. "
-    "Starter tier."
+    "Decode a transaction: sender, receiver, value, gas and fee, status, "
+    "and the ERC-20 and ERC-721 transfer events (EVM via Etherscan; Solana "
+    "parsed via Helius). An unknown hash is an error (HTTP 404). Starter "
+    "tier."
 )
 
 
@@ -69,10 +74,10 @@ class GetTxInput(BaseModel):
     model_config = {"extra": "forbid"}
 
     hash: str = Field(
-        min_length=1,
+        min_length=64,
         max_length=128,
-        pattern=r"^[A-Za-z0-9]+$",
-        description="Transaction hash.",
+        pattern=r"^(0x[a-fA-F0-9]{64}|[1-9A-HJ-NP-Za-km-z]{64,128})$",
+        description="Transaction hash (EVM 0x plus 64 hex) or Solana signature.",
     )
     chain: OnchainChain = Field(
         default="ethereum",
@@ -100,7 +105,9 @@ GET_TOKEN_HOLDERS_TOOL_NAME = "get_token_holders"
 
 GET_TOKEN_HOLDERS_TOOL_DESCRIPTION = (
     "Top token holders with balance and %-supply. EVM-only, Pro tier. Use "
-    "for concentration/risk analysis."
+    "for concentration/risk analysis. Usually answers partial today "
+    "(upstream_error): the Etherscan holder list needs a paid Etherscan "
+    "plan."
 )
 
 
@@ -108,8 +115,8 @@ class GetTokenHoldersInput(BaseModel):
     model_config = {"extra": "forbid"}
 
     contract: str = Field(
-        min_length=1,
-        max_length=128,
+        min_length=42,
+        max_length=42,
         pattern=r"^0x[a-fA-F0-9]{40}$",
         description="Token contract address (EVM).",
     )
@@ -141,8 +148,11 @@ async def run_get_token_holders(args: dict[str, Any]) -> ResponseEnvelope[Any]:
 GET_DEFI_PROTOCOL_TOOL_NAME = "get_defi_protocol"
 
 GET_DEFI_PROTOCOL_TOOL_DESCRIPTION = (
-    "DeFi protocol snapshot: TVL, chains, volume, fees. Via DefiLlama. "
-    "Free tier."
+    "Compact DefiLlama snapshot of a DeFi protocol: TVL in total and per "
+    "chain, 1d, 7d and 30d TVL change, market cap, category, audit links, "
+    "raise and hack counts, and optional daily TVL history (history_days). "
+    "Fees and revenue are in compare_protocols. A slug DefiLlama does not "
+    "know is an error. Free tier."
 )
 
 
@@ -151,9 +161,15 @@ class GetDefiProtocolInput(BaseModel):
 
     protocol: str = Field(
         min_length=1,
-        max_length=240,
+        max_length=64,
         pattern=SLUG_REGEX,
         description="DefiLlama protocol slug (e.g. 'aave', 'uniswap').",
+    )
+    history_days: Optional[int] = Field(
+        default=None,
+        ge=0,
+        le=90,
+        description="Daily TVL points to include, newest last (0 to 90; default 0, no history).",
     )
 
 
@@ -165,5 +181,5 @@ async def run_get_defi_protocol(args: dict[str, Any]) -> ResponseEnvelope[Any]:
     parsed = GetDefiProtocolInput.model_validate(args)
     return await get_client().request(
         "/v1/onchain/defi",
-        {"protocol": parsed.protocol},
+        {"protocol": parsed.protocol, "history_days": parsed.history_days},
     )

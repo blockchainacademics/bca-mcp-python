@@ -33,7 +33,7 @@ async def test_canonical_envelope_contract_on_tool_call(httpx_mock) -> None:
     httpx_mock.add_response(
         url=(
             "https://api.blockchainacademics.com/v1/articles/search"
-            "?q=bitcoin&limit=10"
+            "?q=bitcoin&limit=10&offset=0"
         ),
         json={
             "data": {
@@ -121,7 +121,7 @@ async def test_canonical_envelope_status_enum_excludes_error(
     httpx_mock.add_response(
         url=(
             "https://api.blockchainacademics.com/v1/articles/search"
-            "?q=x&limit=10"
+            "?q=x&limit=10&offset=0"
         ),
         json={
             "data": {"articles": [], "total": 0},
@@ -169,7 +169,7 @@ async def test_server_call_tool_emits_canonical_envelope(httpx_mock) -> None:
     httpx_mock.add_response(
         url=(
             "https://api.blockchainacademics.com/v1/articles/search"
-            "?q=ethereum&limit=10"
+            "?q=ethereum&limit=10&offset=0"
         ),
         json={
             "data": {"articles": [], "total": 0},

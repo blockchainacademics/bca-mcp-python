@@ -145,7 +145,7 @@ def test_request_custom_research_topic_needs_four_characters() -> None:
     with pytest.raises(ValidationError):
         RequestCustomResearchInput.model_validate({**base, "topic": "BTC"})
     with pytest.raises(ValidationError):
-        RequestCustomResearchInput.model_validate({**base, "topic": "x" * 241})
+        RequestCustomResearchInput.model_validate({**base, "topic": "x" * 257})  # API max 256
     with pytest.raises(ValidationError):  # never read by the API
         RequestCustomResearchInput.model_validate({**base, "topic": "Restaking", "deadline_days": 7})
     v = RequestCustomResearchInput.model_validate({**base, "topic": "Restaking"})

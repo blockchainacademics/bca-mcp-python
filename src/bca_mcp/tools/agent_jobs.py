@@ -117,9 +117,10 @@ GENERATE_DUE_DILIGENCE_TOOL_NAME = "generate_due_diligence"
 
 GENERATE_DUE_DILIGENCE_TOOL_DESCRIPTION = (
     "Kick off a full due-diligence report (tokenomics + team + audits + "
-    "risk + narrative). Required: entity_slug. depth ∈ "
-    "{light, standard, deep}. Async: returns {job_id, status_url}; poll "
-    "get_agent_job. Pro tier."
+    "risk + narrative). Required: entity_slug. depth: light, standard or "
+    "deep. focus is accepted but not applied yet: the report covers every "
+    "section, and the answer lists focus under ignored_params. Async: "
+    "returns {job_id, status_url}; poll get_agent_job. Pro tier."
 )
 
 
@@ -140,7 +141,10 @@ class GenerateDueDiligenceInput(BaseModel):
     focus: Optional[list[Annotated[str, Field(min_length=1, max_length=64)]]] = Field(
         default=None,
         max_length=16,
-        description="Optional focus areas (e.g. ['tokenomics', 'audits']).",
+        description=(
+            "Optional focus areas (e.g. ['tokenomics', 'audits']). Accepted, "
+            "not applied yet."
+        ),
     )
 
 
@@ -168,8 +172,12 @@ async def run_generate_due_diligence(
 GENERATE_TOKENOMICS_MODEL_TOOL_NAME = "generate_tokenomics_model"
 
 GENERATE_TOKENOMICS_MODEL_TOOL_DESCRIPTION = (
-    "Simulate emission/unlock impact on FDV across scenarios. Async, Team "
-    "tier. Returns {job_id, status_url}."
+    "Simulate how emissions and unlocks move an entity's FDV over a "
+    "horizon: horizon_days (rounded up to whole months, up to 120; the "
+    "answer echoes horizon_months) and an optional unlock_shock_pct. "
+    "scenarios is accepted but not modeled yet: the job simulates one "
+    "unlock schedule and the answer lists scenarios under ignored_params. "
+    "Async, Team tier. Returns {job_id, status_url}."
 )
 
 
@@ -186,13 +194,20 @@ class GenerateTokenomicsModelInput(BaseModel):
         default=365,
         ge=30,
         le=3650,
-        description="Projection horizon in days.",
+        description="Simulation horizon in days (30 to 3,650), rounded up to whole months.",
     )
-    # A plain list default (pydantic copies it per instance) so the default
-    # shows up in the advertised schema, as in the TS sibling.
-    scenarios: list[Literal["base", "bull", "bear"]] = Field(
-        default=["base", "bull", "bear"],
-        description="Scenario set to simulate.",
+    unlock_shock_pct: Optional[float] = Field(
+        default=None,
+        ge=0,
+        le=100,
+        description="Optional unlock shock, as a percent of supply (0 to 100).",
+    )
+    # No default: the job models one unlock schedule, so a default list would
+    # be sent, and reported back as ignored, on every call (as in TS).
+    scenarios: Optional[list[Literal["base", "bull", "bear"]]] = Field(
+        default=None,
+        max_length=3,
+        description="Accepted but not modeled yet: the job simulates one unlock schedule.",
     )
 
 
@@ -204,14 +219,15 @@ async def run_generate_tokenomics_model(
     args: dict[str, Any],
 ) -> ResponseEnvelope[Any]:
     parsed = GenerateTokenomicsModelInput.model_validate(args)
-    return await get_client().post(
-        "/v1/agent-jobs/tokenomics-model",
-        {
-            "entity_slug": parsed.entity_slug,
-            "horizon_days": parsed.horizon_days,
-            "scenarios": parsed.scenarios,
-        },
-    )
+    body: dict[str, Any] = {
+        "entity_slug": parsed.entity_slug,
+        "horizon_days": parsed.horizon_days,
+    }
+    if parsed.unlock_shock_pct is not None:
+        body["unlock_shock_pct"] = parsed.unlock_shock_pct
+    if parsed.scenarios is not None:
+        body["scenarios"] = parsed.scenarios
+    return await get_client().post("/v1/agent-jobs/tokenomics-model", body)
 
 
 # --- summarize_whitepaper --------------------------------------------------
@@ -219,8 +235,11 @@ async def run_generate_tokenomics_model(
 SUMMARIZE_WHITEPAPER_TOOL_NAME = "summarize_whitepaper"
 
 SUMMARIZE_WHITEPAPER_TOOL_DESCRIPTION = (
-    "Fetch + structurally summarize a whitepaper URL. Async, Pro tier. "
-    "Returns {job_id, status_url}."
+    "Fetch a whitepaper URL (PDF or HTML) and summarize it into one fixed "
+    "structure (TL;DR, key points, tokenomics, team and risks) in the "
+    "language asked for (default en). length other than standard is "
+    "accepted but not applied yet (the answer lists it under "
+    "ignored_params). Async, Pro tier. Returns {job_id, status_url}."
 )
 
 
@@ -233,9 +252,19 @@ class SummarizeWhitepaperInput(BaseModel):
         pattern=r"^https?://",
         description="Public URL of the whitepaper (PDF or HTML).",
     )
+    language: Optional[str] = Field(
+        default=None,
+        min_length=2,
+        max_length=2,
+        pattern=r"^[a-z]{2}$",
+        description="Summary language, a two-letter code (default en).",
+    )
     length: Literal["brief", "standard", "deep"] = Field(
         default="standard",
-        description="Summary length: brief|standard|deep.",
+        description=(
+            "Accepted, but the summary has one fixed structure (standard); "
+            "brief and deep are not applied yet."
+        ),
     )
 
 
@@ -247,10 +276,10 @@ async def run_summarize_whitepaper(
     args: dict[str, Any],
 ) -> ResponseEnvelope[Any]:
     parsed = SummarizeWhitepaperInput.model_validate(args)
-    return await get_client().post(
-        "/v1/agent-jobs/summarize-whitepaper",
-        {"url": parsed.url, "length": parsed.length},
-    )
+    body: dict[str, Any] = {"url": parsed.url, "length": parsed.length}
+    if parsed.language is not None:
+        body["language"] = parsed.language
+    return await get_client().post("/v1/agent-jobs/summarize-whitepaper", body)
 
 
 # --- translate_contract ----------------------------------------------------
@@ -306,9 +335,10 @@ async def run_translate_contract(
 MONITOR_KEYWORD_TOOL_NAME = "monitor_keyword"
 
 MONITOR_KEYWORD_TOOL_DESCRIPTION = (
-    "Register a keyword monitor: fires a webhook when the keyword appears "
-    "across corpus. Required: keyword, webhook_url (https URL). Async, "
-    "Pro tier."
+    "Save a keyword monitor subscription (keyword plus webhook URL). The "
+    "watcher is not built yet, so no webhook is sent: the answer comes back "
+    "unseeded with webhook_delivery not_active. Required: keyword (2 to 200 "
+    "characters), webhook_url (https URL). Pro tier."
 )
 
 
@@ -316,9 +346,9 @@ class MonitorKeywordInput(BaseModel):
     model_config = {"extra": "forbid"}
 
     keyword: str = Field(
-        min_length=1,
+        min_length=2,
         max_length=200,
-        description="Keyword or phrase to monitor.",
+        description="Keyword or phrase to monitor (2 to 200 characters).",
     )
     webhook_url: str = Field(
         min_length=1,
@@ -330,7 +360,7 @@ class MonitorKeywordInput(BaseModel):
         default=24,
         ge=1,
         le=168,
-        description="Lookback window in hours.",
+        description="Lookback window in hours, stored with the subscription.",
     )
 
 
@@ -365,8 +395,10 @@ async def run_monitor_keyword(
 GET_AGENT_JOB_TOOL_NAME = "get_agent_job"
 
 GET_AGENT_JOB_TOOL_DESCRIPTION = (
-    "Poll the status of an async agent job. Returns "
-    "{status: queued|running|completed|failed, output?, error?}."
+    "Poll the status of an async agent job. Returns {status: "
+    "queued|running|done|failed, result when done, error when failed}. "
+    "monitor_keyword jobs answer unseeded with webhook_delivery not_active "
+    "(no watcher sends webhooks yet)."
 )
 
 
@@ -419,23 +451,28 @@ def _fence_string(source: str, value: str) -> str:
     )
 
 
+def _fence_value(value: Any, source: str) -> Any:
+    """Fence every non-empty string in ``value``: a string, or the strings
+    inside a list or an object (the whitepaper summary is an object of
+    tldr, key_points, tokenomics, team and risks)."""
+    if isinstance(value, str):
+        return _fence_string(source, value) if value else value
+    if isinstance(value, list):
+        return [_fence_value(item, source) for item in value]
+    if isinstance(value, dict):
+        return {k: _fence_value(v, source) for k, v in value.items()}
+    return value
+
+
 def _fence_field(output: dict[str, Any], key: str, source: str) -> None:
     """Fence a single output field in-place.
 
-    Strings are wrapped directly. Lists have each string element wrapped;
-    non-string elements pass through untouched. Matches `_fenceField` in
-    the TS sibling (`agent_jobs.ts:156-171`).
+    Strings are wrapped directly. Lists and objects have each string inside
+    them wrapped; other values pass through untouched. Matches `_fenceField`
+    in the TS sibling (`agent_jobs.ts:156-171`) for strings and lists.
     """
-    v = output.get(key)
-    if isinstance(v, str) and v:
-        output[key] = _fence_string(source, v)
-    elif isinstance(v, list):
-        output[key] = [
-            _fence_string(source, item)
-            if isinstance(item, str) and item
-            else item
-            for item in v
-        ]
+    if key in output:
+        output[key] = _fence_value(output[key], source)
 
 
 async def run_get_agent_job(args: dict[str, Any]) -> ResponseEnvelope[Any]:
@@ -445,12 +482,14 @@ async def run_get_agent_job(args: dict[str, Any]) -> ResponseEnvelope[Any]:
     )
     # A-3: outputs synthesised from third-party content (whitepaper URLs,
     # attacker-controllable contract comments) must be fenced as untrusted
-    # before the LLM consumes them.
+    # before the LLM consumes them. The API returns the skill output under
+    # `result`; `output` is the older name, still read.
     data = res.get("data") if isinstance(res, dict) else None
     if isinstance(data, dict):
         job_kind = data.get("kind") or data.get("job_type") or ""
-        output = data.get("output")
-        if isinstance(output, dict) and isinstance(job_kind, str):
+        for output in (data.get("result"), data.get("output")):
+            if not (isinstance(output, dict) and isinstance(job_kind, str)):
+                continue
             if job_kind in _SUMMARIZE_KINDS:
                 for key in _UNTRUSTED_FIELDS:
                     _fence_field(output, key, "summarize_whitepaper")

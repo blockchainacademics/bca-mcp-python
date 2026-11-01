@@ -313,7 +313,7 @@ async def test_run_monitor_keyword_rejects_loopback_webhook(monkeypatch) -> None
 
     with pytest.raises(BcaBadRequestError, match="non-public"):
         await agent_jobs.run_monitor_keyword(
-            {"keyword": "x", "webhook_url": "https://my.host/hook"}
+            {"keyword": "hack", "webhook_url": "https://my.host/hook"}
         )
 
 

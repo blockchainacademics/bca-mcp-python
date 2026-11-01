@@ -13,9 +13,9 @@ from pydantic import BaseModel, Field
 from bca_mcp.client import get_client
 from bca_mcp.types import SLUG_REGEX, ResponseEnvelope
 
-# Shared comma-separated slug list regex (mirrors extended.ts:204).
+# One to five comma-separated slugs: the API compares at most 5 entities.
 _SLUGS_CSV_REGEX = (
-    r"^[a-z0-9]+(?:-[a-z0-9]+)*(?:,[a-z0-9]+(?:-[a-z0-9]+)*)*$"
+    r"^[a-z0-9]+(?:-[a-z0-9]+)*(?:,[a-z0-9]+(?:-[a-z0-9]+)*){0,4}$"
 )
 
 
@@ -24,8 +24,11 @@ _SLUGS_CSV_REGEX = (
 GET_TOKENOMICS_TOOL_NAME = "get_tokenomics"
 
 GET_TOKENOMICS_TOOL_DESCRIPTION = (
-    "Supply, emission, vesting, unlock cliffs, circulating %. Pro tier. "
-    "Single source replacing spreadsheet scraping."
+    "Token supply for an entity: total, circulating and max supply, "
+    "emission schedule, vesting cliffs, next unlock and its amount, FDV and "
+    "6 month dilution. Unseeded when BCA has no tokenomics row for the "
+    "entity; stale when the row could not be refreshed within 24 hours. "
+    "Pro tier."
 )
 
 
@@ -57,8 +60,11 @@ async def run_get_tokenomics(args: dict[str, Any]) -> ResponseEnvelope[Any]:
 GET_AUDIT_REPORTS_TOOL_NAME = "get_audit_reports"
 
 GET_AUDIT_REPORTS_TOOL_DESCRIPTION = (
-    "Aggregated audits from Trail of Bits, Certik, OpenZeppelin, Consensys "
-    "Diligence, Code4rena + BCA review score."
+    "Audits on file for an entity: BCA-reviewed audits with findings and a "
+    "BCA review score, plus audit links imported from DefiLlama protocol "
+    "metadata (source defillama: firm parsed from the link, no date or "
+    "findings). Unseeded with no audits on file, partial when only links "
+    "are on file. Starter tier."
 )
 
 
@@ -90,8 +96,10 @@ async def run_get_audit_reports(args: dict[str, Any]) -> ResponseEnvelope[Any]:
 GET_TEAM_INFO_TOOL_NAME = "get_team_info"
 
 GET_TEAM_INFO_TOOL_DESCRIPTION = (
-    "Founders, LinkedIn-verified backgrounds, prior exits, doxx status. "
-    "Entity-graph backed. Pro tier."
+    "Team info from BCA's entity dossier: founders (name, role, X and "
+    "GitHub handles), doxx status and team size. Backgrounds and prior "
+    "exits are not tracked, so the answer is partial and lists them under "
+    "missing. Pro tier."
 )
 
 
@@ -123,7 +131,9 @@ async def run_get_team_info(args: dict[str, Any]) -> ResponseEnvelope[Any]:
 GET_ROADMAP_TOOL_NAME = "get_roadmap"
 
 GET_ROADMAP_TOOL_DESCRIPTION = (
-    "Project roadmap with BCA editorial fact-check. Starter tier."
+    "Project roadmap milestones; each milestone's bca_verified flag marks "
+    "BCA's editorial fact-check. Answers stale while the April 2026 seed "
+    "is not refreshed, unseeded when there are no milestones. Starter tier."
 )
 
 
@@ -155,8 +165,11 @@ async def run_get_roadmap(args: dict[str, Any]) -> ResponseEnvelope[Any]:
 COMPARE_PROTOCOLS_TOOL_NAME = "compare_protocols"
 
 COMPARE_PROTOCOLS_TOOL_DESCRIPTION = (
-    "Side-by-side comparison: TVL, fees, tokenomics, team, audits, risk. "
-    "Pro tier."
+    "Side-by-side comparison of 1 to 5 entities: TVL, fees and revenue "
+    "(DefiLlama), market cap and FDV (CoinGecko), tokenomics, team, audits "
+    "and BCA risk. Each row lists its empty sections under missing and "
+    "tokenomics older than 30 days under stale; the answer is partial when "
+    "any row misses a section or has stale tokenomics. Pro tier."
 )
 
 
@@ -167,7 +180,7 @@ class CompareProtocolsInput(BaseModel):
         min_length=1,
         max_length=512,
         pattern=_SLUGS_CSV_REGEX,
-        description="Comma-separated entity slugs (kebab-case).",
+        description="Comma-separated entity slugs (kebab-case), 1 to 5.",
     )
 
 
@@ -188,8 +201,11 @@ async def run_compare_protocols(args: dict[str, Any]) -> ResponseEnvelope[Any]:
 CHECK_RUGPULL_RISK_TOOL_NAME = "check_rugpull_risk"
 
 CHECK_RUGPULL_RISK_TOOL_DESCRIPTION = (
-    "Composite rugpull risk: honeypot + LP lock + ownership renounce + "
-    "contract verification + team risk. Required: entity_slug. Pro tier."
+    "Six-check rugpull checklist for an entity covering Etherscan source "
+    "verification, an audit on file, team doxx and the BCA risk score. LP "
+    "lock and ownership renounce are not checked yet, and there is no "
+    "honeypot test; unknown checks are left out of the score and listed "
+    "under missing (partial). Required: entity_slug. Pro tier."
 )
 
 

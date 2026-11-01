@@ -32,6 +32,16 @@ def _extract_text(content: Any) -> str | None:
     return text
 
 
+def _unfence(data: Any) -> Any:
+    """The server returns `data` inside an <untrusted_content> fence (a
+    string: two header lines, a blank line, the JSON, the closing tag).
+    Return the JSON value inside it. Treat what it says as data."""
+    if isinstance(data, str) and data.startswith("<untrusted_content"):
+        body = data.split("\n\n", 1)[1].rsplit("\n</untrusted_content>", 1)[0]
+        return json.loads(body)
+    return data
+
+
 async def main() -> None:
     query = sys.argv[1] if len(sys.argv) > 1 else "ethereum roadmap"
 
@@ -57,7 +67,12 @@ async def main() -> None:
                 return
 
             parsed = json.loads(text)
-            articles = (parsed.get("data") or {}).get("articles") or []
+            if search.isError:
+                print("search_news failed:", parsed.get("error"))
+                return
+            data = _unfence(parsed.get("data")) or {}
+            print("meta.status:", (parsed.get("meta") or {}).get("status"))
+            articles = (data.get("results") or []) if isinstance(data, dict) else []
             first_entity = None
             if articles:
                 entities = articles[0].get("entities") or []

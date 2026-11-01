@@ -7,6 +7,7 @@ from typing import Any, Iterable
 
 from rich.console import Console
 from rich.markdown import Markdown
+from rich.markup import escape
 from rich.panel import Panel
 from rich.table import Table
 
@@ -23,6 +24,43 @@ def unwrap(envelope: dict[str, Any]) -> Any:
     if isinstance(envelope, dict) and "data" in envelope:
         return envelope["data"]
     return envelope
+
+
+_FENCE_HEAD = '<untrusted_content source="'
+_FENCE_TAIL = "\n</untrusted_content>"
+
+
+def plain(text: Any) -> str:
+    """A field the MCP tools fenced as untrusted content, without the fence
+    (the CLI prints for a person, not for a model)."""
+    value = str(text)
+    if value.startswith(_FENCE_HEAD) and value.endswith(_FENCE_TAIL):
+        head_end = value.find(">\n")
+        if head_end != -1:
+            return value[head_end + 2 : -len(_FENCE_TAIL)]
+    return value
+
+
+def result_of(data: Any) -> Any:
+    """The record a single-item route nests under ``result`` (entities,
+    articles, academy), or ``data`` itself for flat payloads."""
+    if isinstance(data, dict) and isinstance(data.get("result"), dict):
+        return data["result"]
+    return data
+
+
+def status_note(envelope: Any) -> None:
+    """Say so when the answer is not complete (unseeded, partial, stale)."""
+    meta = envelope.get("meta") if isinstance(envelope, dict) else None
+    if not isinstance(meta, dict):
+        return
+    status = meta.get("status")
+    if not status or status == "complete":
+        return
+    diagnostic = meta.get("diagnostic")
+    reason = diagnostic.get("reason") if isinstance(diagnostic, dict) else None
+    text = f"status: {status}" + (f" ({reason})" if reason else "")
+    console.print(f"[yellow]{escape(text)}[/yellow]")
 
 
 def cite_footer(envelope: dict[str, Any]) -> None:
@@ -66,13 +104,39 @@ def news_table(rows: Iterable[dict[str, Any]]) -> None:
     table.add_column("Source")
     table.add_column("Cite")
     for row in rows:
+        source = row.get("source_name") or row.get("source") or row.get("source_slug")
+        link = (
+            row.get("canonical_url")
+            or row.get("source_url")
+            or row.get("cite_url")
+            or row.get("url")
+        )
         table.add_row(
             str(row.get("published_at") or "-")[:10],
-            str(row.get("title") or "-"),
-            str(row.get("source") or row.get("source_slug") or "-"),
-            str(row.get("cite_url") or row.get("url") or "-"),
+            escape(str(row.get("title") or "-")),
+            escape(str(source or "-")),
+            escape(str(link or "-")),
         )
     console.print(table)
+
+
+def price_rows(data: Any, vs: str = "usd") -> list[dict[str, Any]]:
+    """Rows for price_table from get_price's CoinGecko shape,
+    ``{coin_id: {usd, usd_24h_change, usd_market_cap}}``."""
+    if isinstance(data, list):
+        return [d for d in data if isinstance(d, dict)]
+    rows: list[dict[str, Any]] = []
+    if isinstance(data, dict):
+        for coin_id, quote in data.items():
+            if not isinstance(quote, dict):
+                continue
+            rows.append({
+                "ticker": coin_id,
+                "price": quote.get(vs),
+                "change_24h": quote.get(f"{vs}_24h_change"),
+                "market_cap": quote.get(f"{vs}_market_cap"),
+            })
+    return rows
 
 
 def price_table(rows: Iterable[dict[str, Any]]) -> None:
@@ -82,13 +146,18 @@ def price_table(rows: Iterable[dict[str, Any]]) -> None:
     table.add_column("24h %", justify="right")
     table.add_column("Market cap", justify="right")
     for row in rows:
-        ch = row.get("change_24h_percent") or row.get("change_24h")
+        ch = (
+            row.get("change_24h_percent")
+            or row.get("change_24h")
+            or row.get("price_change_percentage_24h")
+        )
         ch_str = f"{ch:+.2f}%" if isinstance(ch, (int, float)) else "-"
         color = "green" if isinstance(ch, (int, float)) and ch >= 0 else "red"
         mc = row.get("market_cap_usd") or row.get("market_cap")
+        price_value = row.get("price_usd") or row.get("price") or row.get("current_price")
         table.add_row(
-            str(row.get("ticker") or row.get("symbol") or "-").upper(),
-            f"${row.get('price_usd') or row.get('price') or '-'}",
+            escape(str(row.get("ticker") or row.get("symbol") or "-").upper()),
+            f"${price_value if price_value is not None else '-'}",
             f"[{color}]{ch_str}[/{color}]",
             f"${mc:,.0f}" if isinstance(mc, (int, float)) else "-",
         )
@@ -96,20 +165,20 @@ def price_table(rows: Iterable[dict[str, Any]]) -> None:
 
 
 def entity_panel(data: dict[str, Any]) -> None:
-    title = data.get("name") or data.get("slug") or "entity"
+    title = data.get("display_name") or data.get("name") or data.get("slug") or "entity"
     kind = data.get("kind") or "-"
-    body_lines: list[str] = [f"[bold]kind:[/bold] {kind}"]
-    for key in ("ticker", "chain", "website", "twitter", "github"):
+    body_lines: list[str] = [f"[bold]kind:[/bold] {escape(str(kind))}"]
+    for key in ("ticker", "chain", "website", "twitter", "github", "mention_count"):
         val = data.get(key)
         if val:
-            body_lines.append(f"[bold]{key}:[/bold] {val}")
+            body_lines.append(f"[bold]{key}:[/bold] {escape(str(val))}")
     if data.get("summary"):
         body_lines.append("")
-        body_lines.append(str(data["summary"]))
+        body_lines.append(escape(plain(data["summary"])))
     console.print(
         Panel.fit(
             "\n".join(body_lines),
-            title=f"[bold cyan]{title}[/bold cyan]",
+            title=f"[bold cyan]{escape(str(title))}[/bold cyan]",
             border_style="cyan",
         )
     )
@@ -129,10 +198,24 @@ def indicator_panel(name: str, entity: str, data: dict[str, Any]) -> None:
 
 
 def explainer_render(data: dict[str, Any]) -> None:
+    """A lesson (body_md) or a course (summary and its lesson index)."""
     title = data.get("title") or data.get("slug") or "Explainer"
-    console.print(f"[bold cyan]{title}[/bold cyan]\n")
-    body = data.get("body") or data.get("content") or data.get("summary") or ""
+    console.print(f"[bold cyan]{escape(str(title))}[/bold cyan]\n")
+    body = (
+        data.get("body_md")
+        or data.get("body")
+        or data.get("content")
+        or data.get("summary")
+        or ""
+    )
     console.print(Markdown(str(body)))
+    lessons = data.get("lessons")
+    if isinstance(lessons, list) and lessons:
+        console.print("")
+        for lesson in lessons:
+            if isinstance(lesson, dict):
+                name = lesson.get("title") or lesson.get("slug") or "-"
+                console.print(f"  {lesson.get('ordinal', '-')}. {escape(str(name))}")
 
 
 def markdown_render(text: str) -> None:

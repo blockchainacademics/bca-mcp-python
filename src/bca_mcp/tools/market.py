@@ -20,11 +20,16 @@ from bca_mcp.types import ResponseEnvelope
 GET_PRICE_TOOL_NAME = "get_price"
 
 GET_PRICE_TOOL_DESCRIPTION = (
-    "Spot price + 24h / 7d / 30d change for one or more tokens, via "
-    "CoinGecko. Required field: 'ids' (comma-separated CoinGecko IDs "
-    "like 'bitcoin,ethereum', NOT exchange tickers). Optional 'vs' "
-    "quote currency defaults to usd."
+    "Spot price, market cap, 24h volume and 24h change for up to 50 "
+    "tokens, via CoinGecko. Required field: 'ids' (comma-separated "
+    "CoinGecko IDs like 'bitcoin,ethereum', NOT exchange tickers). "
+    "Optional 'vs' quote currency defaults to usd. Works without an API key."
 )
+
+# The API's quote currency rule: 3 to 10 lower case letters (usd, eur, btc).
+_VS_REGEX = r"^[a-z]{3,10}$"
+# 1 to 50 comma-separated CoinGecko ids (the API's cap per call).
+_COINGECKO_IDS_REGEX = r"^[a-z0-9]+(?:-[a-z0-9]+)*(?:,[a-z0-9]+(?:-[a-z0-9]+)*){0,49}$"
 
 
 class GetPriceInput(BaseModel):
@@ -32,11 +37,16 @@ class GetPriceInput(BaseModel):
 
     ids: str = Field(
         min_length=1,
-        description="CoinGecko id(s), comma-separated. E.g. 'bitcoin,ethereum'.",
+        max_length=512,
+        pattern=_COINGECKO_IDS_REGEX,
+        description="CoinGecko id(s), comma-separated, up to 50. E.g. 'bitcoin,ethereum'.",
     )
     vs: str = Field(
         default="usd",
-        description="Quote currency (default usd).",
+        min_length=3,
+        max_length=10,
+        pattern=_VS_REGEX,
+        description="Quote currency, 3-10 lowercase letters (default usd).",
     )
 
 
@@ -57,9 +67,10 @@ async def run_get_price(args: dict[str, Any]) -> ResponseEnvelope[Any]:
 GET_MARKET_OVERVIEW_TOOL_NAME = "get_market_overview"
 
 GET_MARKET_OVERVIEW_TOOL_DESCRIPTION = (
-    "Top-N tokens by market cap with volume, 24h change, and category "
-    "tags. No required fields; optional 'limit' defaults to 20 (max 100). "
-    "Use for market-wide context (bull/bear posture, mover spotting)."
+    "Top-N tokens by market cap from CoinGecko: price, market cap, 24h "
+    "volume and 1h, 24h and 7d change. No required fields; optional "
+    "'limit' defaults to 20 (max 100). Use for market-wide context "
+    "(bull/bear posture, mover spotting). Works without an API key."
 )
 
 
@@ -91,8 +102,9 @@ async def run_get_market_overview(args: dict[str, Any]) -> ResponseEnvelope[Any]
 GET_OHLC_TOOL_NAME = "get_ohlc"
 
 GET_OHLC_TOOL_DESCRIPTION = (
-    "OHLC candlestick history for a token. Starter tier. Useful for "
-    "technical-setup agents and backtesting."
+    "OHLC candlestick history for a token from CoinGecko: rows of "
+    "[timestamp, open, high, low, close] over 1 to 365 days. Starter tier. "
+    "Useful for technical-setup agents and backtesting."
 )
 
 
@@ -101,7 +113,7 @@ class GetOhlcInput(BaseModel):
 
     id: str = Field(
         min_length=1,
-        max_length=128,
+        max_length=64,
         pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$",
         description="CoinGecko id (e.g. 'bitcoin').",
     )
@@ -113,9 +125,9 @@ class GetOhlcInput(BaseModel):
     )
     vs: str = Field(
         default="usd",
-        min_length=1,
-        max_length=16,
-        pattern=r"^[a-zA-Z0-9]{1,16}$",
+        min_length=3,
+        max_length=10,
+        pattern=_VS_REGEX,
         description="Quote currency (default usd).",
     )
 
@@ -146,16 +158,16 @@ class GetPairDataInput(BaseModel):
     model_config = {"extra": "forbid"}
 
     chain: str = Field(
-        min_length=1,
-        max_length=64,
+        min_length=2,
+        max_length=32,
         pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$",
         description="Chain slug (e.g. 'ethereum', 'solana', 'bsc').",
     )
     pair: str = Field(
-        min_length=1,
-        max_length=128,
+        min_length=32,
+        max_length=66,
         pattern=r"^[A-Za-z0-9]+$",
-        description="Pair contract address.",
+        description="Pair contract address (32 to 66 characters).",
     )
 
 

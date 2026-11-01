@@ -49,11 +49,16 @@ def _wrap_untrusted(source: str, value: Any) -> Any:
 GET_ARTICLE_TOOL_NAME = "get_article"
 
 GET_ARTICLE_TOOL_DESCRIPTION = (
-    "Fetch a single editorial crypto article by slug: full body, "
-    "citations, entity graph, and attribution metadata. Required field: "
-    "'slug'. Use after search_news when you need the full text of a "
-    "specific result."
+    "Fetch a single editorial crypto article by slug: title, summary, full "
+    "body (body_md), publish date, source link, topics, tickers and entity "
+    "slugs, with citations. Required field: 'slug'. Use after search_news "
+    "when you need the full text of a specific result."
 )
+
+# Free-text article fields that carry third-party text. The API nests the
+# article under `result` and names the body `body_md`; the flat keys are the
+# older shape, still read.
+_ARTICLE_TEXT_FIELDS = ("body_md", "body", "excerpt", "body_markdown", "summary")
 
 
 class GetArticleInput(BaseModel):
@@ -62,7 +67,8 @@ class GetArticleInput(BaseModel):
     slug: str = Field(
         min_length=1,
         max_length=240,
-        description="Article slug (e.g. 'circle-ipo-pricing-2026-04').",
+        pattern=SLUG_REGEX,
+        description="Article slug from search_news (e.g. 'circle-ipo-pricing-2026-04').",
     )
 
 
@@ -79,10 +85,13 @@ async def run_get_article(args: dict[str, Any]) -> ResponseEnvelope[Any]:
     # consumes them. Mirrors TS sibling (`content.ts:34-43`).
     data = res.get("data") if isinstance(res, dict) else None
     if isinstance(data, dict):
-        for key in ("body", "excerpt", "body_markdown", "summary"):
-            v = data.get(key)
-            if isinstance(v, str):
-                data[key] = _wrap_untrusted("get_article", v)
+        for holder in (data.get("result"), data):
+            if not isinstance(holder, dict):
+                continue
+            for key in _ARTICLE_TEXT_FIELDS:
+                v = holder.get(key)
+                if isinstance(v, str):
+                    holder[key] = _wrap_untrusted("get_article", v)
     return res
 
 
@@ -91,10 +100,12 @@ async def run_get_article(args: dict[str, Any]) -> ResponseEnvelope[Any]:
 LIST_ENTITY_MENTIONS_TOOL_NAME = "list_entity_mentions"
 
 LIST_ENTITY_MENTIONS_TOOL_DESCRIPTION = (
-    "Timeline of editorial mentions for an entity: sentiment score, "
-    "sentiment bucket, and article linkback per mention. Required field: "
-    "'slug' (entity slug). Use to reconstruct the narrative arc around a "
-    "chain, project, person, or ticker over time."
+    "Timeline of article mentions for an entity, newest first: article "
+    "title and link, publish date, mentions in the article, sentiment score "
+    "and bucket, and a context snippet. Required field: 'slug' (entity slug "
+    "or alias); page with offset. An unknown entity is an error; an entity "
+    "with no linked mentions answers unseeded. Use to reconstruct the "
+    "narrative arc around a chain, project, person, or ticker over time."
 )
 
 
@@ -104,16 +115,23 @@ class ListEntityMentionsInput(BaseModel):
     slug: str = Field(
         min_length=1,
         max_length=240,
-        description="Entity slug (chain, project, person, ticker).",
+        pattern=SLUG_REGEX,
+        description="Entity slug or alias (chain, project, person, ticker).",
     )
     limit: int = Field(
         default=50,
         ge=1,
-        le=200,
-        description="Max mentions (default 50, max 200).",
+        le=100,
+        description="Max mentions (default 50, max 100).",
+    )
+    offset: int = Field(
+        default=0,
+        ge=0,
+        description="Mentions to skip, for paging (default 0). meta.pageInfo.hasNextPage says whether more exist.",
     )
     since: Optional[str] = Field(
         default=None,
+        max_length=64,
         description="ISO 8601 lower bound for published_at.",
     )
 
@@ -128,20 +146,24 @@ async def run_list_entity_mentions(
     parsed = ListEntityMentionsInput.model_validate(args)
     res = await get_client().request(
         f"/v1/entities/{quote(parsed.slug, safe='')}/mentions",
-        {"limit": parsed.limit, "since": parsed.since},
+        {"since": parsed.since, "limit": parsed.limit, "offset": parsed.offset},
     )
-    # A-3: mention rows may surface third-party excerpts. Mirror TS sibling
-    # (`content.ts:64-78`).
+    # A-3: mention rows carry a snippet of third-party article text. Mirror
+    # TS sibling (`content.ts:64-78`). The API lists the rows under
+    # `results` with `context_snippet`; `mentions` and excerpt / snippet /
+    # body are the older names, still read.
     data = res.get("data") if isinstance(res, dict) else None
-    mentions: Any
+    lists: list[Any] = []
     if isinstance(data, dict):
-        mentions = data.get("mentions", data)
-    else:
-        mentions = data
-    if isinstance(mentions, list):
+        lists = [data.get("results"), data.get("mentions")]
+    elif isinstance(data, list):
+        lists = [data]
+    for mentions in lists:
+        if not isinstance(mentions, list):
+            continue
         for m in mentions:
             if isinstance(m, dict):
-                for key in ("excerpt", "snippet", "body"):
+                for key in ("context_snippet", "excerpt", "snippet", "body"):
                     v = m.get(key)
                     if isinstance(v, str):
                         m[key] = _wrap_untrusted("list_entity_mentions", v)
@@ -181,9 +203,10 @@ async def run_list_topics(args: dict[str, Any]) -> ResponseEnvelope[Any]:
 GET_AS_OF_SNAPSHOT_TOOL_NAME = "get_as_of_snapshot"
 
 GET_AS_OF_SNAPSHOT_TOOL_DESCRIPTION = (
-    "Time-travel query: return the corpus state as it existed at a specific "
-    "historical date. Enterprise tier. Useful for backtesting and audit "
-    "trails."
+    "Time-travel query: the article search as the corpus stood at a past "
+    "date (only articles ingested on or before as_of). Free, and open "
+    "without an API key. Useful for backtesting and audit trails. Answers "
+    "unseeded when nothing matches."
 )
 
 
@@ -192,9 +215,7 @@ class GetAsOfSnapshotInput(BaseModel):
 
     as_of: str = Field(
         max_length=64,
-        description=(
-            "ISO 8601 timestamp: corpus state at this date (Enterprise tier)."
-        ),
+        description="ISO 8601 timestamp: corpus state at this date.",
     )
     query: Optional[str] = Field(
         default=None,

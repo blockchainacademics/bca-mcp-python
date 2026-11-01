@@ -6,11 +6,14 @@ LangGraph agent. The adapter converts the stdio tool surface into native
 
 Install:
 
-    pip install bca-mcp langchain langchain-mcp-adapters langchain-openai
+    pip install bca-mcp langchain-mcp-adapters
 
-Run:
+Run (BCA_API_KEY is optional: without it 16 tools work in demo mode):
 
-    BCA_API_KEY=... OPENAI_API_KEY=... python examples/langchain_agent.py
+    BCA_API_KEY=... python examples/langchain_agent.py
+
+Hand the loaded tools to any LangChain or LangGraph agent and the chat model
+of your choice.
 
 Docs: https://github.com/langchain-ai/langchain-mcp-adapters
 """

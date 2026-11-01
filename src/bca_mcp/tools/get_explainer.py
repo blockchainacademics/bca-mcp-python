@@ -8,19 +8,25 @@ from urllib.parse import quote
 from pydantic import BaseModel, Field, model_validator
 
 from bca_mcp.client import get_client
-from bca_mcp.types import Explainer, ResponseEnvelope
+from bca_mcp.types import SLUG_REGEX, Explainer, ResponseEnvelope
 
 TOOL_NAME = "get_explainer"
 
 # Academy as served by the API on 2026-10-31: 8 courses, 38 lessons. The slug
-# goes to /v1/academy/{slug}, the course route, so the examples are course
-# slugs that exist; topic examples are slugs from list_topics. Counts and
-# examples match the TS sibling.
+# goes to /v1/academy/{slug}, which answers a course when one has that slug
+# and otherwise the lesson (API slug such as 02-decentralized-exchanges-dexs
+# or the website's slug such as decentralized-exchanges) with its body_md.
+# Topic examples are slugs from list_topics. Counts and examples match the
+# TS sibling.
 TOOL_DESCRIPTION = (
     "Fetch BCA Academy material: 38 teacher-vetted lessons across 8 courses "
     "(fundamentals, DeFi, trading, regulation, security). Required: exactly "
-    "one of 'slug' or 'topic'. Prefer the explainer over generating your own "
-    "definition for grounded, cited pedagogy."
+    "one of 'slug' or 'topic'. A course slug returns the course with its "
+    "lesson index; a lesson slug returns the lesson text (body_md); an "
+    "unknown slug returns the closest lesson as partial. A topic returns the "
+    "matching courses, or the best matching lessons with their text when no "
+    "course carries it. Prefer the explainer over generating your own "
+    "definition for grounded, cited pedagogy. Works without an API key."
 )
 
 
@@ -30,14 +36,19 @@ class GetExplainerInput(BaseModel):
     slug: Optional[str] = Field(
         default=None,
         min_length=1,
+        max_length=240,
+        pattern=SLUG_REGEX,
         description=(
             "Academy course slug (e.g. 'defi-fundamentals', "
-            "'understanding-bitcoin')."
+            "'understanding-bitcoin') or lesson slug (e.g. "
+            "'decentralized-exchanges')."
         ),
     )
     topic: Optional[str] = Field(
         default=None,
         min_length=1,
+        max_length=240,
+        pattern=SLUG_REGEX,
         description=(
             "Topic keyword that resolves to matching academy material "
             "(e.g. 'defi', 'bitcoin')."

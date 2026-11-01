@@ -121,7 +121,7 @@ async def test_client_injects_api_key_and_parses_envelope(httpx_mock) -> None:
     # Upstream emits a legacy flat body; the client's canonicalization
     # shim should upgrade it to the canonical envelope.
     httpx_mock.add_response(
-        url="https://api.blockchainacademics.com/v1/articles/search?q=ethereum&limit=10",
+        url="https://api.blockchainacademics.com/v1/articles/search?q=ethereum&limit=10&offset=0",
         json={
             "data": {"articles": [], "total": 0},
             "cite_url": "https://x.test/c",
@@ -237,16 +237,20 @@ async def test_integration_pending_envelope_is_upgraded_to_unseeded(
 
 
 @pytest.mark.asyncio
-async def test_get_article_encodes_slug(httpx_mock) -> None:
+async def test_get_article_takes_a_kebab_slug(httpx_mock) -> None:
+    # Slugs are kebab case (as in the TS sibling), so nothing needs escaping
+    # in the path; a slug with a slash or a space is refused before sending.
     httpx_mock.add_response(
-        url="https://api.blockchainacademics.com/v1/articles/some%2Fweird%20slug",
-        json={"data": {"slug": "some/weird slug", "title": "x"}},
+        url="https://api.blockchainacademics.com/v1/articles/circle-ipo-pricing-2026-04",
+        json={"data": {"result": {"slug": "circle-ipo-pricing-2026-04", "title": "x"}}},
         status_code=200,
     )
     c = BcaClient(api_key="k")
     set_client(c)
-    out = await run_get_article({"slug": "some/weird slug"})
-    assert out.get("data", {}).get("title") == "x"
+    out = await run_get_article({"slug": "circle-ipo-pricing-2026-04"})
+    assert out.get("data", {}).get("result", {}).get("title") == "x"
+    with pytest.raises(ValidationError):
+        await run_get_article({"slug": "some/weird slug"})
 
 
 @pytest.mark.asyncio
@@ -254,7 +258,7 @@ async def test_list_entity_mentions_hits_expected_path(httpx_mock) -> None:
     httpx_mock.add_response(
         url=(
             "https://api.blockchainacademics.com/v1/entities/ethereum/mentions"
-            "?limit=5"
+            "?limit=5&offset=0"
         ),
         json={"data": {"mentions": []}},
         status_code=200,

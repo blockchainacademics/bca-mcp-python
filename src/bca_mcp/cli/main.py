@@ -8,9 +8,12 @@ from __future__ import annotations
 
 import asyncio
 import time
+from pathlib import Path
 from typing import Any, Optional
+from urllib.parse import quote
 
 import typer
+from rich.markup import escape
 
 from bca_mcp.cli.config import (
     CONFIG_FILE,
@@ -28,7 +31,10 @@ from bca_mcp.cli.render import (
     indicator_panel,
     markdown_render,
     news_table,
+    price_rows,
     price_table,
+    result_of,
+    status_note,
     unwrap,
 )
 from bca_mcp.cli.runner import err_console, handle_errors, run_async
@@ -145,11 +151,12 @@ async def news_search(
     apply_env_defaults()
     from bca_mcp.tools import search_news
 
-    args = {"query": query, "limit": limit}
+    args: dict[str, Any] = {"query": query, "limit": limit}
+    # Slug filters are lower case kebab; accept any case here.
     if entity:
-        args["entity"] = entity
+        args["entity"] = entity.strip().lower()
     if topic:
-        args["topic"] = topic
+        args["topic"] = topic.strip().lower()
     if since:
         args["since"] = since
     res = await search_news.run(args)
@@ -157,9 +164,12 @@ async def news_search(
         as_json(res)
         return
     data = unwrap(res)
-    articles = (
-        data.get("articles") if isinstance(data, dict) else data
-    ) or (data if isinstance(data, list) else [])
+    articles: Any = []
+    if isinstance(data, dict):
+        # `results` since 2026; `articles` was the earlier name.
+        articles = data.get("results") or data.get("articles") or []
+    elif isinstance(data, list):
+        articles = data
     if not articles:
         console.print("[yellow]No results.[/yellow]")
         return
@@ -181,15 +191,17 @@ async def entity(
     apply_env_defaults()
     from bca_mcp.tools import get_entity
 
-    res = await get_entity.run({"slug": slug})
+    # Slugs are lower case kebab ('ethereum', 'cz'); accept any case here.
+    res = await get_entity.run({"slug": slug.strip().lower()})
     if json_out:
         as_json(res)
         return
-    data = unwrap(res)
+    data = result_of(unwrap(res))
     if isinstance(data, dict):
         entity_panel(data)
     else:
         console.print(str(data))
+    status_note(res)
     cite_footer(res)
 
 
@@ -200,42 +212,31 @@ async def entity(
 @handle_errors
 @run_async
 async def price(
-    tickers: str = typer.Argument(..., help="Comma-separated tickers, e.g. BTC,ETH,SOL"),
+    ids: str = typer.Argument(
+        ...,
+        help="Comma-separated CoinGecko ids (not tickers), e.g. bitcoin,ethereum,solana",
+    ),
+    vs: str = typer.Option("usd", "--vs", help="Quote currency."),
     json_out: bool = typer.Option(False, "--json"),
 ) -> None:
-    """Spot price + 24h change for one or more tickers."""
+    """Spot price, 24h change and market cap for one or more coins."""
     apply_env_defaults()
     from bca_mcp.tools import market
 
-    ticker_list = [t.strip().upper() for t in tickers.split(",") if t.strip()]
-    if not ticker_list:
-        err_console.print("[red]No tickers provided.[/red]")
+    id_list = [t.strip().lower() for t in ids.split(",") if t.strip()]
+    if not id_list:
+        err_console.print("[red]No CoinGecko ids provided.[/red]")
         raise typer.Exit(code=1)
-    rows: list[dict[str, Any]] = []
-    last_envelope: dict[str, Any] = {}
-    for t in ticker_list:
-        try:
-            res = await market.run_get_price({"ticker": t})
-        except AttributeError:
-            # Fallback if tool module shape differs.
-            from bca_mcp.client import get_client
-
-            res = await get_client().request("/v1/prices", {"ticker": t})
-        last_envelope = res if isinstance(res, dict) else {}
-        data = unwrap(res)
-        if isinstance(data, dict):
-            data.setdefault("ticker", t)
-            rows.append(data)
-        elif isinstance(data, list):
-            rows.extend(d for d in data if isinstance(d, dict))
+    res = await market.run_get_price({"ids": ",".join(id_list), "vs": vs.strip().lower()})
     if json_out:
-        as_json(rows)
+        as_json(res)
         return
+    rows = price_rows(unwrap(res), vs.lower())
     if not rows:
         console.print("[yellow]No price data.[/yellow]")
         return
     price_table(rows)
-    cite_footer(last_envelope)
+    cite_footer(res)
 
 
 @market_app.command("overview")
@@ -271,45 +272,76 @@ async def market_overview(
 @handle_errors
 @run_async
 async def explainer(
-    slug: str = typer.Argument(..., help="Academy lesson slug."),
+    slug: str = typer.Argument(
+        ..., help="Academy course or lesson slug (e.g. defi-fundamentals)."
+    ),
     json_out: bool = typer.Option(False, "--json"),
 ) -> None:
-    """Render an academy lesson as markdown."""
+    """Render an academy course or lesson as markdown."""
     apply_env_defaults()
     from bca_mcp.tools import get_explainer
 
-    res = await get_explainer.run({"slug": slug})
+    res = await get_explainer.run({"slug": slug.strip().lower()})
     if json_out:
         as_json(res)
         return
-    data = unwrap(res)
+    data = result_of(unwrap(res))
     if isinstance(data, dict):
         explainer_render(data)
     else:
         console.print(str(data))
+    status_note(res)
     cite_footer(res)
 
 
 # ---------- indicators ----------
+
+# CLI indicator names (both the MCP tool's words and the API's path work)
+# -> (tool module runner name, takes a window).
+_INDICATORS: dict[str, tuple[str, bool]] = {
+    "coverage-index": ("run_get_coverage_index", True),
+    "coverage": ("run_get_coverage_index", True),
+    "narrative-strength": ("run_get_narrative_strength", True),
+    "narrative": ("run_get_narrative_strength", True),
+    "sentiment-velocity": ("run_get_sentiment_velocity", True),
+    "editorial-premium": ("run_get_editorial_premium", True),
+    "kol-influence": ("run_get_kol_influence", True),
+    "risk-score": ("run_get_risk_score", False),
+    "risk": ("run_get_risk_score", False),
+}
 
 
 @app.command()
 @handle_errors
 @run_async
 async def indicator(
-    name: str = typer.Argument(..., help="Indicator slug, e.g. coverage-index."),
+    name: str = typer.Argument(
+        ...,
+        help="coverage-index, narrative-strength, sentiment-velocity, "
+        "editorial-premium, kol-influence or risk-score.",
+    ),
     entity: str = typer.Argument(..., help="Entity slug."),
-    window: str = typer.Option("30d", "--window", "-w", help="7d | 30d | 90d"),
+    window: str = typer.Option(
+        "30d", "--window", "-w", help="7d | 30d | 90d (not used by risk-score)."
+    ),
     json_out: bool = typer.Option(False, "--json"),
 ) -> None:
     """Read a proprietary indicator value."""
     apply_env_defaults()
-    from bca_mcp.client import get_client
+    from bca_mcp.tools import indicators
 
-    res = await get_client().request(
-        f"/v1/indicators/{name}",
-        {"entity": entity, "window": window},
-    )
+    spec = _INDICATORS.get(name.strip().lower())
+    if spec is None:
+        err_console.print(
+            f"[red]Unknown indicator {escape(name)!r}.[/red] Use one of: "
+            + ", ".join(k for k in _INDICATORS if "-" in k)
+        )
+        raise typer.Exit(code=1)
+    runner_name, takes_window = spec
+    args: dict[str, Any] = {"entity_slug": entity.strip().lower()}
+    if takes_window:
+        args["window"] = window
+    res = await getattr(indicators, runner_name)(args)
     if json_out:
         as_json(res)
         return
@@ -318,6 +350,7 @@ async def indicator(
         indicator_panel(name, entity, data)
     else:
         console.print(str(data))
+    status_note(res)
     cite_footer(res)
 
 
@@ -333,31 +366,65 @@ async def agent(
         help="Skill slug: due-diligence, tokenomics-model, summarize-whitepaper, "
         "translate-contract, monitor-keyword.",
     ),
-    entity: Optional[str] = typer.Option(None, "--entity"),
-    url: Optional[str] = typer.Option(None, "--url"),
-    source: Optional[str] = typer.Option(None, "--source"),
-    target: Optional[str] = typer.Option(None, "--target"),
-    keyword: Optional[str] = typer.Option(None, "--keyword"),
+    entity: Optional[str] = typer.Option(
+        None, "--entity", help="Entity slug (due-diligence, tokenomics-model)."
+    ),
+    url: Optional[str] = typer.Option(None, "--url", help="Whitepaper URL (summarize-whitepaper)."),
+    code_file: Optional[Path] = typer.Option(
+        None, "--code-file", help="Contract source file (translate-contract)."
+    ),
+    source: Optional[str] = typer.Option(
+        None, "--source", help="Source language (translate-contract): solidity, vyper, move, rust-anchor."
+    ),
+    target: Optional[str] = typer.Option(None, "--target", help="Target language (translate-contract)."),
+    keyword: Optional[str] = typer.Option(None, "--keyword", help="Keyword (monitor-keyword)."),
+    webhook: Optional[str] = typer.Option(
+        None, "--webhook", help="https webhook URL (monitor-keyword)."
+    ),
     timeout_s: int = typer.Option(120, "--timeout", help="Polling timeout seconds."),
     json_out: bool = typer.Option(False, "--json"),
 ) -> None:
     """Kick off an async agent-backed skill job and poll until done."""
     apply_env_defaults()
     from bca_mcp.client import get_client
+    from bca_mcp.tools import agent_jobs
 
-    client = get_client()
-    payload: dict[str, Any] = {}
-    for k, v in (
-        ("entity", entity),
-        ("url", url),
-        ("source_language", source),
-        ("target_language", target),
-        ("keyword", keyword),
-    ):
-        if v is not None:
-            payload[k] = v
+    skill_key = skill.strip().lower().replace("_", "-")
+    args: dict[str, Any] = {}
+    if skill_key == "due-diligence":
+        runner = agent_jobs.run_generate_due_diligence
+        args["entity_slug"] = entity
+    elif skill_key == "tokenomics-model":
+        runner = agent_jobs.run_generate_tokenomics_model
+        args["entity_slug"] = entity
+    elif skill_key == "summarize-whitepaper":
+        runner = agent_jobs.run_summarize_whitepaper
+        args["url"] = url
+    elif skill_key == "translate-contract":
+        runner = agent_jobs.run_translate_contract
+        if code_file is None:
+            err_console.print("[red]translate-contract needs --code-file.[/red]")
+            raise typer.Exit(code=1)
+        try:
+            args["code"] = code_file.read_text(encoding="utf-8")
+        except OSError as exc:
+            err_console.print(f"[red]Cannot read {escape(str(code_file))}:[/red] {escape(str(exc))}")
+            raise typer.Exit(code=1)
+        args["source_language"] = source
+        args["target_language"] = target
+    elif skill_key == "monitor-keyword":
+        runner = agent_jobs.run_monitor_keyword
+        args["keyword"] = keyword
+        args["webhook_url"] = webhook
+    else:
+        err_console.print(
+            f"[red]Unknown skill {escape(skill)!r}.[/red] Use due-diligence, "
+            "tokenomics-model, summarize-whitepaper, translate-contract or monitor-keyword."
+        )
+        raise typer.Exit(code=1)
 
-    res = await client.post(f"/v1/agent-jobs/{skill}/run", payload)
+    # Missing options stay out, so the tool model names the required ones.
+    res = await runner({k: v for k, v in args.items() if v is not None})
     data = unwrap(res)
     job_id = (data or {}).get("job_id") if isinstance(data, dict) else None
     if not job_id:
@@ -367,39 +434,45 @@ async def agent(
         as_json(res)
         raise typer.Exit(code=1)
 
-    console.print(f"[cyan]Job[/cyan] {job_id} [dim]submitted, polling…[/dim]")
+    console.print(f"[cyan]Job[/cyan] {job_id} [dim]submitted, polling...[/dim]")
+    status_note(res)
+    client = get_client()
     start = time.monotonic()
-    with console.status("[dim]Running skill…[/dim]", spinner="dots"):
+    with console.status("[dim]Running skill...[/dim]", spinner="dots"):
         while time.monotonic() - start < timeout_s:
-            poll = await client.request(f"/v1/agent-jobs/{job_id}")
+            poll = await client.request(f"/v1/agent-jobs/{quote(str(job_id), safe='')}")
             poll_data = unwrap(poll) or {}
             status = poll_data.get("status") if isinstance(poll_data, dict) else None
-            if status in ("completed", "success", "done"):
+            if status in ("done", "completed", "success"):
                 if json_out:
                     as_json(poll)
                     return
-                output = poll_data.get("output") if isinstance(poll_data, dict) else None
+                # The API returns the skill output under `result`.
+                output = None
+                if isinstance(poll_data, dict):
+                    output = poll_data.get("result") or poll_data.get("output")
                 if isinstance(output, dict):
-                    # Try common shapes: {markdown, summary, body}
                     body = (
                         output.get("markdown")
                         or output.get("summary")
                         or output.get("body")
+                        or output.get("target_code")
                     )
-                    if body:
-                        markdown_render(str(body))
+                    if isinstance(body, str) and body:
+                        markdown_render(body)
                     else:
                         as_json(output)
                 elif isinstance(output, str):
                     markdown_render(output)
                 else:
                     as_json(poll)
+                status_note(poll)
                 cite_footer(poll)
                 return
             if status in ("failed", "error"):
                 err_console.print(
                     f"[red]Job {job_id} failed:[/red] "
-                    f"{poll_data.get('error') if isinstance(poll_data, dict) else status}"
+                    f"{escape(str(poll_data.get('error') if isinstance(poll_data, dict) else status))}"
                 )
                 raise typer.Exit(code=1)
             await asyncio.sleep(2)
