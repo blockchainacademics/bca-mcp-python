@@ -1,0 +1,10 @@
+# GitHub drops mailto: contact links from the issue chooser, so the
+# support address lives in the about text and the link opens the dashboard.
+blank_issues_enabled: true
+contact_links:
+  - name: Ask a question
+    url: https://github.com/blockchainacademics/bca-mcp/discussions/categories/q-a
+    about: The npm and Python packages share one Q&A in the bca-mcp repo. Search there first. Never paste a full API key.
+  - name: Account or billing
+    url: https://blockchainacademics.com/crypto-api/dashboard
+    about: Email support@blockchainacademics.com for your account, billing or anything private. This link opens your API dashboard.

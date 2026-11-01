@@ -214,6 +214,15 @@ Run the server directly for debugging:
 BCA_API_KEY=... python -m bca_mcp
 ```
 
+## Getting help
+
+- **Questions:** ask in [GitHub Discussions Q&A](https://github.com/blockchainacademics/bca-mcp/discussions/categories/q-a). The npm and Python packages share one Q&A, so every answer lives in one place. Search first, since someone may have asked already.
+- **Bugs:** open an [issue](https://github.com/blockchainacademics/bca-mcp-python/issues).
+- **Account and billing:** email [support@blockchainacademics.com](mailto:support@blockchainacademics.com).
+- **Security reports:** email [security@blockchainacademics.com](mailto:security@blockchainacademics.com), never a public issue.
+
+**Never post a full API key.** If we need to know which key, share only the key prefix, the part before the dots on your dashboard (for example `bca_1a2b3c4d`). Our team will never ask for your key or a seed phrase. Response times by plan are in [How to get help](https://github.com/blockchainacademics/bca-mcp/discussions/15).
+
 ## Contributing
 
 Issues, PRs, and feature requests: https://github.com/blockchainacademics/bca-mcp-python
