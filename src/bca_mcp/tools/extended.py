@@ -1396,7 +1396,7 @@ EXTENDED_TOOL_ENTRIES: tuple[tuple[str, str, dict[str, Any], Runner], ...] = (
     # microstructure (5)
     _entry(
         "get_funding_rates",
-        "Perpetual funding rates for a symbol on Binance, Bybit and Hyperliquid: rate, mark price and next funding time per venue, plus the mean of the venues that answered. dYdX is not wired yet. Pro tier.",
+        "Perpetual funding rates for a symbol on Binance, Bybit and Hyperliquid (USDT pairs): each venue's raw rate with its funding interval (1, 4 or 8 hours), the rate on an 8 hour basis and annualized, mark price and next funding time, plus the mean of the 8 hour rates of the venues whose interval is known. dYdX is listed as pending, so the answer is partial. Pro tier.",
         GetFundingRatesInput, _run_get_funding_rates,
     ),
     _entry(
