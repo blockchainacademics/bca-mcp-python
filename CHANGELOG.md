@@ -25,7 +25,7 @@ Fixes from the 2026-10-31 tool probe, in lockstep with @blockchainacademics/mcp 
   - `request_custom_research`: `topic` needs 4 to 240 characters; `deadline_days` (never read by the API) is replaced by the API's `deadline`, plus optional `target_wordcount`, `contact_name`, `company`, `notes`.
   - Descriptions say what the API returns (`request_id`, `status`, `next_step`) and that the tools are free to call with any API key from the free tier up, not "Pro tier".
 - Tool schemas advertise type, enum and bounds directly on optional fields (no `anyOf` null branch, no generated titles). `generate_tokenomics_model` advertises its `scenarios` default, `generate_due_diligence` bounds each `focus` entry, and `list_entity_mentions` defaults `limit` to 50 like the TypeScript package.
-- Demo banner: "16 tools work without a key" (was "~10 tools"). The README lists the 16.
+- Demo banner: "16 tools work without a key" (was "~10 tools"), and "A free key opens 52 tools and paid plans open the rest" (it said a free key opened all tools). The README lists the 16, and the README and the LangChain submission copy say the same about the free key.
 - `get_explainer`: 38 lessons in 8 courses (was 43 in 9), with examples that exist. `list_topics` names only topics in the taxonomy.
 - The User-Agent and `serverInfo.version` report 0.6.3 (`serverInfo` showed the MCP SDK's version).
 - A `BCA_API_KEY` with a stray space or newline around it (a pasted key) is trimmed, as the TypeScript package's fetch does, instead of failing every call with a `BCA_NETWORK` error that repeated the whole key to the host model. A key with a line break inside gives `BCA_AUTH`, and the message never repeats the key.

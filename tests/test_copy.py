@@ -35,7 +35,7 @@ def _tool(name: str):
 def test_demo_banner_exact_bytes() -> None:
     assert DEMO_BANNER == (
         "[bca-mcp] Running in DEMO mode: 16 tools work without a key, under a shared daily cap.\n"
-        "[bca-mcp] Get a free key for all tools: https://blockchainacademics.com/crypto-api/signup?ref=mcp-first-run\n"
+        "[bca-mcp] A free key opens 52 tools and paid plans open the rest: https://blockchainacademics.com/crypto-api/signup?ref=mcp-first-run\n"
         "[bca-mcp] Set: export BCA_API_KEY=bca_...   (or add to your client config)\n"
     )
     assert DEMO_BANNER.isascii()
@@ -44,6 +44,28 @@ def test_demo_banner_exact_bytes() -> None:
 def test_demo_tools_exist() -> None:
     names = {t.name for t in TOOLS}
     assert len(DEMO_TOOLS) == 16 and set(DEMO_TOOLS) <= names
+
+
+def test_free_key_reach_matches_the_tool_descriptions() -> None:
+    # A tool on a paid plan names its tier in its description; the others are
+    # the free tier (52 of the 105 on 2026-11-01).
+    paid = [t for t in TOOLS if re.search(r"\b(Starter|Pro|Team) tier\b", t.description)]
+    free = len(TOOLS) - len(paid)
+    assert free == 52
+    assert f"A free key opens {free} tools and paid plans open the rest" in DEMO_BANNER
+    readme = (ROOT / "README.md").read_text("utf-8")
+    assert f"A free key opens {free} tools." in readme
+    stale = re.compile(
+        r"for all (105|tools)|unlock all 105|all 105 tools are open|full 105-tool surface"
+        r"|opens the rest up to|until a free key is set",
+        re.IGNORECASE,
+    )
+    for where, text in (
+        ("banner", DEMO_BANNER),
+        ("README.md", readme),
+        ("docs/langchain_submission.md", (ROOT / "docs/langchain_submission.md").read_text("utf-8")),
+    ):
+        assert not stale.search(text), f"{where} says a free key opens every tool"
 
 
 def test_readme_lists_the_16_demo_tools_and_current_counts() -> None:

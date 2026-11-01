@@ -71,8 +71,9 @@ Changes:
   as_of, source_hash) and an honest `meta.status` on every answer.
 - `bca-mcp` has a TypeScript sibling (`@blockchainacademics/mcp`) with the same 105 tools,
   already listed in the MCP community registry; this PR closes the Python-side docs gap.
-- 16 tools work without a key (demo mode), and a free API key opens the rest up to its
-  tier, so reviewers and new users can run the notebook end-to-end with no billing friction.
+- 16 tools work without a key (demo mode), a free API key opens 52 (every tool the notebook
+  calls among them) and paid plans open the rest, so reviewers and new users can run the
+  notebook end-to-end with no billing friction.
 
 ## Docs / Links
 
@@ -195,7 +196,7 @@ Changes:
 
 ### Q4. "Does the Python package cover the same tools as the TypeScript one?"
 
-**Answer:** Yes. Both packages expose the same 105 tools with the same names, input schemas and annotations, and both talk to the same REST API with the same attribution contract. 16 of them work without a key; the rest answer with a clean upgrade message until a free key is set. Reviewers can test end-to-end on a free-tier key.
+**Answer:** Yes. Both packages expose the same 105 tools with the same names, input schemas and annotations, and both talk to the same REST API with the same attribution contract. 16 of them work without a key, a free key opens 52, and paid plans open the rest; without a key, the other 89 answer with a clean upgrade message. Reviewers can test end-to-end on a free-tier key.
 
 ### Q5. "How do you handle auth? API key in env var is fine for Claude Desktop but what about shared infra?"
 

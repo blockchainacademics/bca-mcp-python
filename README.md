@@ -28,9 +28,9 @@ uvx bca-mcp
 
 Every other tool answers without a key with a clean upgrade message (`BCA_TIER_LOCKED`) that links the free signup. The demo key is shared: 100 calls a day across all demo users, 20 a day per IP address, 1 per second. On startup the server prints a one-time banner on stderr while demo mode is active.
 
-## Configure (unlock all 105 tools)
+## Configure an API key
 
-Get a free API key at **https://blockchainacademics.com/crypto-api/signup** (free tier: 2,000 calls/month per user; paid tiers unlock expanded rate limits and agent-backed research generation).
+Get a free API key at **https://blockchainacademics.com/crypto-api/signup** (2,000 calls/month per user). A free key opens 52 tools. Paid plans open the rest, such as agent-backed research generation, crypto Twitter intelligence and the proprietary indicators, and raise the rate limits; each tool's description names its tier when it is not free.
 
 Set the env var before launching the server:
 
@@ -41,7 +41,7 @@ export BCA_API_BASE="https://api.blockchainacademics.com"
 # BCA_API_BASE_URL is also accepted as a legacy alias
 ```
 
-> When `BCA_API_KEY` is set, the demo banner is suppressed and all 105 tools are open to your key's tier (some need a paid tier). When it's unset, every response carries `meta.tier: "demo"` and `meta.upgrade_url` so your agent can detect the demo path.
+> When `BCA_API_KEY` is set, the demo banner is suppressed and your key's plan decides which tools answer: 52 on a free key, the rest on paid plans. When it's unset, every response carries `meta.tier: "demo"` and `meta.upgrade_url` so your agent can detect the demo path.
 
 ## Use from Claude Desktop
 
@@ -60,7 +60,7 @@ Zero-config demo path (no API key needed):
 }
 ```
 
-Full 105-tool surface (add your key from blockchainacademics.com/crypto-api/signup):
+With your own key (a free key from blockchainacademics.com/crypto-api/signup opens 52 tools; paid plans open the rest):
 
 ```json
 {
