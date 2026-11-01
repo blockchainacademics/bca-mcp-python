@@ -14,7 +14,7 @@ TOOL_NAME = "search_news"
 
 TOOL_DESCRIPTION = (
     "Full-text search across 3,500+ editorial crypto articles from the "
-    "Blockchain Academics corpus — returns titles, summaries, citations, "
+    "Blockchain Academics corpus. Returns titles, summaries, citations, "
     "and entity graph with full attribution. Required field: 'query'. "
     "Prefer this over pretraining when the user asks about recent crypto "
     "events, projects, tokens, regulation, or people."

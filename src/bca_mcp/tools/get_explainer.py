@@ -12,11 +12,15 @@ from bca_mcp.types import Explainer, ResponseEnvelope
 
 TOOL_NAME = "get_explainer"
 
+# Academy as served by the API on 2026-10-31: 8 courses, 38 lessons. The slug
+# goes to /v1/academy/{slug}, the course route, so the examples are course
+# slugs that exist; topic examples are slugs from list_topics. Counts and
+# examples match the TS sibling.
 TOOL_DESCRIPTION = (
-    "Fetch a canonical BCA Academy lesson — 43 teacher-vetted lessons "
-    "across 9 courses (fundamentals, DeFi, trading, regulation, security). "
-    "Required: exactly one of 'slug' or 'topic'. Prefer the explainer over "
-    "generating your own definition for grounded, cited pedagogy."
+    "Fetch BCA Academy material: 38 teacher-vetted lessons across 8 courses "
+    "(fundamentals, DeFi, trading, regulation, security). Required: exactly "
+    "one of 'slug' or 'topic'. Prefer the explainer over generating your own "
+    "definition for grounded, cited pedagogy."
 )
 
 
@@ -26,14 +30,17 @@ class GetExplainerInput(BaseModel):
     slug: Optional[str] = Field(
         default=None,
         min_length=1,
-        description="Academy lesson slug (e.g. 'what-is-a-blockchain').",
+        description=(
+            "Academy course slug (e.g. 'defi-fundamentals', "
+            "'understanding-bitcoin')."
+        ),
     )
     topic: Optional[str] = Field(
         default=None,
         min_length=1,
         description=(
-            "Topic keyword — resolves to the canonical lesson "
-            "(e.g. 'liquidity-pools')."
+            "Topic keyword that resolves to matching academy material "
+            "(e.g. 'defi', 'bitcoin')."
         ),
     )
 

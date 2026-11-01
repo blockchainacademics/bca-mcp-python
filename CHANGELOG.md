@@ -4,6 +4,31 @@ All notable changes to `bca-mcp` are documented here.
 
 This project follows [Semantic Versioning](https://semver.org/) and [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.6.3] (unreleased)
+
+Fixes from the 2026-10-31 tool probe, in lockstep with @blockchainacademics/mcp 0.6.3. 104 → 105 tools.
+
+### Added
+
+- `get_as_of_snapshot`: article search pinned to the corpus as it stood at a past date, ported from the TypeScript package. Both packages now list the same 105 tools.
+- MCP tool annotations on every tool: a `title` ("Get price"), `openWorldHint: true`, `readOnlyHint: true` on read tools, and `readOnlyHint: false`, `destructiveHint: false`, `idempotentHint: false` on the eight tools that create a record or start a job.
+
+### Fixed
+
+- Failed tool calls return `isError: true`. 0.6.2 sent the error body with `isError: false`, so clients read errors as results.
+- Invalid arguments give `BCA_BAD_REQUEST` with `field: problem` pairs (`Invalid arguments for book_kol_campaign: budget_usd: Input should be greater than or equal to 500`) instead of a raw validation dump. A rejected `monitor_keyword` webhook is `BCA_BAD_REQUEST` too (was `BCA_UNKNOWN`).
+- When the API rejects a request (4xx), the error message carries the API's explanation, up to 500 characters, fenced as untrusted content. 5xx errors stay generic.
+- `translate_contract` sends the contract as `code`, the API's field name. 0.6.2 sent `source_code`, which the API rejected on every call.
+- The service tools take the fields the API requires (changed parameters; the 0.6.2 shapes never worked):
+  - `book_kol_campaign`: `contact_email`, `project_name`, `campaign_type` (thread, video, space, podcast, hybrid) and `budget_usd` (whole dollars, 500 to 2,000,000); optional `project_slug`, `contact_name`, `company`, `target_chains`, `notes`. `objective`, `target_audience` and `launch_window_days` are gone.
+  - `submit_listing`: `contact_email`, `directory` (vcs, aggregators, trading_bots, mcps, nft_communities, jobs, stablecoins, trading_yields), `listing_name`, `listing_url` and `description` (20 to 2,000 characters); optional `contact_name`, `tags`. `entity` is gone.
+  - `request_custom_research`: `topic` needs 4 to 240 characters; `deadline_days` (never read by the API) is replaced by the API's `deadline`, plus optional `target_wordcount`, `contact_name`, `company`, `notes`.
+  - Descriptions say what the API returns (`request_id`, `status`, `next_step`) and that the tools are free to call with any API key from the free tier up, not "Pro tier".
+- Tool schemas advertise type, enum and bounds directly on optional fields (no `anyOf` null branch, no generated titles). `generate_tokenomics_model` advertises its `scenarios` default, `generate_due_diligence` bounds each `focus` entry, and `list_entity_mentions` defaults `limit` to 50 like the TypeScript package.
+- Demo banner: "16 tools work without a key" (was "~10 tools"). The README lists the 16.
+- `get_explainer`: 38 lessons in 8 courses (was 43 in 9), with examples that exist. `list_topics` names only topics in the taxonomy.
+- The User-Agent and `serverInfo.version` report 0.6.3 (`serverInfo` showed the MCP SDK's version).
+
 ## [0.6.2] — 2026-10-19
 
 ### Added — live crypto jobs (lockstep with @blockchainacademics/mcp 0.6.2)

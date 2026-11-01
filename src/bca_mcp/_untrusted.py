@@ -53,3 +53,19 @@ def neutralize_fence_tokens(text: str) -> str:
     if not isinstance(text, str) or not text:
         return text
     return _FENCE_TAG_RE.sub(_escape_tag, text)
+
+
+def wrap_untrusted(source: str, text: str) -> str:
+    """Fence one upstream string: neutralize embedded fence tags, then wrap it
+    in ``<untrusted_content source="...">`` so the host model reads it as data.
+
+    Same bytes as the per-field fences the tool modules apply to article
+    bodies and job output. Non-strings and empty strings pass through.
+    """
+    if not isinstance(text, str) or not text:
+        return text
+    return (
+        f'<untrusted_content source="{source}">\n'
+        f"{neutralize_fence_tokens(text)}\n"
+        "</untrusted_content>"
+    )

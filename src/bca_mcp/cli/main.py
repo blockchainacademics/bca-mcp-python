@@ -35,7 +35,7 @@ from bca_mcp.cli.runner import err_console, handle_errors, run_async
 
 app = typer.Typer(
     name="bca",
-    help="Blockchain Academics CLI — crypto intelligence for terminals + scripts.",
+    help="Blockchain Academics CLI: crypto intelligence for terminals + scripts.",
     no_args_is_help=True,
     add_completion=False,
 )
@@ -367,7 +367,7 @@ async def agent(
         as_json(res)
         raise typer.Exit(code=1)
 
-    console.print(f"[cyan]Job[/cyan] {job_id} [dim]submitted — polling…[/dim]")
+    console.print(f"[cyan]Job[/cyan] {job_id} [dim]submitted, polling…[/dim]")
     start = time.monotonic()
     with console.status("[dim]Running skill…[/dim]", spinner="dots"):
         while time.monotonic() - start < timeout_s:

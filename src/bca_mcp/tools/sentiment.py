@@ -105,7 +105,7 @@ async def run_get_social_pulse(args: dict[str, Any]) -> ResponseEnvelope[Any]:
 GET_FEAR_GREED_TOOL_NAME = "get_fear_greed"
 
 GET_FEAR_GREED_TOOL_DESCRIPTION = (
-    "Crypto Fear & Greed Index (Alternative.me) — historical series + "
+    "Crypto Fear & Greed Index (Alternative.me): historical series + "
     "BCA interpretation."
 )
 

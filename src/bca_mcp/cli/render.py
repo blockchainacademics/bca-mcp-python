@@ -67,10 +67,10 @@ def news_table(rows: Iterable[dict[str, Any]]) -> None:
     table.add_column("Cite")
     for row in rows:
         table.add_row(
-            str(row.get("published_at") or "—")[:10],
-            str(row.get("title") or "—"),
-            str(row.get("source") or row.get("source_slug") or "—"),
-            str(row.get("cite_url") or row.get("url") or "—"),
+            str(row.get("published_at") or "-")[:10],
+            str(row.get("title") or "-"),
+            str(row.get("source") or row.get("source_slug") or "-"),
+            str(row.get("cite_url") or row.get("url") or "-"),
         )
     console.print(table)
 
@@ -83,21 +83,21 @@ def price_table(rows: Iterable[dict[str, Any]]) -> None:
     table.add_column("Market cap", justify="right")
     for row in rows:
         ch = row.get("change_24h_percent") or row.get("change_24h")
-        ch_str = f"{ch:+.2f}%" if isinstance(ch, (int, float)) else "—"
+        ch_str = f"{ch:+.2f}%" if isinstance(ch, (int, float)) else "-"
         color = "green" if isinstance(ch, (int, float)) and ch >= 0 else "red"
         mc = row.get("market_cap_usd") or row.get("market_cap")
         table.add_row(
-            str(row.get("ticker") or row.get("symbol") or "—").upper(),
-            f"${row.get('price_usd') or row.get('price') or '—'}",
+            str(row.get("ticker") or row.get("symbol") or "-").upper(),
+            f"${row.get('price_usd') or row.get('price') or '-'}",
             f"[{color}]{ch_str}[/{color}]",
-            f"${mc:,.0f}" if isinstance(mc, (int, float)) else "—",
+            f"${mc:,.0f}" if isinstance(mc, (int, float)) else "-",
         )
     console.print(table)
 
 
 def entity_panel(data: dict[str, Any]) -> None:
     title = data.get("name") or data.get("slug") or "entity"
-    kind = data.get("kind") or "—"
+    kind = data.get("kind") or "-"
     body_lines: list[str] = [f"[bold]kind:[/bold] {kind}"]
     for key in ("ticker", "chain", "website", "twitter", "github"):
         val = data.get(key)
@@ -117,7 +117,7 @@ def entity_panel(data: dict[str, Any]) -> None:
 
 def indicator_panel(name: str, entity: str, data: dict[str, Any]) -> None:
     value = data.get("value") if isinstance(data, dict) else data
-    window = data.get("window") if isinstance(data, dict) else "—"
+    window = data.get("window") if isinstance(data, dict) else "-"
     console.print(
         Panel.fit(
             f"[bold]value:[/bold] {value}\n"

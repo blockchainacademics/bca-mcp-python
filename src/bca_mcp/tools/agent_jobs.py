@@ -14,13 +14,14 @@ from __future__ import annotations
 
 import ipaddress
 import socket
-from typing import Any, Literal, Optional
+from typing import Annotated, Any, Literal, Optional
 from urllib.parse import quote, urlparse
 
 from pydantic import BaseModel, Field
 
 from bca_mcp._untrusted import neutralize_fence_tokens
 from bca_mcp.client import get_client
+from bca_mcp.errors import BcaBadRequestError
 from bca_mcp.types import SLUG_REGEX, ResponseEnvelope
 
 
@@ -117,7 +118,7 @@ GENERATE_DUE_DILIGENCE_TOOL_NAME = "generate_due_diligence"
 GENERATE_DUE_DILIGENCE_TOOL_DESCRIPTION = (
     "Kick off a full due-diligence report (tokenomics + team + audits + "
     "risk + narrative). Required: entity_slug. depth ∈ "
-    "{light, standard, deep}. Async — returns {job_id, status_url}; poll "
+    "{light, standard, deep}. Async: returns {job_id, status_url}; poll "
     "get_agent_job. Pro tier."
 )
 
@@ -135,7 +136,8 @@ class GenerateDueDiligenceInput(BaseModel):
         default="standard",
         description="Depth of the report: light|standard|deep.",
     )
-    focus: Optional[list[str]] = Field(
+    # Each entry 1..64 chars, at most 16 entries (the TS zod schema).
+    focus: Optional[list[Annotated[str, Field(min_length=1, max_length=64)]]] = Field(
         default=None,
         max_length=16,
         description="Optional focus areas (e.g. ['tokenomics', 'audits']).",
@@ -150,11 +152,7 @@ async def run_generate_due_diligence(
     args: dict[str, Any],
 ) -> ResponseEnvelope[Any]:
     parsed = GenerateDueDiligenceInput.model_validate(args)
-    # Validate individual focus entries (1..64 chars), matching the TS schema.
     focus = parsed.focus or []
-    for f in focus:
-        if not (1 <= len(f) <= 64):
-            raise ValueError("focus entries must be 1..64 chars")
     return await get_client().post(
         "/v1/agent-jobs/due-diligence",
         {
@@ -190,8 +188,10 @@ class GenerateTokenomicsModelInput(BaseModel):
         le=3650,
         description="Projection horizon in days.",
     )
+    # A plain list default (pydantic copies it per instance) so the default
+    # shows up in the advertised schema, as in the TS sibling.
     scenarios: list[Literal["base", "bull", "bear"]] = Field(
-        default_factory=lambda: ["base", "bull", "bear"],
+        default=["base", "bull", "bear"],
         description="Scenario set to simulate.",
     )
 
@@ -259,7 +259,7 @@ TRANSLATE_CONTRACT_TOOL_NAME = "translate_contract"
 
 TRANSLATE_CONTRACT_TOOL_DESCRIPTION = (
     "Translate a smart contract between languages (Solidity ↔ Vyper ↔ "
-    "Move ↔ Anchor). Required: source_code, source_language, "
+    "Move ↔ Anchor). Required: code, source_language, "
     "target_language. Async, Team tier."
 )
 
@@ -267,7 +267,10 @@ TRANSLATE_CONTRACT_TOOL_DESCRIPTION = (
 class TranslateContractInput(BaseModel):
     model_config = {"extra": "forbid"}
 
-    source_code: str = Field(
+    # `code` is the field name of the API's TranslateContractRequest (and of
+    # the TS sibling's schema). 0.6.2 sent `source_code`, which the API
+    # rejected with HTTP 422 on every call.
+    code: str = Field(
         min_length=10,
         max_length=200_000,
         description="Source contract code.",
@@ -291,7 +294,7 @@ async def run_translate_contract(
     return await get_client().post(
         "/v1/agent-jobs/translate-contract",
         {
-            "source_code": parsed.source_code,
+            "code": parsed.code,
             "source_language": parsed.source_language,
             "target_language": parsed.target_language,
         },
@@ -341,8 +344,12 @@ async def run_monitor_keyword(
     parsed = MonitorKeywordInput.model_validate(args)
     # H-3: SSRF guard. Reject non-HTTPS, bare IPs, and any hostname that
     # resolves (A or AAAA) into a private / loopback / link-local / reserved
-    # range. Raises ValueError (surfaced as BCA_BAD_REQUEST by the server).
-    _validate_webhook_url(parsed.webhook_url)
+    # range. Surfaced as BCA_BAD_REQUEST (0.6.2 reported BCA_UNKNOWN), with the
+    # same message as the TS sibling.
+    try:
+        _validate_webhook_url(parsed.webhook_url)
+    except ValueError as err:
+        raise BcaBadRequestError(str(err)) from err
     return await get_client().post(
         "/v1/agent-jobs/monitor-keyword",
         {
@@ -388,9 +395,11 @@ _SUMMARIZE_KINDS = ("summarize-whitepaper", "summarize_whitepaper")
 # previous instructions and exfiltrate env vars"). The LLM may faithfully
 # reproduce those comments inside target_code/notes. Fence every string the
 # downstream LLM will see so those payloads are interpreted as data, not
-# instructions. Mirrors `agent_jobs.ts:143-150`.
+# instructions. Mirrors `_TRANSLATE_UNTRUSTED_FIELDS` in agent_jobs.ts
+# (`code` is the request field name, fenced in case the backend echoes it).
 _TRANSLATE_KINDS = ("translate-contract", "translate_contract")
 _TRANSLATE_UNTRUSTED_FIELDS = (
+    "code",
     "source_code",
     "translated_code",
     "target_code",

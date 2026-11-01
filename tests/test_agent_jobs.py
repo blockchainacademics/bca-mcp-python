@@ -52,7 +52,7 @@ def test_translate_contract_rejects_unknown_language() -> None:
     with pytest.raises(ValidationError):
         TranslateContractInput.model_validate(
             {
-                "source_code": "contract A {}",
+                "code": "contract A {}",
                 "source_language": "solidity",
                 "target_language": "haskell",
             }
@@ -307,7 +307,11 @@ async def test_run_monitor_keyword_rejects_loopback_webhook(monkeypatch) -> None
 
     monkeypatch.setattr(agent_jobs.socket, "getaddrinfo", _fake_getaddrinfo)
     set_client(BcaClient(api_key="k"))
-    with pytest.raises(ValueError, match="non-public"):
+    # Surfaced as BCA_BAD_REQUEST since 0.6.3 (was a bare ValueError, which
+    # the server reported as BCA_UNKNOWN).
+    from bca_mcp.errors import BcaBadRequestError
+
+    with pytest.raises(BcaBadRequestError, match="non-public"):
         await agent_jobs.run_monitor_keyword(
             {"keyword": "x", "webhook_url": "https://my.host/hook"}
         )

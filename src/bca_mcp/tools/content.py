@@ -1,14 +1,14 @@
 """Content & corpus tools (category 1).
 
 Wraps read-only `/v1/articles`, `/v1/topics`, `/v1/entities` endpoints.
-Mirrors the subset of `src/tools/content.ts` that ships in the v0.1
-Python scaffold — further corpus tools (`get_as_of_snapshot`, etc.)
-land in v0.2.
+Mirrors `src/tools/content.ts` (``search_news``, ``get_entity`` and
+``get_explainer`` live in their own modules).
 
 Tool surface exported here:
-  * ``get_article``           — full body + citations for a single article slug
-  * ``list_entity_mentions``  — mention timeline for one entity
-  * ``list_topics``           — topic taxonomy for filter discovery
+  * ``get_article``           full body + citations for a single article slug
+  * ``list_entity_mentions``  mention timeline for one entity
+  * ``list_topics``           topic taxonomy for filter discovery
+  * ``get_as_of_snapshot``    corpus search as of a past date
 
 Each tool is a self-contained module-level triple of
 ``<NAME>``, ``<DESCRIPTION>``, ``<input_schema>()``, and ``run_<name>()``
@@ -24,7 +24,7 @@ from pydantic import BaseModel, Field
 
 from bca_mcp._untrusted import neutralize_fence_tokens
 from bca_mcp.client import get_client
-from bca_mcp.types import ResponseEnvelope
+from bca_mcp.types import SLUG_REGEX, ResponseEnvelope
 
 
 def _wrap_untrusted(source: str, value: Any) -> Any:
@@ -91,7 +91,7 @@ async def run_get_article(args: dict[str, Any]) -> ResponseEnvelope[Any]:
 LIST_ENTITY_MENTIONS_TOOL_NAME = "list_entity_mentions"
 
 LIST_ENTITY_MENTIONS_TOOL_DESCRIPTION = (
-    "Timeline of editorial mentions for an entity — sentiment score, "
+    "Timeline of editorial mentions for an entity: sentiment score, "
     "sentiment bucket, and article linkback per mention. Required field: "
     "'slug' (entity slug). Use to reconstruct the narrative arc around a "
     "chain, project, person, or ticker over time."
@@ -107,10 +107,10 @@ class ListEntityMentionsInput(BaseModel):
         description="Entity slug (chain, project, person, ticker).",
     )
     limit: int = Field(
-        default=20,
+        default=50,
         ge=1,
         le=200,
-        description="Max mentions (default 20, max 200).",
+        description="Max mentions (default 50, max 200).",
     )
     since: Optional[str] = Field(
         default=None,
@@ -152,10 +152,12 @@ async def run_list_entity_mentions(
 
 LIST_TOPICS_TOOL_NAME = "list_topics"
 
+# The ten topics of the API's taxonomy (topic_taxonomy, seeded by
+# scripts/seed_canonical_slugs.py in the API repo). Same list as the TS sibling.
 LIST_TOPICS_TOOL_DESCRIPTION = (
-    "Browse the BCA topic taxonomy (regulation, defi, infra, memecoins, "
-    "security, etc.). No required fields. Use to discover valid filter "
-    "values for search_news."
+    "Browse the BCA topic taxonomy: regulation, defi, nft, layer-2, bitcoin, "
+    "ethereum, solana, stablecoins, rwa and ai-agents. No required fields. "
+    "Use to discover valid filter values for search_news."
 )
 
 
@@ -170,3 +172,58 @@ def list_topics_input_schema() -> dict[str, Any]:
 async def run_list_topics(args: dict[str, Any]) -> ResponseEnvelope[Any]:
     ListTopicsInput.model_validate(args)
     return await get_client().request("/v1/topics")
+
+
+# --- get_as_of_snapshot ----------------------------------------------------
+# Port of `getAsOfSnapshot` in the TS sibling's src/tools/content.ts: the
+# article search, pinned to the corpus as it stood at `as_of`.
+
+GET_AS_OF_SNAPSHOT_TOOL_NAME = "get_as_of_snapshot"
+
+GET_AS_OF_SNAPSHOT_TOOL_DESCRIPTION = (
+    "Time-travel query: return the corpus state as it existed at a specific "
+    "historical date. Enterprise tier. Useful for backtesting and audit "
+    "trails."
+)
+
+
+class GetAsOfSnapshotInput(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    as_of: str = Field(
+        max_length=64,
+        description=(
+            "ISO 8601 timestamp: corpus state at this date (Enterprise tier)."
+        ),
+    )
+    query: Optional[str] = Field(
+        default=None,
+        min_length=1,
+        max_length=512,
+        description="Optional search query.",
+    )
+    entity: Optional[str] = Field(
+        default=None,
+        min_length=1,
+        max_length=240,
+        pattern=SLUG_REGEX,
+        description="Optional entity slug filter.",
+    )
+    limit: int = Field(default=20, ge=1, le=50)
+
+
+def get_as_of_snapshot_input_schema() -> dict[str, Any]:
+    return GetAsOfSnapshotInput.model_json_schema()
+
+
+async def run_get_as_of_snapshot(args: dict[str, Any]) -> ResponseEnvelope[Any]:
+    parsed = GetAsOfSnapshotInput.model_validate(args)
+    return await get_client().request(
+        "/v1/articles/search",
+        {
+            "as_of": parsed.as_of,
+            "q": parsed.query,
+            "entity": parsed.entity,
+            "limit": parsed.limit,
+        },
+    )

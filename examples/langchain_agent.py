@@ -30,7 +30,7 @@ async def _demo(query: str) -> None:
         from langchain_mcp_adapters.tools import load_mcp_tools  # type: ignore
     except ImportError:
         print(
-            "langchain-mcp-adapters not installed — run:\n"
+            "langchain-mcp-adapters not installed. Run:\n"
             "  pip install langchain-mcp-adapters\n",
             file=sys.stderr,
         )

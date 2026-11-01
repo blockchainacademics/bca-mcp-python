@@ -1,14 +1,14 @@
 # bca-mcp
 
-The canonical crypto MCP server for AI agents — **Python edition**. 3,500+ editorial articles, 200+ entity dossiers, 43 academy lessons, and live market data — accessible as MCP tools your agent can call natively.
+The canonical crypto MCP server for AI agents, **Python edition**: 3,500+ editorial articles, 200+ entity dossiers, 38 academy lessons in 8 courses, and live market data, as MCP tools your agent can call natively.
 
 Sibling of [`@blockchainacademics/mcp`](https://www.npmjs.com/package/@blockchainacademics/mcp) (TypeScript). Same REST API. Same attribution contract. Use whichever fits your stack.
 
-**v0.6 ships the full 105-tool catalog + the `bca` CLI** — the most-used corpus + market endpoints, plus a terminal-first way to explore them. Later versions expand toward parity with the TS sibling (102 tools). Starting narrow on the MCP surface is deliberate: tight tools, sharp descriptions, low-risk publish.
+**v0.6 ships the full 105-tool catalog plus the `bca` CLI.** The tool names match the TypeScript package one for one, and the CLI gives you a terminal-first way to explore the same API.
 
 ## Why
 
-LLMs hallucinate about crypto. BCA ships ground-truth editorial content with full attribution. Plug this MCP server into Claude Desktop, LangChain, LlamaIndex, Eliza, or any MCP-compatible agent and your model queries the BCA corpus like any other tool — with `cite_url`, `as_of`, and `source_hash` on every response.
+LLMs hallucinate about crypto. BCA ships ground-truth editorial content with full attribution. Plug this MCP server into Claude Desktop, LangChain, LlamaIndex, Eliza, or any MCP-compatible agent and your model queries the BCA corpus like any other tool, with `cite_url`, `as_of`, and `source_hash` on every response.
 
 ## Install
 
@@ -22,7 +22,11 @@ uvx bca-mcp
 
 ## Zero-config first run (no API key needed)
 
-`uvx bca-mcp` works out of the box. The package ships with a public demo key baked in that unlocks 10 marquee tools (`get_price`, `get_trending`, `get_fear_greed`, `get_market_overview`, `search_news`, `get_sentiment`, `get_entity`, `get_explainer`, `get_recent_stories`, `get_topic`). Shared global cap of 100 calls/day + 20/day per IP. On startup the server emits a one-time banner to stderr noting the demo mode is active.
+`uvx bca-mcp` works out of the box. The package ships with a public demo key, and 16 tools work without a key of your own:
+
+`get_price`, `get_trending`, `get_fear_greed`, `get_market_overview`, `search_news`, `get_sentiment`, `get_entity`, `get_explainer`, `get_recent_stories`, `get_topic`, `search_grants`, `get_grant`, `list_jobs`, `get_job`, `search_academy`, `get_as_of_snapshot`.
+
+Every other tool answers without a key with a clean upgrade message (`BCA_TIER_LOCKED`) that links the free signup. The demo key is shared: 100 calls a day across all demo users, 20 a day per IP address, 1 per second. On startup the server prints a one-time banner on stderr while demo mode is active.
 
 ## Configure (unlock all 105 tools)
 
@@ -37,7 +41,7 @@ export BCA_API_BASE="https://api.blockchainacademics.com"
 # BCA_API_BASE_URL is also accepted as a legacy alias
 ```
 
-> When `BCA_API_KEY` is set the demo banner is suppressed and you get the full 99-tool surface. When it's unset, every response carries `meta.tier: "demo"` and `meta.upgrade_url` so your agent can detect the demo path.
+> When `BCA_API_KEY` is set, the demo banner is suppressed and all 105 tools are open to your key's tier (some need a paid tier). When it's unset, every response carries `meta.tier: "demo"` and `meta.upgrade_url` so your agent can detect the demo path.
 
 ## Use from Claude Desktop
 
@@ -70,7 +74,9 @@ Full 105-tool surface (add your key from blockchainacademics.com/crypto-api/sign
 }
 ```
 
-Restart Claude Desktop — the tools appear in the tool picker. If you installed via `pipx`, you can swap `"command": "bca-mcp"` with empty `args` (a console-script entry point is registered by the package).
+Restart Claude Desktop and the tools appear in the tool picker. If you installed via `pipx`, you can swap `"command": "bca-mcp"` with empty `args` (a console-script entry point is registered by the package).
+
+Every tool carries MCP annotations: a readable `title`, `readOnlyHint: true` on the read tools, and `readOnlyHint: false` on the eight tools that create a record or start a job (`submit_listing`, `book_kol_campaign`, `request_custom_research`, `monitor_keyword`, `generate_due_diligence`, `generate_tokenomics_model`, `summarize_whitepaper`, `translate_contract`), so clients can ask before running those.
 
 ## Use from LangChain
 
@@ -99,11 +105,11 @@ Full worked example in [`examples/langchain_agent.py`](./examples/langchain_agen
 
 ## Use from Eliza
 
-See [`examples/eliza_plugin.md`](./examples/eliza_plugin.md) for integration notes — `bca-mcp` plugs into Eliza's MCP plugin surface as a stdio-transport server.
+See [`examples/eliza_plugin.md`](./examples/eliza_plugin.md) for integration notes: `bca-mcp` plugs into Eliza's MCP plugin surface as a stdio-transport server.
 
 ## The `bca` CLI
 
-`pip install bca-mcp` also registers a terminal-first CLI. It talks to the same REST API as the MCP server — handy for debugging, quick lookups, and shell pipelines.
+`pip install bca-mcp` also registers a terminal-first CLI. It talks to the same REST API as the MCP server, which makes it handy for debugging, quick lookups, and shell pipelines.
 
 ```bash
 bca login                                # store API key in ~/.bca/config.toml (chmod 600)
@@ -112,27 +118,27 @@ bca entity ethereum                      # dossier panel
 bca price BTC,ETH,SOL                    # spot + 24h change table
 bca market overview -n 10                # top-N by market cap
 bca indicator coverage-index bitcoin -w 30d
-bca explainer what-is-a-blockchain       # rendered markdown
+bca explainer defi-fundamentals          # rendered markdown
 bca agent summarize-whitepaper --url https://ethereum.org/…
 bca version                              # CLI + live API version
 ```
 
 Every command accepts `--json` for unformatted output suitable for `jq` pipelines. Env vars (`BCA_API_KEY`, `BCA_API_BASE`) take precedence over `~/.bca/config.toml`.
 
-## Tool catalog (the first 8 tools; all 105 at https://blockchainacademics.com/crypto-api/tools)
+## Tool catalog (a selection; all 105 at https://blockchainacademics.com/crypto-api/tools)
 
-| Tool | Category | Endpoint | Tier |
-|---|---|---|---|
-| `search_news` | content | `GET /v1/articles/search` | Starter |
-| `get_article` | content | `GET /v1/articles/{slug}` | Starter |
-| `get_entity` | content | `GET /v1/entities/{slug}` | Starter |
-| `list_entity_mentions` | content | `GET /v1/entities/{slug}/mentions` | Starter |
-| `list_topics` | content | `GET /v1/topics` | Starter |
-| `get_explainer` | content | `GET /v1/academy/{slug}` | Starter |
-| `get_price` | market | `GET /v1/market/price` | Starter |
-| `get_market_overview` | market | `GET /v1/market/overview` | Starter |
+| Tool | Category | Endpoint | Tier | Without a key |
+|---|---|---|---|---|
+| `search_news` | content | `GET /v1/articles/search` | Free | yes |
+| `get_article` | content | `GET /v1/articles/{slug}` | Free | no |
+| `get_entity` | content | `GET /v1/entities/{slug}` | Free | yes |
+| `list_entity_mentions` | content | `GET /v1/entities/{slug}/mentions` | Free | no |
+| `list_topics` | content | `GET /v1/topics` | Free | no |
+| `get_explainer` | content | `GET /v1/academy/{slug}` | Free | yes |
+| `get_price` | market | `GET /v1/market/price` | Free | yes |
+| `get_market_overview` | market | `GET /v1/market/overview` | Free | yes |
 
-All v0.1 tools are **free tier** — no paid plan required to call them.
+All eight work with a free API key. "Without a key" marks the ones open in demo mode.
 
 ### Tool details
 
@@ -146,58 +152,71 @@ Required: `slug` (1–240 chars).
 Required: **exactly one** of `slug` (e.g. `"vitalik-buterin"`) or `ticker` (e.g. `"ETH"`, case-insensitive). Aliases resolve automatically (`CZ` → `changpeng-zhao`, `Maker` → `makerdao`, `BSC` → `bnb-chain`, …).
 
 #### `list_entity_mentions`
-Required: `slug` (entity). Optional: `since` (ISO 8601), `limit` (1–200, default 20).
+Required: `slug` (entity). Optional: `since` (ISO 8601), `limit` (1–200, default 50).
 
 #### `list_topics`
 No arguments.
 
 #### `get_explainer`
-Required: **exactly one** of `slug` (e.g. `"what-is-a-blockchain"`) or `topic` (keyword).
+Required: **exactly one** of `slug` (an academy course slug, e.g. `"defi-fundamentals"`) or `topic` (keyword, e.g. `"defi"`).
 
 #### `get_price`
-Required: `ids` (comma-separated CoinGecko IDs, e.g. `"bitcoin,ethereum"` — NOT exchange tickers). Optional: `vs` (quote currency, default `usd`).
+Required: `ids` (comma-separated CoinGecko IDs, e.g. `"bitcoin,ethereum"`, not exchange tickers). Optional: `vs` (quote currency, default `usd`).
 
 #### `get_market_overview`
 Optional: `limit` (1–100, default 20).
 
 ## Attribution contract
 
-Every response includes a structured `attribution` block:
+Every response is the same envelope, with a structured `attribution` block:
 
 ```json
 {
   "data": { ... },
   "attribution": {
-    "cite_url": "https://blockchainacademics.com/...",
-    "as_of": "2026-04-19T12:34:56Z",
-    "source_hash": "sha256:..."
+    "citations": [
+      {
+        "cite_url": "https://blockchainacademics.com/...",
+        "as_of": "2026-04-19T12:34:56Z",
+        "source_hash": "sha256:..."
+      }
+    ]
   },
-  "meta": null
+  "meta": {
+    "status": "complete",
+    "request_id": "req_...",
+    "pageInfo": { "hasNextPage": false, "hasPreviousPage": false, "startCursor": null, "endCursor": null }
+  }
 }
 ```
 
-**When your agent surfaces BCA content to a user, you MUST link `cite_url`.** This is the core trade: BCA gives agents ground-truth citations; agents give BCA distribution. `as_of` and `source_hash` let downstream systems detect staleness and verify content integrity. Fields are preserved as `null` (not dropped) when upstream omits them, so agents can detect missing provenance explicitly.
+**When your agent surfaces BCA content to a user, you MUST link the citation's `cite_url`.** This is the core trade: BCA gives agents ground-truth citations; agents give BCA distribution. `as_of` and `source_hash` let downstream systems detect staleness and verify content integrity. Fields are preserved as `null` (not dropped) when upstream omits them, so agents can detect missing provenance explicitly.
+
+The MCP server returns `data` inside an `<untrusted_content source="bca-api">` fence so the host model reads upstream text as data, not instructions. `attribution` and `meta` stay structured.
 
 ## Degraded-state envelopes
 
-The BCA API sometimes returns `status=integration_pending` or `status=upstream_error` envelopes (200 HTTP) when a specific data source is temporarily unavailable. **The MCP server passes these through as successful tool responses** — your agent sees the envelope and decides how to surface it. This matches the TS sibling's behavior.
+When a data source is empty, stale or temporarily unavailable, the API still answers HTTP 200 and says so in `meta.status`: `unseeded`, `partial` or `stale` instead of `complete`. **The MCP server passes these through as successful tool responses**, so your agent sees the status and decides how to surface it. The legacy `integration_pending` and `upstream_error` statuses of older API deploys arrive as `unseeded` and `partial`. This matches the TS sibling's behavior.
 
 ## Errors
 
-The server never crashes the stdio process. All failures surface as MCP responses with `isError: true` and a JSON body:
+The server never crashes the stdio process. Every failure is an MCP tool result with `isError: true` and a JSON body:
 
 ```json
-{ "error": { "code": "BCA_AUTH", "message": "..." } }
+{ "error": { "code": "BCA_BAD_REQUEST", "message": "Invalid arguments for book_kol_campaign: budget_usd: Input should be greater than or equal to 500" } }
 ```
+
+Invalid arguments are rejected before any request is sent, with one `field: problem` pair per issue, separated by `; `. When the API itself rejects a request (HTTP 4xx), the message adds the API's explanation (up to 500 characters), fenced as untrusted content. 5xx errors stay generic.
 
 | Code | Meaning |
 |---|---|
 | `BCA_AUTH` | Invalid `BCA_API_KEY` (HTTP 401/403) |
-| `BCA_TIER_LOCKED` | Tool not in your current tier's allowlist (HTTP 403). Demo tier sees this on 91 of the 105 tools — the error message includes the upgrade URL. |
-| `BCA_RATE_LIMIT` | Rate limit exceeded (HTTP 429 — honor `Retry-After`) |
+| `BCA_TIER_LOCKED` | Tool not in your current tier's allowlist (HTTP 403). Without a key this is the answer on 89 of the 105 tools; the message includes the signup URL. |
+| `BCA_RATE_LIMIT` | Rate limit exceeded (HTTP 429; honor `Retry-After`) |
 | `BCA_UPSTREAM` | BCA API returned 5xx or malformed JSON |
 | `BCA_NETWORK` | Network failure or 20s timeout exceeded |
-| `BCA_BAD_REQUEST` | Invalid tool arguments or 4xx response |
+| `BCA_BAD_REQUEST` | Invalid tool arguments, or a 4xx response from the API |
+| `BCA_UNKNOWN` | Unexpected error inside the server (the process keeps running) |
 
 ## Development
 

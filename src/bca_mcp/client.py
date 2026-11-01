@@ -26,6 +26,7 @@ from typing import Any, Mapping, Optional
 
 import httpx
 
+from bca_mcp._untrusted import neutralize_fence_tokens
 from bca_mcp.errors import (
     BcaAuthError,
     BcaBadRequestError,
@@ -48,11 +49,11 @@ except ImportError:
     # shipped without it (hatchling excluded the ignored file) → import crashed for
     # every pip/uvx user. If it's ever missing from the build again, fall back to
     # the public demo key literal so `import bca_mcp` never fails. This value is
-    # public by design (rate-limited, 10-tool allowlist); source: scripts/demo-key.txt.
+    # public by design (rate-limited, 16-tool allowlist); source: scripts/demo-key.txt.
     BCA_DEMO_KEY_FALLBACK = "bca_demo_a3e1cc71b2b32872cb32516ffc7e8ad8203acb9d"
 
 DEFAULT_BASE = "https://api.blockchainacademics.com"
-USER_AGENT = "bca-mcp/0.6.2 (+https://github.com/blockchainacademics/bca-mcp-python)"
+USER_AGENT = "bca-mcp/0.6.3 (+https://github.com/blockchainacademics/bca-mcp-python)"
 
 # H-1: strict allowlist of base URLs. Env vars and constructor args are both
 # validated against this list at startup. An attacker who controls
@@ -118,7 +119,7 @@ def _warn_legacy_envelope_once() -> None:
             "bca-mcp client: received legacy flat envelope "
             "(top-level cite_url/as_of/source_hash). Upgrading to canonical "
             "shape. Upstream should emit attribution.citations[] + meta.* "
-            "directly — this shim is temporary."
+            "directly; this shim is temporary."
         )
 
 
@@ -254,6 +255,79 @@ def _canonicalize_envelope(payload: Any) -> ResponseEnvelope[Any]:
 # Mirrors `MAX_BODY_BYTES` in `src/client.ts`.
 MAX_BODY_BYTES = 10 * 1024 * 1024
 
+# Error bodies are only read for their detail, so they get a far smaller cap.
+MAX_ERROR_BODY_BYTES = 64 * 1024
+# The API's error detail is passed to the host model, cut to this many
+# characters. Same limits as the TypeScript sibling.
+MAX_DETAIL_CHARS = 500
+
+# FastAPI prefixes each validation error location with where the value came
+# from; the caller only needs the field path.
+_LOC_ROOTS = ("body", "query", "path", "header", "cookie")
+
+
+def _render_api_issue(issue: Any) -> Optional[str]:
+    """One FastAPI validation error as ``field: msg`` (just ``msg`` when it
+    has no field), or None when it carries no message."""
+    if isinstance(issue, str):
+        return issue
+    if not isinstance(issue, dict):
+        return None
+    msg = issue.get("msg")
+    if not isinstance(msg, str):
+        msg = issue.get("message")
+    if not isinstance(msg, str) or not msg:
+        return None
+    loc = issue.get("loc")
+    segments = list(loc) if isinstance(loc, (list, tuple)) else []
+    if segments and isinstance(segments[0], str) and segments[0] in _LOC_ROOTS:
+        segments = segments[1:]
+    field = ".".join(str(seg) for seg in segments)
+    return f"{field}: {msg}" if field else msg
+
+
+def _render_api_error_detail(body: Any) -> Optional[str]:
+    """The API's error detail from a parsed 4xx body: FastAPI's ``detail``
+    string, or its list of validation errors rendered as ``field: msg``
+    pairs joined by ``"; "``. Falls back to a ``message`` inside ``detail``
+    or inside BCA's ``{error: {message}}`` shape. None when there is no
+    readable detail."""
+    if not isinstance(body, dict):
+        return None
+    detail = body.get("detail")
+    if isinstance(detail, str):
+        return detail.strip() or None
+    if isinstance(detail, list):
+        parts = [p for p in (_render_api_issue(i) for i in detail) if p]
+        return "; ".join(parts) if parts else None
+    if isinstance(detail, dict) and isinstance(detail.get("message"), str):
+        return detail["message"].strip() or None
+    error = body.get("error")
+    if isinstance(error, dict) and isinstance(error.get("message"), str):
+        return error["message"].strip() or None
+    return None
+
+
+def _read_error_json(res: httpx.Response) -> Any:
+    """Parsed JSON error body, or None when it is missing, huge or not JSON."""
+    if len(res.content) > MAX_ERROR_BODY_BYTES:
+        return None
+    try:
+        return res.json()
+    except (ValueError, _json.JSONDecodeError):
+        return None
+
+
+def _api_error_detail(res: httpx.Response) -> Optional[str]:
+    """The API's explanation of a rejected (4xx) request, cut to
+    ``MAX_DETAIL_CHARS``. It is upstream text: the MCP server fences it as
+    untrusted content (which also neutralizes fence tags) before a model
+    reads it. Non-JSON bodies (a proxy's HTML page) give None."""
+    detail = _render_api_error_detail(_read_error_json(res))
+    if detail is None:
+        return None
+    return detail[:MAX_DETAIL_CHARS]
+
 # Module-level guard so we only warn once per process when a non-default
 # BCA_API_BASE is in use. Exposed via `reset_nondefault_warning()` so tests
 # can reset state between cases.
@@ -313,7 +387,7 @@ class BcaClient:
         self._is_nondefault_base = resolved != DEFAULT_BASE
 
         # Auth fallback chain (v0.5.0): explicit > env > demo. The demo key
-        # is public, rate-limited, and gated to a 10-tool allowlist by the
+        # is public, rate-limited, and gated to a 16-tool allowlist by the
         # backend. The fallback exists so `uvx bca-mcp` is a true zero-config
         # first-run experience instead of a BCA_AUTH wall on every tool call.
         user_key = api_key or os.environ.get("BCA_API_KEY")
@@ -444,28 +518,33 @@ class BcaClient:
             # includes the upgrade URL.
             upstream_code: Optional[str] = None
             upstream_msg: Optional[str] = None
-            try:
-                body_json = res.json()
-                if isinstance(body_json, dict):
-                    err = body_json.get("error")
-                    if isinstance(err, dict):
-                        c = err.get("code")
-                        m = err.get("message")
-                        if isinstance(c, str):
-                            upstream_code = c
-                        if isinstance(m, str):
-                            upstream_msg = m
-                    # FastAPI HTTPException uses {detail, ...}; check our
-                    # X-BCA-Error-Code header as the code source then.
-                    hdr_code = res.headers.get("x-bca-error-code")
-                    if upstream_code is None and hdr_code:
-                        upstream_code = hdr_code
-                    if upstream_msg is None:
-                        det = body_json.get("detail")
-                        if isinstance(det, str):
-                            upstream_msg = det
-            except (ValueError, _json.JSONDecodeError):
-                pass
+            body_json = _read_error_json(res)
+            if isinstance(body_json, dict):
+                err = body_json.get("error")
+                if isinstance(err, dict):
+                    c = err.get("code")
+                    m = err.get("message")
+                    if isinstance(c, str):
+                        upstream_code = c
+                    if isinstance(m, str):
+                        upstream_msg = m
+                # FastAPI HTTPException uses {detail, ...}; check our
+                # X-BCA-Error-Code header as the code source then.
+                hdr_code = res.headers.get("x-bca-error-code")
+                if upstream_code is None and hdr_code:
+                    upstream_code = hdr_code
+                if upstream_msg is None:
+                    det = body_json.get("detail")
+                    if isinstance(det, str):
+                        upstream_msg = det
+            # A body that wasn't JSON falls through to the generic auth error.
+            # The message is shown verbatim (it carries the signup link), so
+            # it is only capped and has any fence tag neutralized (as in the
+            # TS sibling).
+            if upstream_msg is not None:
+                upstream_msg = (
+                    neutralize_fence_tokens(upstream_msg[:MAX_DETAIL_CHARS]) or None
+                )
             if upstream_code == "BCA_TIER_LOCKED":
                 raise BcaError(
                     "BCA_TIER_LOCKED",
@@ -483,12 +562,19 @@ class BcaClient:
                 except ValueError:
                     retry_after = None
             raise BcaRateLimitError(retry_after)
+        # 5xx stays generic: server internals never reach the host model.
         if res.status_code >= 500:
             raise BcaUpstreamError(res.status_code)
         if 400 <= res.status_code < 500:
-            # 4xx (other than 401/403/429) = bad request from caller.
+            # 4xx (other than 401/403/429) = bad request from caller. Carry
+            # the API's own explanation (a 404's "Job ... not found", a 422's
+            # field errors) so the caller can fix the call. It is upstream
+            # text: capped here, fenced as untrusted content by the MCP
+            # server before a model reads it.
             raise BcaBadRequestError(
-                f"BCA API rejected request: HTTP {res.status_code}"
+                f"BCA API rejected request: HTTP {res.status_code}",
+                status=res.status_code,
+                detail=_api_error_detail(res),
             )
         if not (200 <= res.status_code < 300):
             raise BcaUpstreamError(

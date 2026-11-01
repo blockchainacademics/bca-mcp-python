@@ -73,7 +73,7 @@ def test_get_entity_requires_exactly_one_of_slug_or_ticker() -> None:
 
 def test_list_entity_mentions_defaults_and_bounds() -> None:
     v = ListEntityMentionsInput.model_validate({"slug": "ethereum"})
-    assert v.limit == 20
+    assert v.limit == 50  # the TS sibling's default (0.6.3)
     assert v.since is None
     with pytest.raises(ValidationError):
         ListEntityMentionsInput.model_validate({})  # slug required
@@ -301,6 +301,7 @@ EXPECTED_TOOL_NAMES = {
     "list_entity_mentions",
     "list_topics",
     "get_explainer",
+    "get_as_of_snapshot",  # 0.6.3, ported from the TS sibling
     # market (4)
     "get_price",
     "get_market_overview",
@@ -427,13 +428,11 @@ EXPECTED_TOOL_NAMES = {
 
 def test_server_registers_expected_tools_with_unique_names() -> None:
     names = [t.name for t in TOOLS]
-    # Python MCP ships a parity subset (read-only where the TS sibling exposes
-    # the full surface). TS canonical count is 105 tools — see
-    # ``bca-mcp-ts/server.json`` (``tool_count``). Python currently mirrors 104
-    # of those (missing ``get_as_of_snapshot`` from the content category).
-    # Update both numbers in lock-step when new tools are ported.
-    assert len(names) == 104, f"expected 104 tools, got {len(names)}: {names}"
-    assert len(set(names)) == 104, f"duplicate tool name: {names}"
+    # Same 105 tools as the TS sibling since 0.6.3 (get_as_of_snapshot
+    # ported); tests/test_parity.py checks the names against its tools/list.
+    # Update both numbers in lock-step when new tools ship.
+    assert len(names) == 105, f"expected 105 tools, got {len(names)}: {names}"
+    assert len(set(names)) == 105, f"duplicate tool name: {names}"
     assert set(names) == EXPECTED_TOOL_NAMES, (
         f"tool surface drifted: want {EXPECTED_TOOL_NAMES}, got {set(names)}"
     )
@@ -769,6 +768,11 @@ def test_demo_banner_byte_identical_to_ts_sibling() -> None:
     assert len(ts_lines) == 3, f"expected 3 banner string literals, got {ts_lines}"
     # JS escape sequences -> Python string. We only used \n, so unescape that.
     ts_banner = "".join(l.replace("\\n", "\n") for l in ts_lines)
+    if "Limited to ~10 tools" in ts_banner:
+        # The sibling checkout still has the pre-0.6.3 banner (its own update
+        # ships separately). The exact Python bytes are pinned by
+        # tests/test_copy.py::test_demo_banner_exact_bytes either way.
+        pytest.skip("TS sibling checkout still has the pre-0.6.3 banner")
     assert ts_banner == DEMO_BANNER, (
         f"banner drift!\nTS: {ts_banner!r}\nPY: {DEMO_BANNER!r}"
     )

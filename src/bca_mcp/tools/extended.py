@@ -12,7 +12,7 @@ schemas verbatim: same regex, same enums, same defaults.
 
 from __future__ import annotations
 
-from typing import Any, Awaitable, Callable, Optional
+from typing import Annotated, Any, Awaitable, Callable, Optional
 from urllib.parse import quote
 
 from pydantic import BaseModel, Field
@@ -636,34 +636,90 @@ async def _run_scan_contract(args: dict[str, Any]) -> ResponseEnvelope[Any]:
 
 
 # ==========================================================================
-# Services — POST (3)
+# Services: POST (3)
 # ==========================================================================
+#
+# Each input model mirrors the API request model in
+# blockchainacademics-api app/api/v1/services.py (KOLCampaignRequest,
+# CustomResearchRequest, ListingSubmissionRequest): same field names, same
+# required set, same bounds and enums, so a call that passes here is not
+# rejected upstream with a 422 (0.6.2 sent fields the API does not read and
+# missed required ones). Field order, bounds and wording match the TS
+# sibling's extended.ts. Each endpoint is free to call with any real key
+# (the demo key is not on the demo allowlist), files a service request for a
+# human to review, and answers 201 {request_id, status, next_step}. Only the
+# fields the caller set are sent; the API applies its own defaults.
+
+CampaignType = Literal["thread", "video", "space", "podcast", "hybrid"]
+ListingDirectory = Literal[
+    "vcs", "aggregators", "trading_bots", "mcps",
+    "nft_communities", "jobs", "stablecoins", "trading_yields",
+]
+_HTTP_URL_REGEX = r"^https?://"
+# One target chain or tag: 1..64 characters.
+_ShortText = Annotated[str, Field(min_length=1, max_length=64)]
+
+
+def _service_body(model: BaseModel) -> dict[str, Any]:
+    return model.model_dump(exclude_none=True)
+
+
+def _contact_name_field() -> Any:
+    return Field(default=None, max_length=200, description="Optional contact name.")
+
+
+def _company_field() -> Any:
+    return Field(default=None, max_length=200, description="Optional company name.")
+
+
+def _notes_field(what: str) -> Any:
+    return Field(
+        default=None,
+        max_length=4000,
+        description=f"Optional {what} (up to 4,000 characters).",
+    )
+
 
 class BookKolCampaignInput(BaseModel):
     model_config = {"extra": "forbid"}
     contact_email: str = Field(
         pattern=_EMAIL_REGEX,
         max_length=254,
-        description="Required. Contact email for campaign coordination.",
+        description="Required. Where BCA Studio sends the recommended KOL slate and quote.",
     )
-    budget_usd: float = Field(ge=100)
-    objective: str = Field(min_length=1, max_length=512)
-    target_audience: Optional[str] = Field(default=None, max_length=256)
-    launch_window_days: int = Field(default=30, ge=1, le=365)
+    project_name: str = Field(
+        min_length=2,
+        max_length=200,
+        description="Required. Project or brand name (2 to 200 characters).",
+    )
+    campaign_type: CampaignType = Field(
+        description="Required. Campaign format: thread, video, space, podcast or hybrid.",
+    )
+    budget_usd: int = Field(
+        ge=500,
+        le=2_000_000,
+        description="Required. Budget in whole US dollars, 500 to 2,000,000.",
+    )
+    contact_name: Optional[str] = _contact_name_field()
+    company: Optional[str] = _company_field()
+    project_slug: Optional[str] = Field(
+        default=None,
+        min_length=1,
+        max_length=240,
+        pattern=SLUG_REGEX,
+        description="Optional BCA entity slug for the project (e.g. 'ethereum').",
+    )
+    target_chains: Optional[list[_ShortText]] = Field(
+        default=None,
+        max_length=12,
+        description="Optional chains the campaign targets, up to 12 (e.g. ['solana', 'base']).",
+    )
+    notes: Optional[str] = _notes_field("brief: goals, audience, timing")
 
 
 async def _run_book_kol_campaign(args: dict[str, Any]) -> ResponseEnvelope[Any]:
     p = BookKolCampaignInput.model_validate(args)
-    return await _gc().post(
-        "/v1/services/book-kol-campaign",
-        {
-            "contact_email": p.contact_email,
-            "budget_usd": p.budget_usd,
-            "objective": p.objective,
-            "target_audience": p.target_audience,
-            "launch_window_days": p.launch_window_days,
-        },
-    )
+    return await _gc().post("/v1/services/book-kol-campaign", _service_body(p))
 
 
 class RequestCustomResearchInput(BaseModel):
@@ -671,54 +727,75 @@ class RequestCustomResearchInput(BaseModel):
     contact_email: str = Field(
         pattern=_EMAIL_REGEX,
         max_length=254,
-        description="Required. Contact email for report delivery.",
+        description="Required. Where BCA Research sends the scope and quote.",
     )
-    topic: str = Field(min_length=1, max_length=256)
-    depth: ResearchDepth = "standard"
-    deadline_days: int = Field(default=7, ge=1, le=30)
+    topic: str = Field(
+        min_length=4,
+        max_length=240,
+        description="Required. What to research (4 to 240 characters).",
+    )
+    depth: ResearchDepth = Field(
+        default="standard",
+        description="Report depth: light, standard or deep.",
+    )
+    target_wordcount: int = Field(
+        default=3000,
+        ge=500,
+        le=20_000,
+        description="Target report length in words, 500 to 20,000.",
+    )
+    deadline: Optional[str] = Field(
+        default=None,
+        max_length=40,
+        description=(
+            "Optional deadline: an ISO date or free text such as "
+            "'within 2 weeks' (up to 40 characters)."
+        ),
+    )
+    contact_name: Optional[str] = _contact_name_field()
+    company: Optional[str] = _company_field()
+    notes: Optional[str] = _notes_field("notes for the research team")
 
 
 async def _run_request_custom_research(args: dict[str, Any]) -> ResponseEnvelope[Any]:
     p = RequestCustomResearchInput.model_validate(args)
-    return await _gc().post(
-        "/v1/services/custom-research",
-        {
-            "contact_email": p.contact_email,
-            "topic": p.topic,
-            "depth": p.depth,
-            "deadline_days": p.deadline_days,
-        },
-    )
+    return await _gc().post("/v1/services/custom-research", _service_body(p))
 
 
 class SubmitListingInput(BaseModel):
     model_config = {"extra": "forbid"}
+    contact_email: str = Field(
+        pattern=_EMAIL_REGEX,
+        max_length=254,
+        description="Required. Where the editorial team replies with featured listing pricing.",
+    )
+    directory: ListingDirectory = Field(description="Required. Target directory.")
     listing_name: str = Field(
-        min_length=1,
-        max_length=128,
-        description="Required. Display name for the listing.",
+        min_length=2,
+        max_length=200,
+        description="Required. Display name for the listing (2 to 200 characters).",
     )
-    directory: str = Field(
-        pattern=SLUG_REGEX,
-        min_length=1,
-        max_length=240,
-        description="Target directory, e.g. 'vcs', 'aggregators'.",
+    listing_url: str = Field(
+        max_length=2083,
+        pattern=_HTTP_URL_REGEX,
+        description="Required. Public http or https URL of the project or product.",
     )
-    entity: str = Field(pattern=SLUG_REGEX, min_length=1, max_length=240)
-    contact_email: str = Field(pattern=_EMAIL_REGEX, max_length=254)
+    description: str = Field(
+        min_length=20,
+        max_length=2000,
+        description="Required. What the listing is (20 to 2,000 characters).",
+    )
+    contact_name: Optional[str] = _contact_name_field()
+    tags: Optional[list[_ShortText]] = Field(
+        default=None,
+        max_length=24,
+        description="Optional tags, up to 24.",
+    )
 
 
 async def _run_submit_listing(args: dict[str, Any]) -> ResponseEnvelope[Any]:
     p = SubmitListingInput.model_validate(args)
-    return await _gc().post(
-        "/v1/services/submit-listing",
-        {
-            "listing_name": p.listing_name,
-            "directory": p.directory,
-            "entity": p.entity,
-            "contact_email": p.contact_email,
-        },
-    )
+    return await _gc().post("/v1/services/submit-listing", _service_body(p))
 
 
 # ==========================================================================
@@ -1069,7 +1146,7 @@ EXTENDED_TOOL_ENTRIES: tuple[tuple[str, str, dict[str, Any], Runner], ...] = (
     ),
     _entry(
         "track_bonkfun",
-        "Solana meme launcher — trending launches.",
+        "Solana meme launcher: trending launches.",
         TrackBonkfunInput, _run_track_bonkfun,
     ),
     _entry(
@@ -1101,7 +1178,7 @@ EXTENDED_TOOL_ENTRIES: tuple[tuple[str, str, dict[str, Any], Runner], ...] = (
     ),
     _entry(
         "get_exchange_flows",
-        "Net in/out from CEXs — smart-money signal. Pro tier.",
+        "Net in/out from CEXs, a smart money signal. Pro tier.",
         GetExchangeFlowsInput, _run_get_exchange_flows,
     ),
     _entry(
@@ -1181,20 +1258,20 @@ EXTENDED_TOOL_ENTRIES: tuple[tuple[str, str, dict[str, Any], Runner], ...] = (
         ScanContractInput, _run_scan_contract,
     ),
 
-    # services — POST (3)
+    # services: POST (3)
     _entry(
         "book_kol_campaign",
-        "Broker a KOL campaign via BCA Studio CRM. Required: contact_email, budget_usd, objective. Pro tier. Returns campaign_id + next steps.",
+        "Send a KOL campaign brief to BCA Studio. Required: contact_email, project_name, campaign_type (thread, video, space, podcast or hybrid) and budget_usd (500 to 2,000,000 USD). Free to submit; needs an API key (the free tier is enough). BCA Studio reviews the brief and emails a recommended KOL slate and quote within 2 business days. Returns request_id, status and next_step.",
         BookKolCampaignInput, _run_book_kol_campaign,
     ),
     _entry(
         "request_custom_research",
-        "Escalate to BCA deep-researcher skill. Required: contact_email, topic. Pro tier. Returns order_id + pricing.",
+        "Request a custom research report from BCA Research. Required: contact_email and topic (4 to 240 characters). Free to submit; needs an API key (the free tier is enough). BCA Research replies with scope and a quote within 2 business days; payment is by Stripe invoice. Returns request_id, status and next_step.",
         RequestCustomResearchInput, _run_request_custom_research,
     ),
     _entry(
         "submit_listing",
-        "Submit a listing to a BCA directory (vcs, aggregators, trading-bots, etc.). Required: listing_name, directory, entity, contact_email. Free to call, paid to feature.",
+        "Submit a listing to a BCA directory: vcs, aggregators, trading_bots, mcps, nft_communities, jobs, stablecoins or trading_yields. Required: contact_email, directory, listing_name, listing_url and description (20 to 2,000 characters). Free to submit (needs an API key; the free tier is enough), paid to be featured: the editorial team reviews each submission and emails featured listing pricing. Returns request_id, status and next_step.",
         SubmitListingInput, _run_submit_listing,
     ),
 

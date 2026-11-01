@@ -1,7 +1,7 @@
 [project]
 name = "bca-mcp"
 version = "0.6.3"
-description = "Blockchain Academics MCP server + `bca` CLI — crypto news, entity dossiers, market data, proprietary indicators, and academy explainers for AI agents"
+description = "Blockchain Academics MCP server + `bca` CLI: crypto news, entity dossiers, market data, proprietary indicators, and academy explainers for AI agents"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
