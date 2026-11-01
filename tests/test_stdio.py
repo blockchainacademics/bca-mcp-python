@@ -89,3 +89,68 @@ async def test_stdio_server_without_key() -> None:
         assert DEMO_BANNER in stderr
     listed_text = json.dumps([t.model_dump(mode="json") for t in out["tools"]], ensure_ascii=False)
     assert "—" not in listed_text
+
+
+def _mcp_floor() -> tuple[int, ...]:
+    pyproject = (Path(__file__).resolve().parent.parent / "pyproject.toml").read_text("utf-8")
+    spec = next(line for line in pyproject.splitlines() if line.strip().startswith('"mcp>='))
+    floor = spec.split(">=", 1)[1].split(",", 1)[0]
+    return tuple(int(part) for part in floor.split("."))
+
+
+def test_mcp_floor_is_a_release_that_survives_hosts() -> None:
+    # mcp before 1.12.3 ends the session on notifications/cancelled, before
+    # 1.9.4 on a malformed request, and before 1.21.1 fails to import next to
+    # pydantic 2.14 (it imports a helper pydantic removed). See the test below.
+    assert _mcp_floor() >= (1, 21, 1)
+
+
+@pytest.mark.asyncio
+async def test_stdio_server_survives_a_cancelled_call_and_a_malformed_call() -> None:
+    # Hosts send notifications/cancelled when the user stops a tool call, and a
+    # broken host can send arguments that are not an object. Neither may end
+    # the session. Raw JSON-RPC lines, since the SDK client will not send a
+    # malformed request.
+    from mcp.client.stdio import get_default_environment
+
+    proc = await asyncio.create_subprocess_exec(
+        sys.executable, "-m", "bca_mcp",
+        stdin=asyncio.subprocess.PIPE,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.DEVNULL,
+        env={**get_default_environment(), "BCA_API_BASE": "http://127.0.0.1:9"},
+    )
+    assert proc.stdin is not None and proc.stdout is not None
+
+    async def send(message: dict) -> None:
+        proc.stdin.write((json.dumps(message) + "\n").encode())
+        await proc.stdin.drain()
+
+    async def reply(request_id: int) -> dict:
+        while True:
+            line = await asyncio.wait_for(proc.stdout.readline(), timeout=30)
+            assert line, f"server exited before answering request {request_id}"
+            message = json.loads(line)
+            if message.get("id") == request_id:
+                return message
+
+    try:
+        await send({"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {
+            "protocolVersion": "2025-06-18", "capabilities": {},
+            "clientInfo": {"name": "bca-mcp-tests", "version": "0"},
+        }})
+        assert "result" in await reply(1)
+        await send({"jsonrpc": "2.0", "method": "notifications/initialized"})
+        await send({"jsonrpc": "2.0", "id": 2, "method": "tools/call",
+                    "params": {"name": "get_price", "arguments": {"ids": "bitcoin"}}})
+        await send({"jsonrpc": "2.0", "method": "notifications/cancelled",
+                    "params": {"requestId": 2, "reason": "user stopped the call"}})
+        await send({"jsonrpc": "2.0", "id": 3, "method": "tools/call",
+                    "params": {"name": "get_price", "arguments": [1, 2]}})
+        assert "error" in await reply(3)
+        await send({"jsonrpc": "2.0", "id": 4, "method": "ping"})
+        assert (await reply(4)).get("result") == {}
+    finally:
+        if proc.returncode is None:
+            proc.kill()
+        await proc.wait()
