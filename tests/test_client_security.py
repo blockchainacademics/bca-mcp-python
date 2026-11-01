@@ -230,3 +230,61 @@ async def test_api_key_never_sent_to_redirect_target(httpx_mock) -> None:
     requests = httpx_mock.get_requests()
     assert len(requests) == 1
     assert "api.blockchainacademics.com" in str(requests[0].url)
+
+
+# --- API key hygiene ------------------------------------------------------
+
+
+def test_api_key_surrounding_whitespace_is_stripped(monkeypatch) -> None:
+    # A pasted key often brings a trailing newline. The TS sibling's fetch
+    # strips it from the header value, so this package does too.
+    monkeypatch.setenv("BCA_API_KEY", "  bca_live_test_key\n")
+    client = BcaClient()
+    assert client._api_key == "bca_live_test_key"
+    assert client.using_demo_key is False
+    assert BcaClient(api_key="bca_live_test_key \r\n")._api_key == "bca_live_test_key"
+
+
+def test_blank_api_key_falls_back_to_the_demo_key(monkeypatch) -> None:
+    monkeypatch.setenv("BCA_API_KEY", " \n")
+    assert BcaClient().using_demo_key is True
+
+
+@pytest.mark.asyncio
+async def test_stripped_key_is_the_header_sent(httpx_mock) -> None:
+    httpx_mock.add_response(
+        url=f"{DEFAULT_BASE}/v1/topics",
+        match_headers={"X-API-Key": "bca_live_test_key"},
+        json={"data": {}},
+    )
+    await BcaClient(api_key="bca_live_test_key\n").request("/v1/topics")
+
+
+@pytest.mark.asyncio
+async def test_invalid_api_key_is_never_echoed_in_a_tool_error() -> None:
+    # h11 refuses a header value with a control character and repeats the
+    # value in its error text, which 0.6.2 passed on as BCA_NETWORK: the
+    # user's key ended up in front of the host model. A throwaway loopback
+    # listener lets the request get that far without leaving the machine.
+    import asyncio
+    import json
+
+    from bca_mcp.server import call_tool
+
+    async def handle(_reader, writer) -> None:
+        writer.close()
+
+    listener = await asyncio.start_server(handle, "127.0.0.1", 0)
+    port = listener.sockets[0].getsockname()[1]
+    secret = "bca_live_SECRETVALUE0123"
+    try:
+        set_client(BcaClient(base_url=f"http://127.0.0.1:{port}", api_key=f"{secret}\r\nX-Injected: 1"))
+        result = await call_tool("list_topics", {})
+    finally:
+        listener.close()
+        await listener.wait_closed()
+    text = result.content[0].text
+    assert result.isError is True
+    assert json.loads(text)["error"]["code"] == "BCA_AUTH"
+    assert "SECRETVALUE" not in text
+    assert "X-Injected" not in text

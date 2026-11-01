@@ -391,6 +391,11 @@ class BcaClient:
         # backend. The fallback exists so `uvx bca-mcp` is a true zero-config
         # first-run experience instead of a BCA_AUTH wall on every tool call.
         user_key = api_key or os.environ.get("BCA_API_KEY")
+        # A key never has surrounding whitespace, but a pasted one often
+        # brings a trailing newline or space. Strip it (fetch does the same
+        # to header values in the TS sibling) instead of failing every call.
+        if user_key:
+            user_key = user_key.strip() or None
         self._api_key = user_key or BCA_DEMO_KEY_FALLBACK or None
         self._using_demo_key = (
             not user_key and bool(BCA_DEMO_KEY_FALLBACK)
@@ -493,6 +498,15 @@ class BcaClient:
                     )
                 else:
                     res = await http.get(url, params=clean_params, headers=headers)
+        except httpx.LocalProtocolError as err:
+            # Raised while the request is built when a header value is not
+            # valid HTTP, and its text repeats that value. The only header
+            # value that varies is X-API-Key, so the text is never passed on:
+            # it would put the user's key in front of the host model.
+            raise BcaAuthError(
+                "BCA_API_KEY is not a valid HTTP header value (it contains "
+                "a control character); check the key"
+            ) from err
         except httpx.HTTPError as err:
             raise BcaNetworkError(err) from err
 

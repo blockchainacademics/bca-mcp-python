@@ -28,6 +28,7 @@ Fixes from the 2026-10-31 tool probe, in lockstep with @blockchainacademics/mcp 
 - Demo banner: "16 tools work without a key" (was "~10 tools"). The README lists the 16.
 - `get_explainer`: 38 lessons in 8 courses (was 43 in 9), with examples that exist. `list_topics` names only topics in the taxonomy.
 - The User-Agent and `serverInfo.version` report 0.6.3 (`serverInfo` showed the MCP SDK's version).
+- A `BCA_API_KEY` with a stray space or newline around it (a pasted key) is trimmed, as the TypeScript package's fetch does, instead of failing every call with a `BCA_NETWORK` error that repeated the whole key to the host model. A key with a line break inside gives `BCA_AUTH`, and the message never repeats the key.
 
 ## [0.6.2] — 2026-10-19
 
