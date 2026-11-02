@@ -18,6 +18,10 @@ jobs:
         with:
           python-version: "3.12"
       - run: python -m pip install --upgrade build
+      # _demo_key.py is generated and gitignored; generate it so the wheel
+      # carries the current demo key (client.py's literal fallback is only a
+      # safety net and goes stale if the key rotates).
+      - run: python scripts/gen_demo_key.py
       - run: python -m build
       - uses: actions/upload-artifact@v4
         with:
