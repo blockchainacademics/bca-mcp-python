@@ -8,7 +8,7 @@ Install:
 
     pip install bca-mcp langchain-mcp-adapters
 
-Run (BCA_API_KEY is optional: without it 16 tools work in demo mode):
+Run (BCA_API_KEY is optional: without it 17 tools work in demo mode):
 
     BCA_API_KEY=... python examples/langchain_agent.py
 

@@ -52,7 +52,8 @@ GET_ARTICLE_TOOL_DESCRIPTION = (
     "Fetch a single editorial crypto article by slug: title, summary, full "
     "body (body_md), publish date, source link, topics, tickers and entity "
     "slugs, with citations. Required field: 'slug'. Use after search_news "
-    "when you need the full text of a specific result."
+    "when you need the full text of a specific result. Works without an API "
+    "key."
 )
 
 # Free-text article fields that carry third-party text. The API nests the

@@ -52,7 +52,7 @@ If a reviewer pushes back and insists on a tool wrapper in `libs/community`, the
 Adds a new third-party integration entry for [`bca-mcp`](https://pypi.org/project/bca-mcp/),
 a Python MCP server that exposes the Blockchain Academics crypto corpus (3,800+ editorial
 articles, 150+ entity dossiers, 38 academy lessons in 8 courses, live market data) as
-105 MCP tools, 16 of which work without an API key.
+105 MCP tools, 17 of which work without an API key.
 
 Changes:
 - **New provider page:** `docs/docs/integrations/providers/blockchain_academics.mdx`
@@ -71,7 +71,7 @@ Changes:
   as_of, source_hash) and an honest `meta.status` on every answer.
 - `bca-mcp` has a TypeScript sibling (`@blockchainacademics/mcp`) with the same 105 tools,
   already listed in the MCP community registry; this PR closes the Python-side docs gap.
-- 16 tools work without a key (demo mode), a free API key opens 52 (every tool the notebook
+- 17 tools work without a key (demo mode), a free API key opens 52 (every tool the notebook
   calls among them) and paid plans open the rest, so reviewers and new users can run the
   notebook end-to-end with no billing friction.
 
@@ -116,7 +116,7 @@ Changes:
 
 | # | Type | Purpose |
 |---|---|---|
-| 1 | Markdown | **Header + one-paragraph overview.** What BCA is, what the 105 tools cover (16 without a key), the attribution contract, link to the signup page for a free key. |
+| 1 | Markdown | **Header + one-paragraph overview.** What BCA is, what the 105 tools cover (17 without a key), the attribution contract, link to the signup page for a free key. |
 | 2 | Markdown | **Setup.** Note: needs Python 3.11 or later, a free `BCA_API_KEY`, and `langchain-mcp-adapters`. |
 | 3 | Code | **Install.** `%pip install --quiet bca-mcp langchain-mcp-adapters langgraph` plus the chat model package of the reader's choice. |
 | 4 | Code | **Imports + env.** `import asyncio, os, sys; from mcp import ClientSession, StdioServerParameters; from mcp.client.stdio import stdio_client; from langchain_mcp_adapters.tools import load_mcp_tools`. Sets `os.environ["BCA_API_KEY"]` via `getpass` if not already set. |
@@ -142,7 +142,7 @@ Changes:
 - [ ] **Rotate PyPI publish token**: revoke the v0.1.0 upload token, mint a scoped-to-`bca-mcp` token, store in 1Password under `PyPI / bca-mcp` (or publish through the trusted publishing workflow)
 - [ ] `pip install bca-mcp` installs clean on fresh venvs: 3.11, 3.12 (macOS arm64, Linux x86_64)
 - [ ] `pipx install bca-mcp && bca --help` works (console script entry points register)
-- [ ] `python -m bca_mcp` starts without `BCA_API_KEY` set in demo mode: a one-time stderr banner, and 16 tools answer
+- [ ] `python -m bca_mcp` starts without `BCA_API_KEY` set in demo mode: a one-time stderr banner, and 17 tools answer
 - [ ] `dist/` contains both wheel + sdist; both pass `twine check`
 
 ### README coverage
@@ -196,7 +196,7 @@ Changes:
 
 ### Q4. "Does the Python package cover the same tools as the TypeScript one?"
 
-**Answer:** Yes. Both packages expose the same 105 tools with the same names, input schemas and annotations, and both talk to the same REST API with the same attribution contract. 16 of them work without a key, a free key opens 52, and paid plans open the rest; without a key, the other 89 answer with a clean upgrade message. Reviewers can test end-to-end on a free-tier key.
+**Answer:** Yes. Both packages expose the same 105 tools with the same names, input schemas and annotations, and both talk to the same REST API with the same attribution contract. 17 of them work without a key, a free key opens 52, and paid plans open the rest; without a key, the other 88 answer with a clean upgrade message. Reviewers can test end-to-end on a free-tier key.
 
 ### Q5. "How do you handle auth? API key in env var is fine for Claude Desktop but what about shared infra?"
 

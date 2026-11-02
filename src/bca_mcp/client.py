@@ -49,7 +49,7 @@ except ImportError:
     # shipped without it (hatchling excluded the ignored file) → import crashed for
     # every pip/uvx user. If it's ever missing from the build again, fall back to
     # the public demo key literal so `import bca_mcp` never fails. This value is
-    # public by design (rate-limited, 16-tool allowlist); source: scripts/demo-key.txt.
+    # public by design (rate-limited, 17-tool allowlist); source: scripts/demo-key.txt.
     BCA_DEMO_KEY_FALLBACK = "bca_demo_a3e1cc71b2b32872cb32516ffc7e8ad8203acb9d"
 
 DEFAULT_BASE = "https://api.blockchainacademics.com"
@@ -387,7 +387,7 @@ class BcaClient:
         self._is_nondefault_base = resolved != DEFAULT_BASE
 
         # Auth fallback chain (v0.5.0): explicit > env > demo. The demo key
-        # is public, rate-limited, and gated to a 16-tool allowlist by the
+        # is public, rate-limited, and gated to a 17-tool allowlist by the
         # backend. The fallback exists so `uvx bca-mcp` is a true zero-config
         # first-run experience instead of a BCA_AUTH wall on every tool call.
         user_key = api_key or os.environ.get("BCA_API_KEY")

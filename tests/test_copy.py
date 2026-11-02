@@ -13,12 +13,14 @@ from bca_mcp.server import TOOLS
 ROOT = Path(__file__).resolve().parent.parent
 EM_DASH = "—"
 
-# The API's demo allowlist (blockchainacademics-api app/api/v1/_demo_allowlist.py).
+# The API's demo allowlist (blockchainacademics-api app/api/v1/_demo_allowlist.py;
+# 2026-11-02: the 16 of 2026-10-31 plus get_article).
 DEMO_TOOLS = (
     "get_price", "get_trending", "get_fear_greed", "get_market_overview",
-    "search_news", "get_sentiment", "get_entity", "get_explainer",
-    "get_recent_stories", "get_topic", "search_grants", "get_grant",
-    "list_jobs", "get_job", "search_academy", "get_as_of_snapshot",
+    "search_news", "get_article", "get_sentiment", "get_entity",
+    "get_explainer", "get_recent_stories", "get_topic", "search_grants",
+    "get_grant", "list_jobs", "get_job", "search_academy",
+    "get_as_of_snapshot",
 )
 
 # The API's topic taxonomy (topic_taxonomy, scripts/seed_canonical_slugs.py).
@@ -34,7 +36,7 @@ def _tool(name: str):
 
 def test_demo_banner_exact_bytes() -> None:
     assert DEMO_BANNER == (
-        "[bca-mcp] Running in DEMO mode: 16 tools work without a key, under a shared daily cap.\n"
+        "[bca-mcp] Running in DEMO mode: 17 tools work without a key, under a shared daily cap.\n"
         "[bca-mcp] A free key opens 52 tools and paid plans open the rest: https://blockchainacademics.com/crypto-api/signup?ref=mcp-first-run\n"
         "[bca-mcp] Set: export BCA_API_KEY=bca_...   (or add to your client config)\n"
     )
@@ -43,7 +45,28 @@ def test_demo_banner_exact_bytes() -> None:
 
 def test_demo_tools_exist() -> None:
     names = {t.name for t in TOOLS}
-    assert len(DEMO_TOOLS) == 16 and set(DEMO_TOOLS) <= names
+    assert len(DEMO_TOOLS) == 17 and set(DEMO_TOOLS) <= names
+    assert f"{len(DEMO_TOOLS)} tools work without a key" in DEMO_BANNER
+
+
+def test_every_demo_tool_description_says_it_works_without_a_key() -> None:
+    for name in DEMO_TOOLS:
+        # get_entity: only the slug form ("the slug form works without one").
+        assert re.search(r"(works|open) without (an API key|one)", _tool(name).description, re.I), name
+    assert "Works without an API key." in _tool("get_article").description
+
+
+def test_no_copy_still_counts_16_demo_tools() -> None:
+    stale = re.compile(r"\b16 tools\b|\b16 of (which|them)\b|\(16 without|\b89 of the 105\b|\bother 89\b")
+    for path in (
+        "README.md",
+        "docs/langchain_submission.md",
+        "examples/eliza_plugin.md",
+        "examples/langchain_agent.py",
+    ):
+        assert not stale.search((ROOT / path).read_text("utf-8")), path
+    readme = (ROOT / "README.md").read_text("utf-8")
+    assert "| `get_article` | content | `GET /v1/articles/{slug}` | Free | yes |" in readme
 
 
 def test_free_key_reach_matches_the_tool_descriptions() -> None:
@@ -68,17 +91,17 @@ def test_free_key_reach_matches_the_tool_descriptions() -> None:
         assert not stale.search(text), f"{where} says a free key opens every tool"
 
 
-def test_readme_lists_the_16_demo_tools_and_current_counts() -> None:
+def test_readme_lists_the_17_demo_tools_and_current_counts() -> None:
     readme = (ROOT / "README.md").read_text("utf-8")
     section = readme.split("## Zero-config first run", 1)[1].split("\n## ", 1)[0]
     listed = re.findall(r"`([a-z_]+)`", section)
     assert [t for t in listed if t in {x.name for x in TOOLS}] == list(DEMO_TOOLS)
-    assert "16 tools" in section
+    assert "17 tools" in section
     assert "upgrade message" in section
     for stale in ("10 marquee", "first 8 tools", "8 tools", "1,000 calls", "99-tool",
-                  "91 of the 105", "43 academy", "102 tools"):
+                  "91 of the 105", "89 of the 105", "16 tools", "43 academy", "102 tools"):
         assert stale not in readme, stale
-    assert "89 of the 105" in readme
+    assert "88 of the 105" in readme
     assert "38 academy lessons" in readme
 
 

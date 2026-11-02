@@ -22,9 +22,9 @@ uvx bca-mcp
 
 ## Zero-config first run (no API key needed)
 
-`uvx bca-mcp` works out of the box. The package ships with a public demo key, and 16 tools work without a key of your own:
+`uvx bca-mcp` works out of the box. The package ships with a public demo key, and 17 tools work without a key of your own:
 
-`get_price`, `get_trending`, `get_fear_greed`, `get_market_overview`, `search_news`, `get_sentiment`, `get_entity` (slug form), `get_explainer`, `get_recent_stories`, `get_topic`, `search_grants`, `get_grant`, `list_jobs`, `get_job`, `search_academy`, `get_as_of_snapshot`.
+`get_price`, `get_trending`, `get_fear_greed`, `get_market_overview`, `search_news`, `get_article`, `get_sentiment`, `get_entity` (slug form), `get_explainer`, `get_recent_stories`, `get_topic`, `search_grants`, `get_grant`, `list_jobs`, `get_job`, `search_academy`, `get_as_of_snapshot`.
 
 Every other tool answers without a key with a clean upgrade message (`BCA_TIER_LOCKED`) that links the free signup. The demo key is shared: 100 calls a day across all demo users, 20 a day per IP address, 1 per second. On startup the server prints a one-time banner on stderr while demo mode is active.
 
@@ -130,7 +130,7 @@ Every command accepts `--json` for unformatted output suitable for `jq` pipeline
 | Tool | Category | Endpoint | Tier | Without a key |
 |---|---|---|---|---|
 | `search_news` | content | `GET /v1/articles/search` | Free | yes |
-| `get_article` | content | `GET /v1/articles/{slug}` | Free | no |
+| `get_article` | content | `GET /v1/articles/{slug}` | Free | yes |
 | `get_entity` | content | `GET /v1/entities/{slug}` | Free | yes |
 | `list_entity_mentions` | content | `GET /v1/entities/{slug}/mentions` | Free | no |
 | `list_topics` | content | `GET /v1/topics` | Free | no |
@@ -222,7 +222,7 @@ Invalid arguments are rejected before any request is sent, with one `field: prob
 | Code | Meaning |
 |---|---|
 | `BCA_AUTH` | Invalid `BCA_API_KEY` (HTTP 401/403), or a key that cannot be sent as a header value (a line break inside it); the key itself is never repeated in the message |
-| `BCA_TIER_LOCKED` | Tool not in your current tier's allowlist (HTTP 403). Without a key this is the answer on 89 of the 105 tools; the message includes the signup URL. |
+| `BCA_TIER_LOCKED` | Tool not in your current tier's allowlist (HTTP 403). Without a key this is the answer on 88 of the 105 tools; the message includes the signup URL. |
 | `BCA_RATE_LIMIT` | Rate limit exceeded (HTTP 429; honor `Retry-After`) |
 | `BCA_UPSTREAM` | BCA API returned 5xx or malformed JSON |
 | `BCA_NETWORK` | Network failure or 20s timeout exceeded |
