@@ -14,8 +14,14 @@ COPY pyproject.toml README.md LICENSE ./
 COPY scripts ./scripts
 COPY src ./src
 # The demo key module is generated from scripts/demo-key.txt, as in the publish workflow.
+# pyproject asks for any hatchling, so the build backend and its dependencies are
+# pinned here (each release at least two weeks old) and the wheel builds without
+# isolation: a new hatchling release cannot change what goes into the image.
 RUN python scripts/gen_demo_key.py \
- && pip wheel --no-cache-dir --no-deps --wheel-dir /wheels .
+ && pip install --no-cache-dir --root-user-action=ignore \
+      hatchling==1.32.4 packaging==26.1 pathspec==1.1.1 pluggy==1.6.0 \
+      tomlkit==0.15.2 trove-classifiers==2026.9.21.13 \
+ && pip wheel --no-cache-dir --no-deps --no-build-isolation --wheel-dir /wheels .
 
 FROM python:3.12.16-slim-trixie
 LABEL org.opencontainers.image.title="Blockchain Academics MCP (Python)" \
