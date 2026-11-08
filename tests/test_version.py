@@ -23,6 +23,18 @@ def test_versions_agree() -> None:
     assert f"@blockchainacademics/mcp {__version__} " in source
 
 
+def test_python_classifiers_respect_requires_python() -> None:
+    # PyPI shows these; none may name a Python older than requires-python.
+    project = tomllib.loads((ROOT / "pyproject.toml").read_text("utf-8"))["project"]
+    floor = tuple(int(p) for p in project["requires-python"].removeprefix(">=").split("."))
+    listed = [
+        tuple(int(p) for p in c.rsplit(" :: ", 1)[1].split("."))
+        for c in project["classifiers"]
+        if c.startswith("Programming Language :: Python :: 3.")
+    ]
+    assert listed and all(v >= floor for v in listed), listed
+
+
 def test_changelog_has_a_section_for_this_version() -> None:
     changelog = (ROOT / "CHANGELOG.md").read_text("utf-8")
     assert f"## [{__version__}]" in changelog
