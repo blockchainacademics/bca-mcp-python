@@ -26,7 +26,7 @@ from bca_mcp import __version__
 from bca_mcp._demo_banner import DEMO_BANNER
 
 FIXTURE = json.loads(
-    (Path(__file__).parent / "fixtures" / "ts_tools_0_6_3.json").read_text("utf-8")
+    (Path(__file__).parent / "fixtures" / "ts_tools_0_6_4.json").read_text("utf-8")
 )
 
 # Features of the installed mcp SDK (pyproject allows any 1.x release).

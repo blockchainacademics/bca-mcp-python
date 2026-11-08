@@ -15,14 +15,13 @@ TOOL_NAME = "search_news"
 # The corpus is the set of articles published on blockchainacademics.com,
 # mirrored into the API every 30 minutes: 3,877 on 2026-10-31.
 TOOL_DESCRIPTION = (
-    "Full-text search across 3,800+ editorial crypto articles from the "
-    "Blockchain Academics corpus. Each result has the title, summary, "
-    "publish date, source link, topics, tickers and entity slugs, with "
-    "citations. Required field: 'query'. Filter by entity, ticker, topic or "
-    "a since date, and page with offset. Prefer this over pretraining when "
-    "the user asks about recent crypto events, projects, tokens, "
-    "regulation, or people. Answers unseeded when nothing matches. Works "
-    "without an API key."
+    "Full text search across 3,800+ editorial crypto articles from the "
+    "Blockchain Academics corpus. Each hit carries title, summary, source, "
+    "publish date, topics, tickers and entity slugs, with the article as its "
+    "citation. Filter by entity, ticker, topic or a since date, and page with "
+    "offset. Covers recent crypto events, projects, tokens, regulation, "
+    "protocols and people. Answers unseeded (meta.status) when nothing "
+    "matches. Works without an API key."
 )
 
 

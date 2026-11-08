@@ -1,9 +1,11 @@
-"""Parity with the TypeScript sibling, @blockchainacademics/mcp 0.6.3.
+"""Parity with the TypeScript sibling, @blockchainacademics/mcp 0.6.4.
 
-The fixture (tests/fixtures/ts_tools_0_6_3.json) holds the 105 tool names of
+The fixture (tests/fixtures/ts_tools_0_6_4.json) holds the 105 tool names of
 the TS tools/list and, per tool, the JSON Schema constraints of its zod
-schema: type (integer vs number), enum, minimum, maximum, default. Both
-packages must advertise the same names and the same constraints.
+schema (type, integer vs number, enum, minimum, maximum, default) and its
+description. Both packages must advertise the same names and the same
+constraints, and the descriptions rewritten for the directory review in 0.6.4
+must read the same in both.
 """
 
 from __future__ import annotations
@@ -20,11 +22,28 @@ from bca_mcp.annotations import WRITE_TOOLS, tool_annotations, tool_title
 from bca_mcp.server import TOOLS, build_server, tool_definitions
 
 FIXTURE = json.loads(
-    (Path(__file__).parent / "fixtures" / "ts_tools_0_6_3.json").read_text("utf-8")
+    (Path(__file__).parent / "fixtures" / "ts_tools_0_6_4.json").read_text("utf-8")
 )
 TS_NAMES: list[str] = FIXTURE["names"]
 TS_CONSTRAINTS: dict[str, Any] = FIXTURE["constraints"]
+TS_DESCRIPTIONS: dict[str, str] = FIXTURE["descriptions"]
 KEYS = ("type", "enum", "minimum", "maximum", "default")
+
+# Descriptions rewritten in 0.6.4 so they say what the tool does, returns and
+# when it applies (directory-submissions.md 4.6, row A3). Same text in both
+# packages, word for word.
+SHARED_DESCRIPTIONS = (
+    "search_news", "get_entity", "get_explainer", "get_article",
+    "list_entity_mentions", "list_topics", "get_price", "get_market_overview",
+    "get_wallet_profile", "get_token_holders", "get_x_signals",
+    "generate_due_diligence", "generate_tokenomics_model",
+    "summarize_whitepaper", "translate_contract", "book_kol_campaign",
+    "request_custom_research", "submit_listing", "search_academy",
+    "get_history_correlation",
+)
+# The two indicators share everything before each package's own meta.status
+# sentence (_STATUS_NOTE here, STATUS_NOTE in the TS sibling).
+SHARED_INDICATOR_PREFIXES = ("get_sentiment_velocity", "get_editorial_premium")
 
 
 def _pick(prop: dict[str, Any]) -> dict[str, Any]:
@@ -48,6 +67,24 @@ def test_tool_names_equal_the_ts_tools_list() -> None:
     missing = sorted(set(TS_NAMES) - set(names))
     extra = sorted(set(names) - set(TS_NAMES))
     assert not missing and not extra, f"missing={missing} extra={extra}"
+
+
+# --- descriptions (0.6.4, directory review row A3) ---------------------------
+
+
+@pytest.mark.parametrize("name", SHARED_DESCRIPTIONS)
+def test_rewritten_descriptions_match_ts_word_for_word(name: str) -> None:
+    tool = next(t for t in TOOLS if t.name == name)
+    assert tool.description == TS_DESCRIPTIONS[name]
+
+
+@pytest.mark.parametrize("name", SHARED_INDICATOR_PREFIXES)
+def test_indicator_descriptions_match_ts_before_the_status_note(name: str) -> None:
+    tool = next(t for t in TOOLS if t.name == name)
+    ours = tool.description.split(" meta.status is ", 1)[0]
+    theirs = TS_DESCRIPTIONS[name].split(" meta.status is ", 1)[0]
+    assert ours == theirs
+    assert ours.endswith("Pro tier.")
 
 
 # --- schemas (F37) ---------------------------------------------------------

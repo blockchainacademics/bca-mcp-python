@@ -286,13 +286,13 @@ async def run_get_ct_pulse(args: dict[str, Any]) -> ResponseEnvelope[Any]:
 GET_X_SIGNALS_TOOL_NAME = "get_x_signals"
 
 GET_X_SIGNALS_TOOL_DESCRIPTION = (
-    "Breaking crypto stories surfaced on X before news outlets, from vetted "
-    "accounts (security researchers, exchanges, regulators, ETF analysts) "
-    "plus an open keyword sweep. Each story: headline, summary, event type, "
-    "the accounts and post URLs behind it, confidence, and whether on-chain "
-    "evidence was cited. latest_signal_at is the newest stored signal; an "
-    "empty window answers stale when older signals exist (unseeded when "
-    "none are stored). Pro tier."
+    "Breaking crypto stories from posts on X by vetted accounts (security "
+    "researchers, exchanges, regulators, ETF analysts) plus an open keyword "
+    "sweep. Each story: headline, summary, event type, the accounts and post "
+    "URLs behind it, confidence, and whether onchain evidence was cited. "
+    "latest_signal_at is the newest stored signal; an empty window answers "
+    "stale when older signals exist (the sweep is behind or the lane is "
+    "paused) and unseeded when none are stored. Pro tier."
 )
 
 

@@ -20,16 +20,17 @@ TOOL_NAME = "get_entity"
 # column, ticker dossiers and linked currencies, but it is not on the demo
 # allowlist, so the ticker form needs an API key. Same as the TS sibling.
 TOOL_DESCRIPTION = (
-    "Fetch a canonical BCA entity dossier (chain, project, person or "
-    "ticker): name, kind, ticker, chain, website, X handle, summary when "
-    "there is one, mention count and first and last mention dates. "
-    "Required: exactly one of 'slug' or 'ticker'. Aliases in slug form "
-    "resolve to the canonical entity ('cz' to changpeng-zhao, 'maker' to "
-    "makerdao) and the answer names the alias in resolved_from_alias. The "
-    "ticker form returns every entity that matches the ticker (the ticker "
-    "dossier and the chain or project it maps to) and needs an API key; the "
-    "slug form works without one. Thin dossiers answer partial, with "
-    "meta.diagnostic.missing naming what is absent (summary, mentions)."
+    "Fetch a BCA entity dossier (chain, project, person or ticker): name, "
+    "kind, ticker, chain, website and X handle, summary when there is one, "
+    "mention count and first and last mention dates. Takes exactly one of slug "
+    "or ticker. Aliases in slug form resolve to the canonical entity ('cz' to "
+    "changpeng-zhao, 'maker' to makerdao) and the answer names the alias in "
+    "resolved_from_alias. The ticker form returns every entity that matches "
+    "the ticker (the ticker dossier and the chain or project it maps to) and "
+    "needs an API key; the slug form works without one. Many dossiers are "
+    "still thin: meta.status partial, with meta.diagnostic.missing naming what "
+    "is absent (summary, mentions). Applies to 'what is X' and 'who is X' "
+    "questions, including names found by search_news."
 )
 
 

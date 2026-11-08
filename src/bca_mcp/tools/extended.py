@@ -948,7 +948,7 @@ class SubmitListingInput(BaseModel):
     contact_email: str = Field(
         pattern=_EMAIL_REGEX,
         max_length=254,
-        description="Required. Where the editorial team replies with featured listing pricing.",
+        description="Required. Where the editorial team replies.",
     )
     directory: ListingDirectory = Field(description="Required. Target directory.")
     listing_name: str = Field(
@@ -1494,17 +1494,17 @@ EXTENDED_TOOL_ENTRIES: tuple[tuple[str, str, dict[str, Any], Runner], ...] = (
     # services: POST (3)
     _entry(
         "book_kol_campaign",
-        "Send a KOL campaign brief to BCA Studio. Required: contact_email, project_name, campaign_type (thread, video, space, podcast or hybrid) and budget_usd (500 to 2,000,000 USD). Free to submit; needs an API key (the free tier is enough). Each brief alerts BCA Studio, who reply to contact_email by hand with a recommended KOL slate and quote (nothing is emailed automatically). Returns request_id, status and next_step.",
+        "Send a KOL campaign brief to BCA Studio. Required: contact_email, project_name, campaign_type (thread, video, space, podcast or hybrid) and budget_usd (500 to 2,000,000 USD). Needs an API key (the free tier is enough). Each brief alerts BCA Studio, who reply to contact_email by hand with a recommended KOL slate and quote (nothing is emailed automatically). Returns request_id, status and next_step.",
         BookKolCampaignInput, _run_book_kol_campaign,
     ),
     _entry(
         "request_custom_research",
-        "Request a custom research report from BCA Research. Required: contact_email and topic (4 to 256 characters). Free to submit; needs an API key (the free tier is enough). Each request alerts BCA Research, who reply to contact_email by hand with scope and a quote; payment is by Stripe invoice. Returns request_id, status and next_step.",
+        "Request a custom research report from BCA Research. Required: contact_email and topic (4 to 256 characters). Needs an API key (the free tier is enough). Each request alerts BCA Research, who reply to contact_email by hand with scope and a quote. Returns request_id, status and next_step.",
         RequestCustomResearchInput, _run_request_custom_research,
     ),
     _entry(
         "submit_listing",
-        "Submit a listing to a BCA directory: vcs, aggregators, trading_bots, mcps, nft_communities, jobs, stablecoins or trading_yields. Required: contact_email, directory, listing_name, listing_url and description (20 to 2,000 characters). Free to submit (needs an API key; the free tier is enough), paid to be featured: each submission alerts the editors, who review it for fit and reply to contact_email by hand with featured listing pricing. Returns request_id, status and next_step.",
+        "Submit a listing to a BCA directory: vcs, aggregators, trading_bots, mcps, nft_communities, jobs, stablecoins or trading_yields. Required: contact_email, directory, listing_name, listing_url and description (20 to 2,000 characters). Needs an API key (the free tier is enough). Each submission alerts the editors, who review it for fit and reply to contact_email by hand. Returns request_id, status and next_step.",
         SubmitListingInput, _run_submit_listing,
     ),
 
@@ -1521,7 +1521,7 @@ EXTENDED_TOOL_ENTRIES: tuple[tuple[str, str, dict[str, Any], Runner], ...] = (
     ),
     _entry(
         "get_history_correlation",
-        "Pearson correlation of a coin's daily price change against its daily BCA sentiment and, with peer, against the peer's daily price change, with the aligned daily series. Partial below 7 paired days. Useful for pair trades.",
+        "Pearson correlation of a coin's daily price change against its daily BCA sentiment and, with peer, against the peer's daily price change, with the aligned daily series (each row carries peer_price_change_pct when peer is given). Partial below 7 paired days, for a flat series, or when an input is missing for part of the window.",
         GetHistoryCorrelationInput, _run_get_history_correlation,
     ),
     _entry(
@@ -1543,7 +1543,7 @@ EXTENDED_TOOL_ENTRIES: tuple[tuple[str, str, dict[str, Any], Runner], ...] = (
     ),
     _entry(
         "search_academy",
-        "Full-text search across academy lessons. Each hit has the course and lesson slugs, title, summary, publish date and site_url, the lesson's page on blockchainacademics.com (link to site_url, not to the slug). Unseeded when nothing matches. Works without an API key.",
+        "Full text search across academy lessons. Each hit has the course and lesson slugs, title, summary, publish date and site_url, the lesson's page on blockchainacademics.com (the slugs are not page URLs). Unseeded when nothing matches. Works without an API key.",
         SearchAcademyInput, _run_search_academy,
     ),
     _entry(

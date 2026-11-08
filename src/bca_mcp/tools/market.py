@@ -20,10 +20,10 @@ from bca_mcp.types import ResponseEnvelope
 GET_PRICE_TOOL_NAME = "get_price"
 
 GET_PRICE_TOOL_DESCRIPTION = (
-    "Spot price, market cap, 24h volume and 24h change for up to 50 "
-    "tokens, via CoinGecko. Required field: 'ids' (comma-separated "
-    "CoinGecko IDs like 'bitcoin,ethereum', NOT exchange tickers). "
-    "Optional 'vs' quote currency defaults to usd. Works without an API key."
+    "Spot price, 24h change, market cap and 24h volume for up to 50 tokens, "
+    "via CoinGecko. Takes CoinGecko ids such as 'bitcoin' or 'ethereum' (not "
+    "exchange tickers), comma separated, and an optional quote currency vs "
+    "(default usd). Works without an API key."
 )
 
 # The API's quote currency rule: 3 to 10 lower case letters (usd, eur, btc).
@@ -67,10 +67,10 @@ async def run_get_price(args: dict[str, Any]) -> ResponseEnvelope[Any]:
 GET_MARKET_OVERVIEW_TOOL_NAME = "get_market_overview"
 
 GET_MARKET_OVERVIEW_TOOL_DESCRIPTION = (
-    "Top-N tokens by market cap from CoinGecko: price, market cap, 24h "
-    "volume and 1h, 24h and 7d change. No required fields; optional "
-    "'limit' defaults to 20 (max 100). Use for market-wide context "
-    "(bull/bear posture, mover spotting). Works without an API key."
+    "Top tokens by market cap from CoinGecko (limit, default 20, up to 100): "
+    "price, market cap, 24h volume and the 1h, 24h and 7d price change. Gives "
+    "context for the whole market: its direction and the biggest movers. Works "
+    "without an API key."
 )
 
 

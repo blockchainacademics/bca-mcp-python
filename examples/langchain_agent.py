@@ -1,21 +1,21 @@
-"""LangChain integration via `langchain-mcp-adapters` (the official bridge).
+"""LangChain integration through `langchain.mcp` (LangChain 1.4 and later).
 
-This is the recommended way to expose BCA MCP tools to a LangChain /
-LangGraph agent. The adapter converts the stdio tool surface into native
-`StructuredTool` objects the agent can call like any LangChain tool.
+`MCPAdapter` starts the bca-mcp stdio server and turns its tools into
+LangChain tools that a LangChain or LangGraph agent can call. It replaces the
+archived langchain-mcp-adapters package.
 
 Install:
 
-    pip install bca-mcp langchain-mcp-adapters
+    pip install bca-mcp "langchain[mcp]>=1.4.0"
 
 Run (BCA_API_KEY is optional: without it 17 tools work in demo mode):
 
     BCA_API_KEY=... python examples/langchain_agent.py
 
-Hand the loaded tools to any LangChain or LangGraph agent and the chat model
+Hand the loaded tools to `langchain.agents.create_agent` with the chat model
 of your choice.
 
-Docs: https://github.com/langchain-ai/langchain-mcp-adapters
+Docs: https://docs.langchain.com/oss/python/migrate/langchain-mcp-adapters
 """
 
 from __future__ import annotations
@@ -24,42 +24,40 @@ import asyncio
 import os
 import sys
 
-from mcp import ClientSession, StdioServerParameters
-from mcp.client.stdio import stdio_client
-
 
 async def _demo(query: str) -> None:
     try:
-        from langchain_mcp_adapters.tools import load_mcp_tools  # type: ignore
+        from langchain.mcp import MCPAdapter
     except ImportError:
         print(
-            "langchain-mcp-adapters not installed. Run:\n"
-            "  pip install langchain-mcp-adapters\n",
+            "langchain.mcp is not installed. Run:\n"
+            '  pip install "langchain[mcp]>=1.4.0"\n',
             file=sys.stderr,
         )
         raise
 
-    params = StdioServerParameters(
-        command=sys.executable,
-        args=["-m", "bca_mcp"],
-        env={**os.environ, "BCA_API_KEY": os.environ.get("BCA_API_KEY", "")},
-    )
+    config = {
+        "mcpServers": {
+            "bca": {
+                "command": sys.executable,
+                "args": ["-m", "bca_mcp"],
+                "env": {**os.environ, "BCA_API_KEY": os.environ.get("BCA_API_KEY", "")},
+            }
+        }
+    }
 
-    async with stdio_client(params) as (read, write):
-        async with ClientSession(read, write) as session:
-            await session.initialize()
+    async with MCPAdapter(config) as adapter:
+        # MCP stdio tools -> LangChain tools, ready for create_agent.
+        tools = await adapter.list_tools()
+        print(f"Loaded {len(tools)} BCA tools into LangChain:")
+        for t in tools:
+            print(f"  - {t.name}")
 
-            # One-line bridge: MCP stdio tools -> LangChain StructuredTool list
-            tools = await load_mcp_tools(session)
-            print(f"Loaded {len(tools)} BCA tools into LangChain:")
-            for t in tools:
-                print(f"  - {t.name}")
-
-            # Find `search_news` and round-trip a single call.
-            search_news = next(t for t in tools if t.name == "search_news")
-            result = await search_news.ainvoke({"query": query, "limit": 3})
-            print("\n--- search_news result ---")
-            print(result)
+        # Find `search_news` and round-trip a single call.
+        search_news = next(t for t in tools if t.name == "search_news")
+        result = await search_news.ainvoke({"query": query, "limit": 3})
+        print("\n--- search_news result ---")
+        print(result)
 
 
 def main() -> None:

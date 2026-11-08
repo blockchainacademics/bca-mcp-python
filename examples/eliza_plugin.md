@@ -27,7 +27,7 @@ Sign up at **https://blockchainacademics.com/crypto-api/pricing**. The free tier
 
 ## Wire into Eliza's character config
 
-Eliza exposes MCP servers through [`@elizaos/plugin-mcp`](https://github.com/elizaos-plugins/plugin-mcp). Add `bca-mcp` to your character's plugin config:
+Eliza exposes MCP servers through [`@elizaos/plugin-mcp`](https://www.npmjs.com/package/@elizaos/plugin-mcp). Add `bca-mcp` to your character's plugin config:
 
 ```json
 {

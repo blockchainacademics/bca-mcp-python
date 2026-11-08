@@ -114,6 +114,67 @@ def test_no_em_dashes_in_user_facing_text() -> None:
         assert EM_DASH not in json.dumps(t.input_schema, ensure_ascii=False), t.name
 
 
+def _schema_descriptions(node) -> list[str]:
+    out: list[str] = []
+    if isinstance(node, dict):
+        for key, value in node.items():
+            if key == "description" and isinstance(value, str):
+                out.append(value)
+            else:
+                out.extend(_schema_descriptions(value))
+    elif isinstance(node, list):
+        for item in node:
+            out.extend(_schema_descriptions(item))
+    return out
+
+
+def test_descriptions_never_tell_the_model_how_to_behave_or_sell() -> None:
+    # Directory review criteria: "Describe what the tool does, and don't tell
+    # Claude how to behave"; descriptions must not "promote products and
+    # services" (directory-submissions.md 4.6, row A3). Same check as the TS
+    # sibling's test/api_alignment.test.ts.
+    banned = [
+        re.compile(r"\bUse (this|after|to|for|when)\b", re.I),
+        re.compile(r"\bPrefer\b", re.I),
+        re.compile(r"pretraining|from memory|your own definition|instead of relying", re.I),
+        re.compile(r"\bpoll get_agent_job\b", re.I),
+        re.compile(r"\blink (with|to) site_url\b", re.I),
+        re.compile(r"teacher-vetted|pedagog", re.I),
+        re.compile(r"before news outlets", re.I),
+        re.compile(r"accumulation edge|pair trades|reversal", re.I),
+        re.compile(r"Free to submit|paid to be featured|featured listing|Stripe", re.I),
+    ]
+    for t in TOOLS:
+        for text in [t.description, *_schema_descriptions(t.input_schema)]:
+            for pattern in banned:
+                assert not pattern.search(text), f"{t.name}: {pattern.pattern} in {text!r}"
+    # The tier stays named on every paid tool (52 free-tier tools, see above).
+    assert "Pro tier" in _tool("get_token_holders").description
+    assert "Team tier" in _tool("translate_contract").description
+    assert "the free tier is enough" in _tool("submit_listing").description
+
+
+def test_readme_carries_the_directory_notes() -> None:
+    readme = (ROOT / "README.md").read_text("utf-8")
+    # The official MCP Registry verifies PyPI ownership through this line.
+    assert "<!-- mcp-name: io.github.blockchainacademics/mcp -->" in readme
+    assert re.search(r"^## Not financial advice$", readme, re.M)
+    assert re.search(r"^## Privacy$", readme, re.M)
+    assert "about 150 entity dossiers" in readme
+    assert not re.search(r"150\+ entit|canonical crypto MCP|ground-truth", readme, re.I)
+    # langchain-mcp-adapters is archived; LangChain ships MCP as langchain.mcp.
+    # The prose may name the old package, but no code imports it or links it.
+    for path in ("README.md", "examples/langchain_agent.py"):
+        text = (ROOT / path).read_text("utf-8")
+        assert "langchain_mcp_adapters" not in text, path
+        assert "github.com/langchain-ai/langchain-mcp-adapters" not in text, path
+        assert "from langchain.mcp import MCPAdapter" in text, path
+    # The elizaos-plugins/plugin-mcp repo answers 404; the npm page is the reference.
+    eliza = (ROOT / "examples/eliza_plugin.md").read_text("utf-8")
+    assert "github.com/elizaos-plugins/plugin-mcp" not in eliza
+    assert "npmjs.com/package/@elizaos/plugin-mcp" in eliza
+
+
 def test_list_topics_names_only_taxonomy_topics() -> None:
     desc = _tool("list_topics").description
     named = set(desc.split(":", 1)[1].split(". ", 1)[0].replace(" and ", ", ").replace(" ", "").split(","))
@@ -124,7 +185,7 @@ def test_list_topics_names_only_taxonomy_topics() -> None:
 
 def test_get_explainer_counts_and_examples() -> None:
     tool = _tool("get_explainer")
-    assert "38 teacher-vetted lessons across 8 courses" in tool.description
+    assert "38 lessons across 8 courses" in tool.description
     assert "43" not in tool.description and "9 courses" not in tool.description
     props = tool.input_schema["properties"]
     # Course slugs served by /v1/academy/{slug} (8 courses on 2026-10-31).

@@ -116,11 +116,12 @@ ContractLanguage = Literal["solidity", "vyper", "move", "rust-anchor"]
 GENERATE_DUE_DILIGENCE_TOOL_NAME = "generate_due_diligence"
 
 GENERATE_DUE_DILIGENCE_TOOL_DESCRIPTION = (
-    "Kick off a full due-diligence report (tokenomics + team + audits + "
-    "risk + narrative). Required: entity_slug. depth: light, standard or "
-    "deep. focus is accepted but not applied yet: the report covers every "
-    "section, and the answer lists focus under ignored_params. Async: "
-    "returns {job_id, status_url}; poll get_agent_job. Pro tier."
+    "Start a due diligence report on an entity covering tokenomics, team, "
+    "audits, risk and narrative. Required: entity_slug. depth: light, standard "
+    "or deep. focus is accepted but not applied yet: the report covers every "
+    "section, and the answer lists focus under ignored_params. Async: returns "
+    "job_id and status_url, and get_agent_job returns the report when it is "
+    "done. Pro tier."
 )
 
 
@@ -172,12 +173,12 @@ async def run_generate_due_diligence(
 GENERATE_TOKENOMICS_MODEL_TOOL_NAME = "generate_tokenomics_model"
 
 GENERATE_TOKENOMICS_MODEL_TOOL_DESCRIPTION = (
-    "Simulate how emissions and unlocks move an entity's FDV over a "
-    "horizon: horizon_days (rounded up to whole months, up to 120; the "
-    "answer echoes horizon_months) and an optional unlock_shock_pct. "
-    "scenarios is accepted but not modeled yet: the job simulates one "
-    "unlock schedule and the answer lists scenarios under ignored_params. "
-    "Async, Team tier. Returns {job_id, status_url}."
+    "Simulate how emissions and unlocks move an entity's FDV over a horizon: "
+    "horizon_days (rounded up to whole months, up to 120) and an optional "
+    "unlock_shock_pct. scenarios is accepted but not modeled yet: the job "
+    "simulates one unlock schedule and the answer lists scenarios under "
+    "ignored_params. Async: returns job_id, status_url and the horizon_months "
+    "used, and get_agent_job returns the model when it is done. Team tier."
 )
 
 
@@ -236,10 +237,11 @@ SUMMARIZE_WHITEPAPER_TOOL_NAME = "summarize_whitepaper"
 
 SUMMARIZE_WHITEPAPER_TOOL_DESCRIPTION = (
     "Fetch a whitepaper URL (PDF or HTML) and summarize it into one fixed "
-    "structure (TL;DR, key points, tokenomics, team and risks) in the "
-    "language asked for (default en). length other than standard is "
-    "accepted but not applied yet (the answer lists it under "
-    "ignored_params). Async, Pro tier. Returns {job_id, status_url}."
+    "structure: TL;DR, key points, tokenomics, team and risks, in the language "
+    "asked for (default en). length other than standard is accepted but not "
+    "applied yet (the answer lists it under ignored_params). Async: returns "
+    "job_id and status_url, and get_agent_job returns the summary when it is "
+    "done. Pro tier."
 )
 
 
@@ -287,9 +289,10 @@ async def run_summarize_whitepaper(
 TRANSLATE_CONTRACT_TOOL_NAME = "translate_contract"
 
 TRANSLATE_CONTRACT_TOOL_DESCRIPTION = (
-    "Translate a smart contract between languages (Solidity ↔ Vyper ↔ "
-    "Move ↔ Anchor). Required: code, source_language, "
-    "target_language. Async, Team tier."
+    "Translate a smart contract between Solidity, Vyper, Move and Anchor. "
+    "Required: code, source_language, target_language (the two must differ). "
+    "Async: returns job_id and status_url, and get_agent_job returns the "
+    "translation when it is done. Team tier."
 )
 
 

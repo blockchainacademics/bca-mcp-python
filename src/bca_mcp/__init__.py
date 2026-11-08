@@ -1,6 +1,6 @@
 """Blockchain Academics MCP server (Python).
 
-Sibling of `@blockchainacademics/mcp` — same tool surface, same REST API,
+Sibling of `@blockchainacademics/mcp`: same tool surface, same REST API,
 same attribution contract.
 """
 
@@ -14,7 +14,7 @@ from bca_mcp.errors import (
     BcaUpstreamError,
 )
 
-__version__ = "0.6.3"
+__version__ = "0.6.4"
 
 __all__ = [
     "__version__",

@@ -129,9 +129,10 @@ async def run_get_narrative_strength(
 GET_SENTIMENT_VELOCITY_TOOL_NAME = "get_sentiment_velocity"
 
 GET_SENTIMENT_VELOCITY_TOOL_DESCRIPTION = (
-    "Sentiment Velocity: the smoothed rate of change (d/dt) of an entity's "
-    "daily sentiment over 7d or 30d, an early reversal-detection signal. "
-    "Unseeded until the window holds two daily sentiment samples. Pro tier. "
+    "Rate of change of an entity's sentiment (the smoothed derivative of its "
+    "daily sentiment) over 7d or 30d: positive while sentiment rises, negative "
+    "while it falls. Unseeded until the window holds two daily sentiment "
+    "samples. Pro tier. "
     + _STATUS_NOTE
 )
 
@@ -164,9 +165,9 @@ async def run_get_sentiment_velocity(
 GET_EDITORIAL_PREMIUM_TOOL_NAME = "get_editorial_premium"
 
 GET_EDITORIAL_PREMIUM_TOOL_DESCRIPTION = (
-    "Correlation of price return to coverage delta (lagged -1 to +3 "
-    "days) over 30d or 90d: the pre-coverage accumulation edge. Unseeded "
-    "until 8 paired days of price and coverage data exist. Pro tier. "
+    "Correlation of price return to coverage change, lagged -1 to +3 days, "
+    "over 30d or 90d: whether BCA coverage leads price. Unseeded until at "
+    "least 8 paired days of price and coverage exist. Pro tier. "
     + _STATUS_NOTE
 )
 

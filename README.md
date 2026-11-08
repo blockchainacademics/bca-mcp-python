@@ -1,6 +1,8 @@
 # bca-mcp
 
-The canonical crypto MCP server for AI agents, **Python edition**: 3,800+ editorial articles, 150+ entity dossiers, 38 academy lessons in 8 courses, and live market data, as MCP tools your agent can call natively.
+<!-- mcp-name: io.github.blockchainacademics/mcp -->
+
+Python edition of the Blockchain Academics crypto MCP server for AI agents: cited news, prices, onchain data, sentiment and indicators. 3,800+ editorial articles, about 150 entity dossiers, 38 academy lessons in 8 courses and live market data, as MCP tools your agent can call.
 
 Sibling of [`@blockchainacademics/mcp`](https://www.npmjs.com/package/@blockchainacademics/mcp) (TypeScript). Same REST API. Same attribution contract. Use whichever fits your stack.
 
@@ -8,7 +10,11 @@ Sibling of [`@blockchainacademics/mcp`](https://www.npmjs.com/package/@blockchai
 
 ## Why
 
-LLMs hallucinate about crypto. BCA ships ground-truth editorial content with full attribution. Plug this MCP server into Claude Desktop, LangChain, LlamaIndex, Eliza, or any MCP-compatible agent and your model queries the BCA corpus like any other tool, with citations (`cite_url`, `as_of`, `source_hash`) and an honest `meta.status` on every response.
+Every answer says where it came from and how complete it is. `attribution.citations[]` lists the sources, primary source first (`cite_url`, `as_of`, `source_hash`), and `meta.status` says whether the answer is complete, partial, stale or unseeded. An agent can cite each fact and tell a full answer from a thin one. The server works in Claude Desktop, LangChain, LlamaIndex, Eliza and any other MCP client.
+
+## Not financial advice
+
+The tools return data, analysis and their sources. Nothing they return is financial, investment or tax advice, or a recommendation to buy or sell anything.
 
 ## Install
 
@@ -42,6 +48,12 @@ export BCA_API_BASE="https://api.blockchainacademics.com"
 ```
 
 > When `BCA_API_KEY` is set, the demo banner is suppressed and your key's plan decides which tools answer: 52 on a free key, the rest on paid plans. When it's unset, every response carries `meta.tier: "demo"` and `meta.upgrade_url` so your agent can detect the demo path.
+
+## Privacy
+
+- Each tool call sends its arguments (for example a search phrase, a coin name, or a wallet or contract address you ask about) and your key, if you set one, over HTTPS to api.blockchainacademics.com, our own API, or to the staging or local base you set in `BCA_API_BASE`. The server sends nothing to any other host; `monitor_keyword` only looks up the webhook's host name in DNS to refuse private addresses.
+- The MCP server stores nothing on your computer. The `bca` CLI keeps your key in `~/.bca/config.toml` (readable only by you) after `bca login`. The API counts calls per key per day and does not log request bodies or query parameters that could contain personal data.
+- Full policy, retention and your rights: [blockchainacademics.com/privacy](https://blockchainacademics.com/privacy), section 12 (Crypto API and MCP Server). Privacy requests: [privacy@blockchainacademics.com](mailto:privacy@blockchainacademics.com).
 
 ## Use from Claude Desktop
 
@@ -80,28 +92,36 @@ Every tool carries MCP annotations: a readable `title`, `readOnlyHint: true` on 
 
 ## Use from LangChain
 
-Ten lines via [`langchain-mcp-adapters`](https://github.com/langchain-ai/langchain-mcp-adapters):
+LangChain ships MCP support as `langchain.mcp` (beta, `pip install "langchain[mcp]>=1.4.0"`; it replaces the archived `langchain-mcp-adapters`). `MCPAdapter` starts the server and turns its tools into LangChain tools:
 
 ```python
-import asyncio, os, sys
-from mcp import ClientSession, StdioServerParameters
-from mcp.client.stdio import stdio_client
-from langchain_mcp_adapters.tools import load_mcp_tools
+import asyncio, os
+from langchain.agents import create_agent
+from langchain.mcp import MCPAdapter
 
-async def main():
-    params = StdioServerParameters(
-        command=sys.executable, args=["-m", "bca_mcp"],
-        env={**os.environ, "BCA_API_KEY": os.environ["BCA_API_KEY"]},
-    )
-    async with stdio_client(params) as (r, w), ClientSession(r, w) as s:
-        await s.initialize()
-        tools = await load_mcp_tools(s)   # -> list[StructuredTool]
-        print(await tools[0].ainvoke({"query": "stablecoin regulation"}))
+config = {
+    "mcpServers": {
+        "bca": {
+            "command": "uvx",
+            "args": ["bca-mcp"],
+            "env": {"BCA_API_KEY": os.environ.get("BCA_API_KEY", "")},
+        }
+    }
+}
+
+async def main() -> None:
+    async with MCPAdapter(config) as adapter:
+        tools = await adapter.list_tools()
+        agent = create_agent("<your chat model>", tools)
+        result = await agent.ainvoke(
+            {"messages": [("user", "What happened with Ethereum this week? Cite sources.")]}
+        )
+        print(result["messages"][-1].content)
 
 asyncio.run(main())
 ```
 
-Full worked example in [`examples/langchain_agent.py`](./examples/langchain_agent.py). Raw MCP client loop (no LangChain) in [`examples/generic_agent.py`](./examples/generic_agent.py).
+An empty `BCA_API_KEY` runs the 17 tools that need no key. Worked example in [`examples/langchain_agent.py`](./examples/langchain_agent.py). Raw MCP client loop (no LangChain) in [`examples/generic_agent.py`](./examples/generic_agent.py).
 
 ## Use from Eliza
 
@@ -192,7 +212,7 @@ Every response is the same envelope, with a structured `attribution` block:
 
 `attribution.citations[0]` is the primary source: the upstream page the data came from when there is one (an article's publisher, CoinGecko, DefiLlama, Etherscan), otherwise the BCA page for the record. A BCA link is included only where blockchainacademics.com has a page for the data; when there is neither, the one citation points at the tool's entry in the API reference.
 
-**When your agent surfaces BCA content to a user, link `citations[0].cite_url`.** This is the core trade: BCA gives agents ground-truth citations; agents give BCA distribution. `as_of` and `source_hash` let downstream systems detect staleness and verify content integrity. Fields are preserved as `null` (not dropped) when upstream omits them, so agents can detect missing provenance explicitly.
+**When your agent surfaces BCA content to a user, link `citations[0].cite_url`.** `as_of` and `source_hash` let downstream systems spot stale or changed data. Fields are preserved as `null` (not dropped) when upstream omits them, so agents can detect missing provenance explicitly.
 
 The MCP server returns `data` inside an `<untrusted_content source="bca-api">` fence so the host model reads upstream text as data, not instructions. `attribution` and `meta` stay structured.
 

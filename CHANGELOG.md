@@ -4,7 +4,28 @@ All notable changes to `bca-mcp` are documented here.
 
 This project follows [Semantic Versioning](https://semver.org/) and [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [0.6.3] (unreleased)
+## [0.6.4] (unreleased)
+
+Directory review fixes (directory-submissions.md, section 4.6 rows A3, A5 and A10, and the package fixes of section 20), in lockstep with @blockchainacademics/mcp 0.6.4. Same 105 tools, same arguments and schemas.
+
+### Changed
+
+- Tool descriptions say what each tool does, what it returns and when it applies, and no longer tell the model how to behave or sell a service. Rewritten: `search_news` (no "prefer this over pretraining"), `get_entity`, `get_explainer` (no "teacher-vetted", no "prefer the explainer over generating your own definition"), `get_article`, `list_entity_mentions`, `list_topics`, `get_price`, `get_market_overview`, `get_wallet_profile`, `get_token_holders`, `get_x_signals` (no "before news outlets"), `get_sentiment_velocity` (says what the sign means instead of "an early reversal-detection signal"), `get_editorial_premium` (no "pre-coverage accumulation edge"), `get_history_correlation` (no "useful for pair trades"), `generate_due_diligence`, `generate_tokenomics_model`, `summarize_whitepaper` and `translate_contract` (get_agent_job returns the result, instead of "poll get_agent_job"), `book_kol_campaign`, `request_custom_research` and `submit_listing` (no "free to submit", featured listing pricing or payment method), and `search_academy` (site_url is the page, instead of "link to site_url"). The `submit_listing.contact_email` description drops the featured listing pricing too. Every tier mention stays: 52 tools are on the free tier, and each paid tool still names its tier.
+- These descriptions read the same as in the TypeScript package, word for word (the two indicators keep this package's own `meta.status` sentence). The parity fixture is now `tests/fixtures/ts_tools_0_6_4.json`, dumped from the TS 0.6.4 build with the descriptions included; its names and constraints are unchanged from 0.6.3. A test fails if any tool or parameter description tells the model what to prefer, what to use, how to link or what to buy.
+- README: the `mcp-name: io.github.blockchainacademics/mcp` line the official MCP Registry reads to confirm this PyPI package belongs to the server entry (server.json 0.6.4 lists `bca-mcp` next to the npm package), a "Not financial advice" note, a Privacy section (what each call sends, to which host, what is stored, and the policy link), "about 150 entity dossiers" (it said 150+, while `list_entities` says about 150), an opening line about the product instead of "the canonical crypto MCP server", and a "Why" section without the "ground-truth" claim.
+- LangChain: the README example and `examples/langchain_agent.py` use `langchain.mcp` (`MCPAdapter`, LangChain 1.4 and later), since `langchain-mcp-adapters` is archived. Checked with langchain 1.4.7: `uvx bca-mcp` loads all 105 tools as LangChain tools, and `env` reaches the server.
+- `examples/eliza_plugin.md` links `@elizaos/plugin-mcp` on npm (its old GitHub repo answers 404).
+- Version 0.6.4 in pyproject, `__version__` and the User-Agent, and `tests/test_version.py` checks that they agree.
+
+### Notes: plan for mcp 2.x (no code change in 0.6.4)
+
+`mcp` 2.0.0 shipped on 2026-07-28 and 2.3.0 on 2026-10-02; 1.29.0 (2026-07-28) is the last 1.x release, so `mcp>=1.21.1,<2.0.0` stays for 0.6.4.
+
+1. Port `server.py` in 0.7.0: the 2.x low level `Server` takes `on_list_tools` and `on_call_tool` in its constructor and has no `@server.list_tools()` decorator or `request_handlers` map, so register both handlers there and keep our own JSON Schemas, annotations, `isError` results and untrusted content fences.
+2. Raise the pin to `mcp>=2.3.0,<3` in the same release, never before the port, and keep a 0.6.x line on 1.x for fixes until 0.7.0 is out.
+3. Before release, run `tests/test_stdio.py` with a 1.x and a 2.x client, plus the parity and annotation tests, and check `serverInfo.version`, that the session survives a cancelled call and a malformed request (the reasons for the 1.21.1 floor), and that the `server/discover` request newer clients send first is answered (1.x logs it as an invalid request, then the session goes on through `initialize`).
+
+## [0.6.3] (2026-11-02)
 
 Fixes from the 2026-10-31 tool probe, in lockstep with @blockchainacademics/mcp 0.6.3. 104 → 105 tools.
 

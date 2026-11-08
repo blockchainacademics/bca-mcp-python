@@ -21,11 +21,11 @@ from bca_mcp.types import SLUG_REGEX, EvmChain, OnchainChain, ResponseEnvelope
 GET_WALLET_PROFILE_TOOL_NAME = "get_wallet_profile"
 
 GET_WALLET_PROFILE_TOOL_DESCRIPTION = (
-    "Wallet summary: native balance (wei and the chain coin, for example "
-    "ETH) and up to 25 token holdings. EVM holdings are the net of the "
-    "newest 1,000 token transfers with likely spam dropped (partial when "
-    "older history exists); Solana holdings are current SPL balances. No "
-    "address labels. Starter tier."
+    "Wallet summary: native balance (in wei and in the chain coin, for example "
+    "ETH) and up to 25 token holdings. EVM holdings are the net of the newest "
+    "1,000 token transfers with likely spam dropped (partial when older "
+    "history exists); Solana holdings are current SPL balances. No address "
+    "labels. Starter tier."
 )
 
 
@@ -104,10 +104,10 @@ async def run_get_tx(args: dict[str, Any]) -> ResponseEnvelope[Any]:
 GET_TOKEN_HOLDERS_TOOL_NAME = "get_token_holders"
 
 GET_TOKEN_HOLDERS_TOOL_DESCRIPTION = (
-    "Top token holders with balance and %-supply. EVM-only, Pro tier. Use "
-    "for concentration/risk analysis. Usually answers partial today "
-    "(upstream_error): the Etherscan holder list needs a paid Etherscan "
-    "plan."
+    "Top holders of an ERC-20 token with balance and share of supply, via "
+    "Etherscan, for holder concentration and risk analysis. EVM chains only, "
+    "Pro tier. Etherscan serves holder lists on its paid plan only, so this "
+    "usually answers partial today (meta.diagnostic names the upstream error)."
 )
 
 

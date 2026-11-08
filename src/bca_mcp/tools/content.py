@@ -49,11 +49,10 @@ def _wrap_untrusted(source: str, value: Any) -> Any:
 GET_ARTICLE_TOOL_NAME = "get_article"
 
 GET_ARTICLE_TOOL_DESCRIPTION = (
-    "Fetch a single editorial crypto article by slug: title, summary, full "
-    "body (body_md), publish date, source link, topics, tickers and entity "
-    "slugs, with citations. Required field: 'slug'. Use after search_news "
-    "when you need the full text of a specific result. Works without an API "
-    "key."
+    "Fetch one BCA article by slug: title, summary, full text (body_md), "
+    "author, source, publish date, topics, tickers and entity slugs, with the "
+    "article as its citation. This is the full text behind a search_news hit. "
+    "An unknown slug is an error (HTTP 404). Works without an API key."
 )
 
 # Free-text article fields that carry third-party text. The API nests the
@@ -101,12 +100,12 @@ async def run_get_article(args: dict[str, Any]) -> ResponseEnvelope[Any]:
 LIST_ENTITY_MENTIONS_TOOL_NAME = "list_entity_mentions"
 
 LIST_ENTITY_MENTIONS_TOOL_DESCRIPTION = (
-    "Timeline of article mentions for an entity, newest first: article "
-    "title and link, publish date, mentions in the article, sentiment score "
-    "and bucket, and a context snippet. Required field: 'slug' (entity slug "
-    "or alias); page with offset. An unknown entity is an error; an entity "
-    "with no linked mentions answers unseeded. Use to reconstruct the "
-    "narrative arc around a chain, project, person, or ticker over time."
+    "Timeline of BCA article mentions for an entity (slug or alias), newest "
+    "first: article slug, title and source URL, publish date, sentiment score "
+    "and bucket, mentions in the article and a context snippet. Page with "
+    "offset. Shows how coverage of a chain, project, person or ticker changed "
+    "over time. Answers unseeded when no public article mentions the entity "
+    "yet; an unknown entity is an error (HTTP 404)."
 )
 
 
@@ -179,8 +178,9 @@ LIST_TOPICS_TOOL_NAME = "list_topics"
 # scripts/seed_canonical_slugs.py in the API repo). Same list as the TS sibling.
 LIST_TOPICS_TOOL_DESCRIPTION = (
     "Browse the BCA topic taxonomy: regulation, defi, nft, layer-2, bitcoin, "
-    "ethereum, solana, stablecoins, rwa and ai-agents. No required fields. "
-    "Use to discover valid filter values for search_news."
+    "ethereum, solana, stablecoins, rwa and ai-agents. Each topic comes with "
+    "its live article count and child topics, and its slug is a topic filter "
+    "value for search_news."
 )
 
 
