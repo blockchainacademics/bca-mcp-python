@@ -1,5 +1,5 @@
 {
- "source": "names, constraints (type, enum, minimum, maximum, default, items) and descriptions: the tools/list of @blockchainacademics/mcp 0.6.4 at bca-mcp-ts release/0.6.4 commit 1a5f319 (SDK 1.32.2), dumped over stdio from a clean build with no key.",
+ "source": "names, constraints (type, enum, minimum, maximum, default, items) and descriptions: the tools/list of @blockchainacademics/mcp 0.6.4 at bca-mcp-ts release/0.6.4 commit 92f4275 (SDK 1.32.2), dumped over stdio from a clean build with no key.",
  "names": [
   "search_news",
   "get_entity",
@@ -1893,7 +1893,7 @@
   "get_ai_agent_tokens": "AI agent tokens (Virtuals Protocol, elizaOS (formerly ai16z), aixbt, Griffain, Zerebro, Bittensor, Artificial Superintelligence Alliance) with CoinGecko price, market cap, 24h volume and change, ranked by market cap.",
   "get_depin_projects": "DePIN tokens (Helium, Render, Filecoin, Akash Network, IoTeX, DIMO, Hivemapper) with CoinGecko price, market cap, 24h volume and change, ranked by market cap.",
   "get_rwa_tokens": "Real-world asset tokens (Ondo, Maple Finance, Centrifuge, Goldfinch, Pendle) with CoinGecko price, market cap, 24h volume and change, ranked by market cap. Starter tier.",
-  "get_prediction_markets": "Live prediction market odds from Polymarket and Kalshi, most traded first. Each market's outcomes is a list of {outcome, price}, the price being the implied probability (0 to 1). Pick the venue and a topic (crypto by default); partial, with meta.diagnostic.missing naming the venue, when a venue fails, has no markets or does not cover the topic.",
+  "get_prediction_markets": "Live prediction market odds from Polymarket and Kalshi, most traded first. Each market's outcomes is a list of {outcome, price}, the price being the implied probability (0 to 1). Takes a venue and a topic (crypto by default); partial, with meta.diagnostic.missing naming the venue, when a venue fails, has no markets or does not cover the topic.",
   "get_regulatory_status": "Crypto regulation state for a country from BCA's curated table: overall status, regulators, key laws and notes, citing the regulator. Unseeded for a country BCA does not cover; partial while its key laws are not on file. Starter tier.",
   "track_sec_filings": "Recent SEC EDGAR filings (form, filing date, document link) for the crypto-related listed companies BCA maps: MSTR, COIN, HOOD, MARA, RIOT, CLSK, BKKT and Galaxy Digital (ticker 'galaxy'). Any other ticker is an error (HTTP 404). Starter tier.",
   "get_mica_status": "EU MiCA applicability by country, with national authorities: one country (ISO-2), or every Member State on file when country is omitted or EU (27 EU Member States, EEA states once seeded). Partial while some Member States have no row. A country outside the EU and EEA lists answers unseeded unless BCA has a reviewed row for it. Per project status is not tracked: entity_slug is ignored. Pro tier.",

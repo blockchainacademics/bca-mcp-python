@@ -143,6 +143,10 @@ def test_descriptions_never_tell_the_model_how_to_behave_or_sell() -> None:
         re.compile(r"before news outlets", re.I),
         re.compile(r"accumulation edge|pair trades|reversal", re.I),
         re.compile(r"Free to submit|paid to be featured|featured listing|Stripe", re.I),
+        # Sending the model to another tool ("use get_job for one role").
+        re.compile(r"\b(use|call|poll|try) [a-z]+_[a-z_]+\b", re.I),
+        # Orders about the arguments: a description says what the tool takes.
+        re.compile(r"(^|[.;:]\s+)(Provide|Pick|Choose)\b"),
     ]
     for t in TOOLS:
         for text in [t.description, *_schema_descriptions(t.input_schema)]:
