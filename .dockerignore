@@ -1,0 +1,13 @@
+# The image build reads only the paths listed below. Everything else stays out
+# of the build context: git history, tests, virtualenvs, caches, .env files.
+*
+!pyproject.toml
+!README.md
+!LICENSE
+!requirements.lock.txt
+!scripts
+!src
+# Generated at build time from scripts/demo-key.txt.
+src/bca_mcp/_demo_key.py
+**/__pycache__
+**/*.pyc
