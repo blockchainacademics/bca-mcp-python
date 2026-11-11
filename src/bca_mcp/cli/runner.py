@@ -65,6 +65,11 @@ def handle_errors(
                 f"{escape(format_validation_error(name, exc))}"
             )
             raise typer.Exit(code=1)
+        except ValueError as exc:
+            # BcaClient refuses a BCA_API_BASE (env var or stored api_base)
+            # outside its allowlist with a ValueError: one line, no traceback.
+            err_console.print(f"[red]Error:[/red] {escape(str(exc))}")
+            raise typer.Exit(code=1)
         except KeyboardInterrupt:
             err_console.print("[dim]Interrupted.[/dim]")
             raise typer.Exit(code=130)

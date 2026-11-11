@@ -69,6 +69,39 @@ def test_login_rejects_empty_key():
     assert result.exit_code == 1
 
 
+def test_login_saves_a_local_api_base_the_client_allows():
+    result = runner.invoke(
+        app, ["login", "--api-key", "bca_k", "--api-base", "http://localhost:8000/"]
+    )
+    assert result.exit_code == 0, result.output
+    assert cli_config.read_config()["api_base"] == "http://localhost:8000"
+
+
+def test_login_refuses_an_api_base_the_client_refuses():
+    result = runner.invoke(
+        app, ["login", "--api-key", "bca_k", "--api-base", "https://proxy.example.com"]
+    )
+    assert result.exit_code == 1
+    assert "Refusing to use BCA_API_BASE='https://proxy.example.com'" in " ".join(
+        result.output.split()
+    )
+    assert not cli_config.CONFIG_FILE.exists()
+
+
+def test_a_stored_bad_api_base_gives_one_error_line_not_a_traceback(monkeypatch):
+    # Saved before the login check existed, or edited by hand.
+    cli_config.write_config({"api_key": "bca_k", "api_base": "https://proxy.example.com"})
+    monkeypatch.delenv("BCA_API_BASE")
+    for args in (["news", "search", "bitcoin"], ["version"]):
+        result = runner.invoke(app, args)
+        assert result.exit_code == 1, result.output
+        assert isinstance(result.exception, SystemExit)
+        assert "Traceback" not in result.output
+        assert "Error: Refusing to use BCA_API_BASE='https://proxy.example.com'" in " ".join(
+            result.output.split()
+        )
+
+
 def test_news_search_pretty(httpx_mock):
     httpx_mock.add_response(
         json={

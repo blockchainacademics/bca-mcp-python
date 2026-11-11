@@ -71,7 +71,7 @@ def login(
     ),
 ) -> None:
     """Store your BCA API key in ~/.bca/config.toml (chmod 600)."""
-    import os
+    from bca_mcp.client import _format_allowlist_error, _is_allowed_base
 
     cfg = read_config()
     if api_key is None:
@@ -82,17 +82,10 @@ def login(
     cfg["api_key"] = api_key.strip()
     if api_base:
         cleaned = api_base.strip().rstrip("/")
-        # HIGH: refuse to persist a non-HTTPS base URL unless the operator
-        # has explicitly opted in via BCA_ALLOW_INSECURE_BASE=1. Mirrors the
-        # same gate inside BcaClient so CLI config and runtime agree.
-        if (
-            not cleaned.startswith("https://")
-            and os.environ.get("BCA_ALLOW_INSECURE_BASE") != "1"
-        ):
-            err_console.print(
-                f"[red]Refusing to save non-HTTPS api_base='{cleaned}'.[/red] "
-                "Set BCA_ALLOW_INSECURE_BASE=1 to override for local dev."
-            )
+        # Refuse to persist a base URL BcaClient would refuse: the same
+        # allowlist, so a saved value never breaks every later command.
+        if not _is_allowed_base(cleaned):
+            err_console.print(f"[red]{escape(_format_allowlist_error(cleaned))}[/red]")
             raise typer.Exit(code=1)
         cfg["api_base"] = cleaned
     write_config(cfg)
