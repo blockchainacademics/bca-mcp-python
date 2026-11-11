@@ -567,6 +567,20 @@ class BcaClient:
                     res.status_code,
                 )
             raise BcaAuthError(upstream_msg or "Invalid or missing BCA_API_KEY")
+        if res.status_code == 402:
+            # A valid key on a plan below the tool's. Same code as the no-key
+            # 403 above. The API's upgrade sentence (it carries the pricing
+            # link) is upstream text, so it is capped here and fenced by the
+            # MCP server like any other 4xx detail (as in the TS sibling).
+            detail = _api_error_detail(res)
+            raise BcaError(
+                "BCA_TIER_LOCKED",
+                "This tool requires a higher tier"
+                if detail is not None
+                else "This tool requires a higher tier. Upgrade at https://blockchainacademics.com/crypto-api/pricing",
+                res.status_code,
+                detail,
+            )
         if res.status_code == 429:
             ra = res.headers.get("retry-after")
             retry_after: Optional[int] = None
@@ -580,7 +594,7 @@ class BcaClient:
         if res.status_code >= 500:
             raise BcaUpstreamError(res.status_code)
         if 400 <= res.status_code < 500:
-            # 4xx (other than 401/403/429) = bad request from caller. Carry
+            # 4xx (other than 401/402/403/429) = bad request from caller. Carry
             # the API's own explanation (a 404's "Job ... not found", a 422's
             # field errors) so the caller can fix the call. It is upstream
             # text: capped here, fenced as untrusted content by the MCP

@@ -18,6 +18,10 @@ Directory review fixes (directory-submissions.md, section 4.6 rows A3, A5 and A1
 - Version 0.6.4 in pyproject, `__version__` and the User-Agent, and `tests/test_version.py` checks that they agree.
 - PyPI classifiers name Python 3.11, 3.12 and 3.13, the versions CI tests. 3.10 was listed although `requires-python` is `>=3.11`; `tests/test_version.py` now rejects a classifier below that floor.
 
+### Fixed
+
+- A tool above the key's plan answers `BCA_TIER_LOCKED` instead of `BCA_BAD_REQUEST`, as in the TypeScript package. The API sends HTTP 402 to a valid key on a lower plan, and the client now gives it the code the README documents (it was only used for the HTTP 403 a call without a key gets). The message is "This tool requires a higher tier:" followed by the API's upgrade sentence with the pricing link, which stays inside an `untrusted_content` fence like any other API detail, cut at 500 characters. A 402 without a readable sentence gets a fixed one with the pricing link. `BcaError.status` is 402 and `BcaError.detail` holds the sentence. 404 and 422 are unchanged.
+
 ### Notes: plan for mcp 2.x (no code change in 0.6.4)
 
 `mcp` 2.0.0 shipped on 2026-07-28 and 2.3.0 on 2026-10-02; 1.29.0 (2026-07-28) is the last 1.x release, so `mcp>=1.21.1,<2.0.0` stays for 0.6.4.
