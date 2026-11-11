@@ -280,6 +280,22 @@ def test_no_api_key_falls_back_to_demo_key(monkeypatch) -> None:
     assert c._api_key == BCA_DEMO_KEY_FALLBACK
 
 
+def test_demo_key_literal_matches_the_source_file() -> None:
+    """client.py's literal fallback (used when _demo_key.py is missing from a
+    build) must be the key in scripts/demo-key.txt, so a rotated key cannot
+    leave a stale copy behind. Read from the files; the key is never shown."""
+    import re
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parent.parent
+    source = (root / "src" / "bca_mcp" / "client.py").read_text("utf-8")
+    literals = re.findall(r'^\s+BCA_DEMO_KEY_FALLBACK = "([^"]*)"$', source, re.MULTILINE)
+    assert len(literals) == 1, "expected one fallback literal in client.py"
+    key = (root / "scripts" / "demo-key.txt").read_text("utf-8").strip()
+    same = literals[0] == key
+    assert same, "client.py fallback literal differs from scripts/demo-key.txt"
+
+
 def test_explicit_api_key_overrides_demo_fallback(monkeypatch) -> None:
     monkeypatch.delenv("BCA_API_KEY", raising=False)
     c = BcaClient(api_key="bca_explicit")
@@ -752,17 +768,13 @@ def test_demo_banner_text_invariants() -> None:
 
 def test_demo_banner_byte_identical_to_ts_sibling() -> None:
     """The TS sibling and Python sibling MUST emit the exact same banner
-    bytes so MCP host log filtering / regex matching works on either side."""
+    bytes so MCP host log filtering / regex matching works on either side.
+    tests/fixtures/ts_demo_banner_0_6_4.ts is bca-mcp-ts src/demo_banner.ts
+    at release/0.6.4, copied unchanged, so the check also runs in CI."""
     from bca_mcp._demo_banner import DEMO_BANNER
     from pathlib import Path
 
-    ts_file = (
-        Path(__file__).resolve().parent.parent.parent
-        / "bca-mcp-ts" / "src" / "demo_banner.ts"
-    )
-    if not ts_file.exists():
-        pytest.skip(f"TS sibling not at {ts_file}; skipping cross-runtime check")
-
+    ts_file = Path(__file__).resolve().parent / "fixtures" / "ts_demo_banner_0_6_4.ts"
     ts_src = ts_file.read_text(encoding="utf-8")
     # Extract the three string literals between double quotes that start
     # with "[bca-mcp]".
@@ -772,12 +784,6 @@ def test_demo_banner_byte_identical_to_ts_sibling() -> None:
     assert len(ts_lines) == 3, f"expected 3 banner string literals, got {ts_lines}"
     # JS escape sequences -> Python string. We only used \n, so unescape that.
     ts_banner = "".join(l.replace("\\n", "\n") for l in ts_lines)
-    if "Limited to ~10 tools" in ts_banner:
-        # The sibling checkout still has the pre-0.6.3 banner (its own update
-        # ships separately). The exact Python bytes are pinned by
-        # tests/test_copy.py::test_demo_banner_exact_bytes either way.
-        pytest.skip("TS sibling checkout still has the pre-0.6.3 banner")
     assert ts_banner == DEMO_BANNER, (
         f"banner drift!\nTS: {ts_banner!r}\nPY: {DEMO_BANNER!r}"
     )
-

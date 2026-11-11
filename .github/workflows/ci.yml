@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, "release/**"]
     tags: ["v*"]
   pull_request:
   workflow_dispatch:
@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11", "3.12", "3.13"]
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@v4
 
@@ -53,15 +53,17 @@ jobs:
           cd /tmp
           /tmp/clean/bin/python -c "import bca_mcp; print('import OK', bca_mcp.__version__)"
           /tmp/clean/bin/python -c "from bca_mcp.client import BcaClient, get_client; print('client OK')"
-          /tmp/clean/bin/bca-mcp --help >/dev/null 2>&1 || /tmp/clean/bin/bca-mcp --version || true
-          /tmp/clean/bin/bca --help >/dev/null 2>&1 && echo "bca CLI OK" || echo "bca CLI: no --help (non-fatal)"
+          /tmp/clean/bin/python -c "from bca_mcp.server import TOOLS; assert len(TOOLS) == 105"
+          /tmp/clean/bin/bca --help >/dev/null
+          # The stdio server exits 0 at the end of its input.
+          /tmp/clean/bin/bca-mcp < /dev/null
 
   tests:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11", "3.12", "3.13"]
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
