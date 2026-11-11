@@ -135,12 +135,31 @@ def test_news_search_json(httpx_mock):
 
 def test_version_command(httpx_mock):
     from bca_mcp import __version__
+    # The public health probe: no key needed, no quota spent.
     httpx_mock.add_response(
-        json={"data": {"version": "prod-abc123"}, "cite_url": None, "as_of": None},
+        url="https://staging-api.blockchainacademics.com/v1/health",
+        json={"ok": True, "git_sha": "abc123def456"},
     )
     result = runner.invoke(app, ["version"])
     assert result.exit_code == 0
     assert __version__ in result.stdout
+    assert "api:     ok (build abc123def456)" in result.stdout
+
+
+def test_version_says_unreachable_only_for_a_network_error(httpx_mock):
+    import httpx
+
+    url = "https://staging-api.blockchainacademics.com/v1/health"
+    httpx_mock.add_exception(httpx.ConnectError("[Errno 61] Connection refused"), url=url)
+    result = runner.invoke(app, ["version"])
+    assert result.exit_code == 0
+    assert "API unreachable: Network error contacting BCA API: ConnectError" in result.stdout
+
+    httpx_mock.add_response(url=url, status_code=503, json={"ok": False, "git_sha": "x"})
+    result = runner.invoke(app, ["version"])
+    assert result.exit_code == 0
+    assert "unreachable" not in result.stdout
+    assert "API error (BCA_UPSTREAM): BCA API upstream error (HTTP 503)" in result.stdout
 
 
 # --- commands against the API's response shapes (pass 2) -------------------
@@ -206,6 +225,21 @@ def test_price_takes_coingecko_ids(httpx_mock):
     assert result.exit_code == 0, result.output
     assert "BITCOIN" in result.stdout and "70000" in result.stdout
     assert "+1.50%" in result.stdout
+    assert "Price (USD)" in result.stdout and "$70000" in result.stdout
+
+
+def test_price_labels_the_vs_currency(httpx_mock):
+    httpx_mock.add_response(
+        url=f"{STAGING}/v1/market/price?ids=bitcoin&vs=eur",
+        json=_envelope({
+            "bitcoin": {"eur": 64000, "eur_24h_change": 1.5, "eur_market_cap": 1.3e12},
+        }),
+    )
+    result = runner.invoke(app, ["price", "bitcoin", "--vs", "eur"])
+    assert result.exit_code == 0, result.output
+    assert "Price (EUR)" in result.stdout
+    assert "EUR 64000" in result.stdout and "EUR 1,300,000,000,000" in result.stdout
+    assert "USD" not in result.stdout and "$" not in result.stdout
 
 
 def test_market_overview_reads_coingecko_rows(httpx_mock):

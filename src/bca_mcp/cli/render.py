@@ -139,10 +139,13 @@ def price_rows(data: Any, vs: str = "usd") -> list[dict[str, Any]]:
     return rows
 
 
-def price_table(rows: Iterable[dict[str, Any]]) -> None:
+def price_table(rows: Iterable[dict[str, Any]], currency: str = "usd") -> None:
+    # get_price quotes in the --vs currency; the market overview is in USD.
+    code = escape(currency.upper())
+    money = "$" if code == "USD" else f"{code} "
     table = Table(show_header=True, header_style="bold cyan")
     table.add_column("Ticker")
-    table.add_column("Price (USD)", justify="right")
+    table.add_column(f"Price ({code})", justify="right")
     table.add_column("24h %", justify="right")
     table.add_column("Market cap", justify="right")
     for row in rows:
@@ -157,9 +160,9 @@ def price_table(rows: Iterable[dict[str, Any]]) -> None:
         price_value = row.get("price_usd") or row.get("price") or row.get("current_price")
         table.add_row(
             escape(str(row.get("ticker") or row.get("symbol") or "-").upper()),
-            f"${price_value if price_value is not None else '-'}",
+            f"{money}{price_value if price_value is not None else '-'}",
             f"[{color}]{ch_str}[/{color}]",
-            f"${mc:,.0f}" if isinstance(mc, (int, float)) else "-",
+            f"{money}{mc:,.0f}" if isinstance(mc, (int, float)) else "-",
         )
     console.print(table)
 

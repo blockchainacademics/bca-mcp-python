@@ -37,7 +37,7 @@ from bca_mcp.cli.render import (
     status_note,
     unwrap,
 )
-from bca_mcp.cli.runner import err_console, handle_errors, run_async
+from bca_mcp.cli.runner import _error_text, err_console, handle_errors, run_async
 
 app = typer.Typer(
     name="bca",
@@ -114,16 +114,22 @@ async def version() -> None:
     console.print(f"[bold]bca-mcp[/bold] {__version__}")
     apply_env_defaults()
     from bca_mcp.client import BcaClient
+    from bca_mcp.errors import BcaError, BcaNetworkError
 
-    client = BcaClient()
     try:
-        res = await client.request("/v1/status")
-        data = unwrap(res)
-        if isinstance(data, dict):
-            api_ver = data.get("version") or data.get("commit") or "live"
-            console.print(f"[bold]api:[/bold]     {api_ver}")
-    except Exception as exc:  # noqa: BLE001
-        console.print(f"[yellow]API unreachable:[/yellow] {exc}")
+        # /v1/health is public: it answers without a key and spends no quota.
+        # /v1/status needs a key, so with the demo key it answered 403 and
+        # printed "API unreachable", and its version field is a constant.
+        res = await BcaClient().request("/v1/health")
+    except BcaNetworkError as exc:
+        console.print(f"[yellow]API unreachable:[/yellow] {_error_text(exc)}")
+        return
+    except BcaError as exc:
+        console.print(f"[yellow]API error ({exc.code}):[/yellow] {_error_text(exc)}")
+        return
+    data = unwrap(res)
+    build = data.get("git_sha") if isinstance(data, dict) else None
+    console.print(f"[bold]api:[/bold]     ok (build {escape(str(build or 'unknown'))})")
 
 
 # ---------- news ----------
@@ -228,7 +234,7 @@ async def price(
     if not rows:
         console.print("[yellow]No price data.[/yellow]")
         return
-    price_table(rows)
+    price_table(rows, vs.lower())
     cite_footer(res)
 
 
