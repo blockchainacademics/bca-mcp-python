@@ -79,27 +79,27 @@ Fixes from the 2026-10-31 tool probe, in lockstep with @blockchainacademics/mcp 
 - README: a section on `meta.status` (complete, partial, stale, unseeded and their diagnostics) and on `attribution.citations[0]` as the primary source; corpus and entity counts from the API (3,800+ articles, 150+ entities); errors are described for every failed tool call.
 - `get_mica_status` describes a country outside the EU and EEA as unseeded only while BCA has no reviewed row for it (the API returns the row when there is one). `get_agent_job` names its tier (Pro) and that a job is visible only to the key that started it.
 
-## [0.6.2] — 2026-10-19
+## [0.6.2] (2026-10-19)
 
-### Added — live crypto jobs (lockstep with @blockchainacademics/mcp 0.6.2)
+### Added: live crypto jobs (lockstep with @blockchainacademics/mcp 0.6.2)
 
 `list_jobs` now returns real data: 1,300+ open roles at 50+ crypto companies, collected every 6 hours from the companies' own job boards, with apply links to the company's own page. Both job tools are available on the demo tier. 103 → 104 tools.
 
 - `list_jobs`: filters now match the API (keyword, role category, remote, location, employment type, company); descriptions are opt-in to keep responses small.
 - `get_job`: one role in full, with apply link and BCA job page URL.
 
-## [0.6.1] — 2026-10-19
+## [0.6.1] (2026-10-19)
 
-### Added — grants (lockstep with @blockchainacademics/mcp 0.6.1)
+### Added: grants (lockstep with @blockchainacademics/mcp 0.6.1)
 
 The live grants directory behind blockchainacademics.com/grants: 200+ crypto, web3, AI and public-funding programs, each checked against the funder's page weekly. Expired rounds are never returned. Available on the demo tier. 101 → 103 tools.
 
 - `search_grants`: filter by keyword, ecosystem (web3, ai, web2_cloud, gov, edu), country, minimum award, application complexity and deadline. Soonest deadline first.
 - `get_grant`: one program in full, with apply link and last verified date.
 
-## [0.6.0] — 2026-10-09
+## [0.6.0] (2026-10-09)
 
-### Added — crypto Twitter intelligence (lockstep with @blockchainacademics/mcp 0.6.0)
+### Added: crypto Twitter intelligence (lockstep with @blockchainacademics/mcp 0.6.0)
 
 BCA's read of what crypto Twitter is saying, as analysis in our own words with X post URLs as citations (never reposted post text). Pro tier. 98 → 101 tools.
 
@@ -112,26 +112,26 @@ BCA's read of what crypto Twitter is saying, as analysis in our own words with X
 - `get_social_pulse` is now live (was `integration_pending`).
 - `get_article` works without an API key (rate-limited per IP).
 
-## [0.5.3] — 2026-09-28
+## [0.5.3] (2026-09-28)
 
 ### Security
 
 - **Prompt-injection fence hardening.** Upstream text (news bodies, whitepapers,
   contract source, entity dossiers) is wrapped in `<untrusted_content>` fences so
   the host LLM treats it as data. That defence is only sound if the text can't
-  contain the fence's own closing token — an attacker embedding a literal
+  contain the fence's own closing token: an attacker embedding a literal
   `</untrusted_content>` could otherwise close the fence early and inject
   instructions. New `_untrusted.neutralize_fence_tokens()` rewrites any literal
   fence tag (open/close, case/space/attribute tolerant) to an inert `&lt;…&gt;`
   form before wrapping, at every fence site. Mirrors the TS sibling.
 
-## [0.5.2] — 2026-09-22
+## [0.5.2] (2026-09-22)
 
 ### Fixed
 
 - **Critical packaging bug: the published package crashed on import.** `client.py`
   imports `bca_mcp._demo_key` at module load, but `_demo_key.py` is generated and
-  gitignored — hatchling excludes gitignored files, so **0.5.0 and 0.5.1 shipped
+  gitignored, and hatchling excludes gitignored files, so **0.5.0 and 0.5.1 shipped
   without it** and every `pip install bca-mcp` / `uvx bca-mcp` failed with
   `ModuleNotFoundError: No module named 'bca_mcp._demo_key'`. (npm's
   `@blockchainacademics/mcp` was unaffected.)
@@ -151,14 +151,14 @@ BCA's read of what crypto Twitter is saying, as analysis in our own words with X
   even if the generator wasn't run.
 - Added a GitHub Actions CI gate (`.github/workflows/ci.yml`) that builds the wheel,
   installs it in a **clean venv**, and asserts `import bca_mcp` + the `bca-mcp`/`bca`
-  entry points work — the exact check that would have caught this before publish.
+  entry points work: the exact check that would have caught this before publish.
 - `USER_AGENT` → `bca-mcp/0.5.2`.
 
 ### Action
 
 - Yank 0.5.0 and 0.5.1 from PyPI after 0.5.2 is confirmed installable.
 
-## [0.5.1] — 2026-06-04
+## [0.5.1] (2026-06-04)
 
 ### Lockstep
 
@@ -170,9 +170,9 @@ is pure version alignment.
 
 `USER_AGENT` bumped to `bca-mcp/0.5.1` to match.
 
-## [0.5.0] — 2026-06-04
+## [0.5.0] (2026-06-04)
 
-### Added — public demo tier (zero-config first run)
+### Added: public demo tier (zero-config first run)
 
 Sibling of `@blockchainacademics/mcp@0.5.0`. Byte-identical demo banner,
 identical fallback chain order, identical envelope/error additions.
@@ -202,7 +202,7 @@ on import.
   bug that under-attributed all subsequent versions on the backend
   rate-limit logs). Now `bca-mcp/0.5.0`.
 
-## [0.4.2] — 2026-06-02
+## [0.4.2] (2026-06-02)
 
 ### Lockstep
 
@@ -211,13 +211,13 @@ on import.
   in a single MCP Registry entry; PyPI `bca-mcp` is referenced at
   `0.4.2`.
 
-## [0.4.1] — 2026-06-02
+## [0.4.1] (2026-06-02)
 
 ### Fixed
 
 - **Python 3.10 import crash.** 0.4.0 failed at import time on Python
   3.10 with `TypeError: cannot inherit from both a TypedDict type and a
-  non-TypedDict base class` — `class ResponseEnvelope(TypedDict, Generic[T])`
+  non-TypedDict base class`, since `class ResponseEnvelope(TypedDict, Generic[T])`
   is only valid on Python 3.11+. Bumped `requires-python` to `>=3.11`
   so `pip install` / `uvx` resolve the correct interpreter from the
   start. No source change required; 0.4.0 stays on PyPI for the audit
@@ -228,17 +228,17 @@ on import.
 - `@blockchainacademics/mcp@0.4.1` on npm carries the same version bump
   (no functional delta on the TS side).
 
-## [0.4.0] — 2026-06-02
+## [0.4.0] (2026-06-02)
 
 Distribution release. Lockstep with `@blockchainacademics/mcp@0.4.0` on npm.
 
-### Security — MCP-TS-2 parity (closes redirect-hardening gap with TS sibling)
+### Security: MCP-TS-2 parity (closes redirect-hardening gap with TS sibling)
 
 - **`follow_redirects=False` on `httpx.AsyncClient`.** Mirrors
   `~/bca-mcp-ts/src/client.ts` commit `895bfee` (2026-04-22). Without this
   flag, a compromised or mis-configured upstream that responds with a 3xx
   and an attacker-controlled `Location` header would cause `httpx` to
-  re-issue the request — `X-API-Key` and all — to the redirect target.
+  re-issue the request (`X-API-Key` and all) to the redirect target.
 - **Explicit 3xx rejection in `BcaClient._call()`.** Any 300–399 status now
   raises `BcaUpstreamError`. The error message includes the status code
   but masks the `Location` header so the attacker URL never leaks into
@@ -246,7 +246,7 @@ Distribution release. Lockstep with `@blockchainacademics/mcp@0.4.0` on npm.
 - **3 new regression tests** in `test_client_security.py`:
   - `test_rejects_302_redirect`
   - `test_rejects_301_permanent_redirect`
-  - `test_api_key_never_sent_to_redirect_target` (defense-in-depth — confirms
+  - `test_api_key_never_sent_to_redirect_target` (defense-in-depth: confirms
     only ONE outbound request fires, to BCA, not the attacker)
 - The `BCA_API_BASE` allowlist from 0.3.1 already bounds the initial host;
   this closes the redirect-based escape from that bound. Test suite:
@@ -255,26 +255,26 @@ Distribution release. Lockstep with `@blockchainacademics/mcp@0.4.0` on npm.
 ### Verified
 
 - Envelope canonicality + hybrid citations (the TS sibling 0.4.0 changes
-  land on the API surface, not the Python MCP layer — Python passes
+  land on the API surface, not the Python MCP layer; Python passes
   through the canonical envelope unchanged).
 - 110 → 113 passing tests.
 
-## [0.3.1] — 2026-04-22
+## [0.3.1] (2026-04-22)
 
 ### Security
-- **H-1 — `BCA_API_BASE` SSRF + credential exfil.** The base URL is now pinned to a strict allowlist (prod `https://api.blockchainacademics.com`, staging `https://staging-api.blockchainacademics.com`, or loopback `http://localhost[:port]` / `http://127.0.0.1[:port]`). Any other value — HTTPS included — is rejected at client construction with `ValueError`. The prior HTTPS-only gate let an attacker with env control point the client at `https://attacker.controlled/` and harvest `X-API-Key` on the first outbound request.
-- **H-2 — Prompt-injection fencing on tool responses.** The MCP `call_tool` handler now wraps every tool response's `data` payload in an `<untrusted_content source="bca-api">` block before serialization. Upstream news titles, article bodies, and entity text are now framed as data, not instructions, for the host LLM. `attribution` and `meta` remain structured — they're our own tool metadata, not attacker-influenced. Fence bytes are identical to the TypeScript sibling.
-- **H-3 — Webhook SSRF in `monitor_keyword`.** The `webhook_url` parameter is now validated before any outbound call: HTTPS only (no `http://` / `ftp://` / `file://`), no bare IP literals, and every IP that the hostname resolves to (A + AAAA) must be public. Private / loopback / link-local / reserved / multicast / unspecified ranges are all rejected, and all returned IPs are checked (DNS-rebinding defense). Cloud metadata targets such as `169.254.169.254` are blocked.
+- **H-1: `BCA_API_BASE` SSRF + credential exfil.** The base URL is now pinned to a strict allowlist (prod `https://api.blockchainacademics.com`, staging `https://staging-api.blockchainacademics.com`, or loopback `http://localhost[:port]` / `http://127.0.0.1[:port]`). Any other value (HTTPS included) is rejected at client construction with `ValueError`. The prior HTTPS-only gate let an attacker with env control point the client at `https://attacker.controlled/` and harvest `X-API-Key` on the first outbound request.
+- **H-2: Prompt-injection fencing on tool responses.** The MCP `call_tool` handler now wraps every tool response's `data` payload in an `<untrusted_content source="bca-api">` block before serialization. Upstream news titles, article bodies, and entity text are now framed as data, not instructions, for the host LLM. `attribution` and `meta` remain structured: they're our own tool metadata, not attacker-influenced. Fence bytes are identical to the TypeScript sibling.
+- **H-3: Webhook SSRF in `monitor_keyword`.** The `webhook_url` parameter is now validated before any outbound call: HTTPS only (no `http://` / `ftp://` / `file://`), no bare IP literals, and every IP that the hostname resolves to (A + AAAA) must be public. Private / loopback / link-local / reserved / multicast / unspecified ranges are all rejected, and all returned IPs are checked (DNS-rebinding defense). Cloud metadata targets such as `169.254.169.254` are blocked.
 
 ### Changed
-- `BCA_ALLOW_INSECURE_BASE` is no longer consulted — loopback bases are explicitly allowlisted, so the escape hatch is redundant.
+- `BCA_ALLOW_INSECURE_BASE` is no longer consulted: loopback bases are explicitly allowlisted, so the escape hatch is redundant.
 
 ### Tests
 - 110 passing (was 94): added H-1 allowlist coverage, H-2 fence-bytes regression, and H-3 webhook SSRF battery (IPv4, IPv6, RFC1918, IMDS, dual-stack DNS rebind, end-to-end `run_monitor_keyword`).
 
-## [0.3.0] — 2026-04-22
+## [0.3.0] (2026-04-22)
 
-### Changed — BREAKING
+### Changed: BREAKING
 - **Canonical response envelope adopted across all tool outputs.** The MCP server now emits the JSON:API-inspired envelope that the REST API locked on 2026-04-22, matching the TypeScript sibling. Every tool response is now shaped as:
 
   ```json
@@ -290,11 +290,11 @@ Distribution release. Lockstep with `@blockchainacademics/mcp@0.4.0` on npm.
   }
   ```
 
-- `attribution.citations[]` is **array-only** — the legacy singular `{cite_url, as_of, source_hash}` shorthand has been removed.
-- `meta.status` enum is now `complete | unseeded | partial | stale`. The legacy `"error"` value has been removed — error conditions surface as raises (`BcaError` subclasses), never as successful-looking bodies.
+- `attribution.citations[]` is **array-only**: the legacy singular `{cite_url, as_of, source_hash}` shorthand has been removed.
+- `meta.status` enum is now `complete | unseeded | partial | stale`. The legacy `"error"` value has been removed: error conditions surface as raises (`BcaError` subclasses), never as successful-looking bodies.
 - `meta.request_id` is always a string.
-- Rate-limit metadata moved to HTTP response headers (previously leaked into the body on `BcaRateLimitError` paths — still the case for the raise, but the successful envelope no longer carries it).
-- Server `call_tool` handler no longer re-shapes tool output — it serializes the canonical envelope the client hands back directly. The old flat→nested transform at `server.py:374-397` has been removed.
+- Rate-limit metadata moved to HTTP response headers (previously leaked into the body on `BcaRateLimitError` paths; still the case for the raise, but the successful envelope no longer carries it).
+- Server `call_tool` handler no longer re-shapes tool output: it serializes the canonical envelope the client hands back directly. The old flat→nested transform at `server.py:374-397` has been removed.
 - Client (`src/bca_mcp/client.py`) now canonicalizes upstream bodies: already-canonical responses pass through untouched; legacy flat `{data, cite_url, as_of, source_hash, status}` responses are upgraded in place (with a one-time warning logged to `bca_mcp.client`) during the rollout window.
 
 ### MIGRATION
@@ -341,41 +341,41 @@ Downstream MCP clients / agents must migrate from `response.attribution.cite_url
 ### Added
 - `bca_mcp.types.Citation`, `PageInfo`, `EnvelopeMeta`, `Attribution` TypedDicts codifying the canonical shape.
 - `bca_mcp.types.default_page_info()` helper for non-paginated payloads.
-- `bca_mcp.client.reset_legacy_envelope_warning()` — testing aid for the flat→canonical shim.
+- `bca_mcp.client.reset_legacy_envelope_warning()`: testing aid for the flat→canonical shim.
 - Canonical-envelope contract test in `tests/test_envelope_shape.py` asserting the full shape on a mocked tool call.
 
-## [0.2.0] — 2026-04-21
+## [0.2.0] (2026-04-21)
 
 ### Added
-- **`bca` CLI** bundled with the package — a Typer + Rich terminal UI over the same REST API the MCP server wraps. Registered as a console script (`pip install bca-mcp` gives you both `bca-mcp` and `bca`).
-  - `bca login` — stores API key in `~/.bca/config.toml` (chmod 600).
-  - `bca config show` — inspect config file location + masked key.
-  - `bca news search <query>` — rich table of articles with `cite_url`.
-  - `bca entity <slug>` — entity dossier panel.
-  - `bca price <tickers>` — spot + 24h change table.
-  - `bca market overview` — top-N by market cap.
-  - `bca indicator <name> <entity> --window {7d,30d,90d}` — proprietary indicator reads.
-  - `bca explainer <slug>` — academy lesson rendered as markdown.
-  - `bca agent <skill>` — kicks off async agent-backed jobs and polls to completion.
-  - `bca version` — shows CLI + live API version.
+- **`bca` CLI** bundled with the package: a Typer + Rich terminal UI over the same REST API the MCP server wraps. Registered as a console script (`pip install bca-mcp` gives you both `bca-mcp` and `bca`).
+  - `bca login`: stores API key in `~/.bca/config.toml` (chmod 600).
+  - `bca config show`: inspect config file location + masked key.
+  - `bca news search <query>`: rich table of articles with `cite_url`.
+  - `bca entity <slug>`: entity dossier panel.
+  - `bca price <tickers>`: spot + 24h change table.
+  - `bca market overview`: top-N by market cap.
+  - `bca indicator <name> <entity> --window {7d,30d,90d}`: proprietary indicator reads.
+  - `bca explainer <slug>`: academy lesson rendered as markdown.
+  - `bca agent <skill>`: kicks off async agent-backed jobs and polls to completion.
+  - `bca version`: shows CLI + live API version.
   - Every command accepts `--json` for pipe-friendly output.
 - `BCA_API_BASE` is now the primary base-URL env var; `BCA_API_BASE_URL` is accepted as a legacy alias (matches the TypeScript sibling + `server.json` contract).
 
 ### Changed
 - User-Agent bumped to `bca-mcp/0.2.0`.
 
-## [0.1.0] — 2026-04-21
+## [0.1.0] (2026-04-21)
 
 ### Added
-- Initial Python release with stdio transport — v0.1 scaffold, **8 read-only tools** (minimum viable parity with `@blockchainacademics/mcp` TS v0.1).
+- Initial Python release with stdio transport: v0.1 scaffold, **8 read-only tools** (minimum viable parity with `@blockchainacademics/mcp` TS v0.1).
 - **Content & corpus (6):** `search_news`, `get_article`, `get_entity`, `list_entity_mentions`, `list_topics`, `get_explainer`.
 - **Market (2):** `get_price`, `get_market_overview`.
 - Typed async HTTPS client (`httpx.AsyncClient`) with `BCA_API_KEY` header injection, 20s default timeout, and both `request()` (GET) and `post()` methods.
-- Fail-fast at server construction if `BCA_API_KEY` is not set — misconfigured MCP hosts surface the error at startup, not on first tool call.
+- Fail-fast at server construction if `BCA_API_KEY` is not set, so misconfigured MCP hosts surface the error at startup, not on first tool call.
 - Envelope passthrough for `status=integration_pending` / `status=upstream_error` bodies (pass as successful tool responses; MCP client decides how to surface).
 - Structured error taxonomy (`BCA_AUTH`, `BCA_RATE_LIMIT`, `BCA_UPSTREAM`, `BCA_NETWORK`, `BCA_BAD_REQUEST`) mirroring the TypeScript sibling.
 - Attribution surfacing (`cite_url`, `as_of`, `source_hash`) on every tool response; `null` preserved when upstream omits.
-- Smoke test suite using `pytest` + `pytest-httpx` — schema + transport validation with no live API calls.
+- Smoke test suite using `pytest` + `pytest-httpx`: schema + transport validation with no live API calls.
 - LangChain integration via `langchain-mcp-adapters` in `examples/langchain_agent.py`.
 - Eliza integration notes in `examples/eliza_plugin.md`.
 - Sibling of the TypeScript `@blockchainacademics/mcp` package. v0.2 will expand the tool surface toward the 99-tool TS parity target.

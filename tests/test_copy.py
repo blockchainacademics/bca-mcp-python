@@ -107,7 +107,15 @@ def test_readme_lists_the_17_demo_tools_and_current_counts() -> None:
 
 def test_no_em_dashes_in_user_facing_text() -> None:
     assert EM_DASH not in DEMO_BANNER
-    for path in ("README.md", "examples/eliza_plugin.md"):
+    # The changelog, the lock file and the generator (which writes the header
+    # of _demo_key.py) ship in the sdist too.
+    for path in (
+        "README.md",
+        "examples/eliza_plugin.md",
+        "CHANGELOG.md",
+        "requirements.lock.txt",
+        "scripts/gen_demo_key.py",
+    ):
         assert EM_DASH not in (ROOT / path).read_text("utf-8"), path
     for t in TOOLS:
         assert EM_DASH not in t.description, t.name

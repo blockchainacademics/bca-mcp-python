@@ -4,7 +4,7 @@
 The demo key is a public, rate-limited fallback baked into the package.
 When BCA_API_KEY is unset, BcaClient uses this value so `uvx bca-mcp` is
 a true zero-config demo. The TS sibling has the same file at
-scripts/demo-key.txt and the same gen script — both must match byte-for-byte
+scripts/demo-key.txt and the same gen script; both must match byte-for-byte
 before tagging a release. See plan: ok-lets-use-all-glowing-plum.md.
 """
 from __future__ import annotations
@@ -22,7 +22,7 @@ def main() -> int:
     raw = TXT.read_text(encoding="utf-8").strip()
     if not raw.startswith("bca_demo_"):
         sys.stderr.write(
-            "gen_demo_key: refusing to emit — scripts/demo-key.txt does not "
+            "gen_demo_key: refusing to emit, scripts/demo-key.txt does not "
             "start with 'bca_demo_'\n"
         )
         return 1
@@ -34,7 +34,7 @@ def main() -> int:
         return 1
 
     body = (
-        "# GENERATED — do not edit by hand. Source: scripts/demo-key.txt.\n"
+        "# GENERATED: do not edit by hand. Source: scripts/demo-key.txt.\n"
         "# Regenerate via: python scripts/gen_demo_key.py\n"
         "#\n"
         "# Public demo key baked into the package. When BCA_API_KEY is unset,\n"

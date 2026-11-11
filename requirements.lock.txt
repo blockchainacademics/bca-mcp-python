@@ -1,4 +1,4 @@
-# requirements.lock.txt — fully-pinned dependency tree for reproducible installs.
+# requirements.lock.txt: fully-pinned dependency tree for reproducible installs.
 #
 # Regenerate from a clean `.venv` with the project's runtime + dev deps installed:
 #
@@ -16,7 +16,7 @@
 # ---------------------------------------------------------------------------
 # Populate the block below by running `pip freeze --exclude-editable` in the
 # fully-provisioned .venv. The placeholder stays empty on first commit so CI
-# will fail loudly until a real freeze is captured — that's intentional, it
+# will fail loudly until a real freeze is captured; that's intentional, it
 # forces a human to verify the tree before it pins.
 # ---------------------------------------------------------------------------
 annotated-doc==0.0.4
