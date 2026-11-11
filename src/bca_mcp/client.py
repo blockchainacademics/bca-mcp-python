@@ -311,22 +311,34 @@ def _render_api_error_detail(body: Any) -> Optional[str]:
     return None
 
 
-def _read_error_json(res: httpx.Response) -> Any:
+async def _read_capped(res: httpx.Response, cap: int) -> Optional[bytes]:
+    """The body of a streamed response, or None as soon as it passes ``cap``
+    bytes: the rest is never read, so an oversized body cannot fill host
+    memory. Same guard as ``readCappedText`` in the TS sibling."""
+    buf = bytearray()
+    async for chunk in res.aiter_bytes():
+        buf += chunk
+        if len(buf) > cap:
+            return None
+    return bytes(buf)
+
+
+def _read_error_json(body: Optional[bytes]) -> Any:
     """Parsed JSON error body, or None when it is missing, huge or not JSON."""
-    if len(res.content) > MAX_ERROR_BODY_BYTES:
+    if body is None:
         return None
     try:
-        return res.json()
+        return _json.loads(body)
     except (ValueError, _json.JSONDecodeError):
         return None
 
 
-def _api_error_detail(res: httpx.Response) -> Optional[str]:
+def _api_error_detail(body: Optional[bytes]) -> Optional[str]:
     """The API's explanation of a rejected (4xx) request, cut to
     ``MAX_DETAIL_CHARS``. It is upstream text: the MCP server fences it as
     untrusted content (which also neutralizes fence tags) before a model
     reads it. Non-JSON bodies (a proxy's HTML page) give None."""
-    detail = _render_api_error_detail(_read_error_json(res))
+    detail = _render_api_error_detail(_read_error_json(body))
     if detail is None:
         return None
     return detail[:MAX_DETAIL_CHARS]
@@ -538,13 +550,20 @@ class BcaClient:
             try:
                 async with self._build_client() as http:
                     if method == "POST":
-                        res = await http.post(
+                        stream = http.stream(
+                            "POST",
                             url,
                             json=dict(body) if body else None,
                             headers=headers,
                         )
                     else:
-                        res = await http.get(url, params=clean_params, headers=headers)
+                        stream = http.stream("GET", url, params=clean_params, headers=headers)
+                    async with stream as res:
+                        # Error bodies are read only for their detail, so
+                        # they get the far smaller cap.
+                        raw = await _read_capped(
+                            res, MAX_BODY_BYTES if res.is_success else MAX_ERROR_BODY_BYTES
+                        )
             except httpx.LocalProtocolError as err:
                 # Raised while the request is built when a header value is not
                 # valid HTTP, and its text repeats that value. The only header
@@ -559,7 +578,7 @@ class BcaClient:
             if res.status_code != 429:
                 break
 
-            detail = _render_api_error_detail(_read_error_json(res))
+            detail = _render_api_error_detail(_read_error_json(raw))
             delay = (
                 _per_second_retry_delay(res, detail)
                 if method == "GET" and retries < RATE_LIMIT_MAX_RETRIES
@@ -595,7 +614,7 @@ class BcaClient:
             # includes the upgrade URL.
             upstream_code: Optional[str] = None
             upstream_msg: Optional[str] = None
-            body_json = _read_error_json(res)
+            body_json = _read_error_json(raw)
             if isinstance(body_json, dict):
                 err = body_json.get("error")
                 if isinstance(err, dict):
@@ -635,7 +654,7 @@ class BcaClient:
             # 403 above. The API's upgrade sentence (it carries the pricing
             # link) is upstream text, so it is capped here and fenced by the
             # MCP server like any other 4xx detail (as in the TS sibling).
-            detail = _api_error_detail(res)
+            detail = _api_error_detail(raw)
             raise BcaError(
                 "BCA_TIER_LOCKED",
                 "This tool requires a higher tier"
@@ -656,7 +675,7 @@ class BcaClient:
             raise BcaBadRequestError(
                 f"BCA API rejected request: HTTP {res.status_code}",
                 status=res.status_code,
-                detail=_api_error_detail(res),
+                detail=_api_error_detail(raw),
             )
         if not (200 <= res.status_code < 300):
             raise BcaUpstreamError(
@@ -665,19 +684,17 @@ class BcaClient:
             )
 
         # MEDIUM: cap body size. A compromised upstream could otherwise stream
-        # an unbounded response and exhaust host memory. httpx has already
-        # materialised `res.content`; we size-check it here and fail fast
-        # with a clear BcaUpstreamError (rather than silently truncating).
-        raw = res.content  # bytes
-        if len(raw) > MAX_BODY_BYTES:
+        # an unbounded response and exhaust host memory. The read above
+        # stopped at the cap (Content-Length can be missing or forged); fail
+        # fast with a clear BcaUpstreamError rather than silently truncating.
+        if raw is None:
             raise BcaUpstreamError(
                 res.status_code,
-                f"response exceeded {MAX_BODY_BYTES} byte cap "
-                f"({len(raw)} bytes received)",
+                f"response exceeded {MAX_BODY_BYTES} byte cap",
             )
 
         try:
-            payload = res.json()
+            payload = _json.loads(raw)
         except (ValueError, _json.JSONDecodeError) as err:
             raise BcaUpstreamError(
                 res.status_code,

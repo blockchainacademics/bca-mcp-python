@@ -27,6 +27,7 @@ Directory review fixes (directory-submissions.md, section 4.6 rows A3, A5 and A1
 - `bca login --api-base` accepts the bases the client accepts (`http://localhost[:port]` and `http://127.0.0.1[:port]` for local development) and refuses any other host before saving. It used to refuse localhost unless `BCA_ALLOW_INSECURE_BASE=1` was set (nothing else reads that variable) and to save any https host, after which every command failed with a traceback. A `BCA_API_BASE` the client refuses, from the environment or the config file, now gives one error message and exit code 1 in every command.
 - `bca version` asks the public health probe (`/v1/health`) and prints `api: ok (build <git sha>)`. It asked `/v1/status`, which needs a key: without one it printed "API unreachable" while the API was up (and spent a demo call), and with one it printed a constant. "API unreachable" now means a network failure; any other error prints its code and message.
 - `bca price --vs eur` labels the price and market cap columns with the currency it asked for. They read "Price (USD)" and `$` for every currency.
+- The 10 MiB cap on a response (and the 64 KiB cap on an error body) is applied while the body is read: the client stops reading at the cap instead of loading the whole body into memory first, as the TypeScript package does. The cap error reads `response exceeded 10485760 byte cap (HTTP 200)`, without the size received.
 
 ### Notes: plan for mcp 2.x (no code change in 0.6.4)
 

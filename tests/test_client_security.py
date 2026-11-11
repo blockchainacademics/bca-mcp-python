@@ -14,16 +14,18 @@ Covers the defensive guards that must stay intact to match the TS sibling:
 
 from __future__ import annotations
 
+import httpx
 import pytest
 
 from bca_mcp.client import (
     DEFAULT_BASE,
     MAX_BODY_BYTES,
+    MAX_ERROR_BODY_BYTES,
     BcaClient,
     reset_nondefault_warning,
     set_client,
 )
-from bca_mcp.errors import BcaUpstreamError
+from bca_mcp.errors import BcaBadRequestError, BcaNetworkError, BcaUpstreamError
 
 
 # --- allowlist gate (H-1) -------------------------------------------------
@@ -152,6 +154,57 @@ async def test_oversize_response_body_raises_upstream(httpx_mock) -> None:
     set_client(c)
     with pytest.raises(BcaUpstreamError, match="byte cap"):
         await c.request("/v1/topics")
+
+
+class _Chunks(httpx.AsyncByteStream):
+    """A response body sent in ``count`` chunks of ``size`` bytes, counting
+    how many the client pulled; ``fail_after`` drops the connection there."""
+
+    def __init__(self, size: int, count: int, fail_after: int | None = None) -> None:
+        self.size, self.count, self.fail_after = size, count, fail_after
+        self.sent = 0
+
+    async def __aiter__(self):
+        for _ in range(self.count):
+            if self.sent == self.fail_after:
+                raise httpx.ReadError("connection reset")
+            self.sent += 1
+            yield b"x" * self.size
+
+
+def _streaming_client(status: int, body: _Chunks) -> BcaClient:
+    return BcaClient(
+        api_key="k",
+        transport=httpx.MockTransport(lambda request: httpx.Response(status, stream=body)),
+    )
+
+
+@pytest.mark.asyncio
+async def test_oversize_body_stops_reading_at_the_cap() -> None:
+    """The read stops once the body passes MAX_BODY_BYTES: 11 chunks of
+    1 MiB are pulled out of the 32 the server would send."""
+    body = _Chunks(1024 * 1024, 32)
+    with pytest.raises(BcaUpstreamError) as exc:
+        await _streaming_client(200, body).request("/v1/topics")
+    assert str(exc.value) == f"response exceeded {MAX_BODY_BYTES} byte cap (HTTP 200)"
+    assert body.sent == MAX_BODY_BYTES // (1024 * 1024) + 1
+
+
+@pytest.mark.asyncio
+async def test_oversize_error_body_stops_at_its_cap_and_gives_no_detail() -> None:
+    body = _Chunks(8 * 1024, 100)
+    with pytest.raises(BcaBadRequestError) as exc:
+        await _streaming_client(404, body).request("/v1/topics")
+    assert str(exc.value) == "BCA API rejected request: HTTP 404"
+    assert exc.value.detail is None
+    assert body.sent == MAX_ERROR_BODY_BYTES // (8 * 1024) + 1
+
+
+@pytest.mark.asyncio
+async def test_a_body_cut_off_mid_stream_is_a_network_error() -> None:
+    body = _Chunks(1024, 10, fail_after=3)
+    with pytest.raises(BcaNetworkError, match="ReadError: connection reset"):
+        await _streaming_client(200, body).request("/v1/topics")
 
 
 @pytest.mark.asyncio
