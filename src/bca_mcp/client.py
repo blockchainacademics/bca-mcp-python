@@ -566,7 +566,10 @@ class BcaClient:
                 else None
             )
             if delay is None:
-                raise BcaRateLimitError(_parse_retry_after(res.headers.get("retry-after")))
+                raise BcaRateLimitError(
+                    _parse_retry_after(res.headers.get("retry-after")),
+                    None if detail is None else detail[:MAX_DETAIL_CHARS],
+                )
             await _sleep(delay + 0.1 + random.random() * 0.2)
             retries += 1
 

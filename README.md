@@ -243,7 +243,7 @@ Invalid arguments are rejected before any request is sent, with one `field: prob
 |---|---|
 | `BCA_AUTH` | Invalid `BCA_API_KEY` (HTTP 401/403), or a key that cannot be sent as a header value (a line break inside it); the key itself is never repeated in the message |
 | `BCA_TIER_LOCKED` | Tool not in your current tier's allowlist (HTTP 403 without a key, HTTP 402 with a key on a lower plan). Without a key this is the answer on 88 of the 105 tools; the message includes the signup URL, or the pricing URL for a key on a lower plan. |
-| `BCA_RATE_LIMIT` | Rate limit exceeded (HTTP 429; honor `Retry-After`). A read the per-second limit turned away is sent again first, up to twice. |
+| `BCA_RATE_LIMIT` | Rate limit exceeded (HTTP 429; honor `Retry-After`). A read the per-second limit turned away is sent again first, up to twice. The message carries the API's own reason, which names the limit that was hit (up to 500 characters, inside an `<untrusted_content>` fence). |
 | `BCA_UPSTREAM` | BCA API returned 5xx or malformed JSON |
 | `BCA_NETWORK` | Network failure or 20s timeout exceeded |
 | `BCA_BAD_REQUEST` | Invalid tool arguments, or a 4xx response from the API (other than 401, 402, 403 and 429) |

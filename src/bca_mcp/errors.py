@@ -59,12 +59,19 @@ class BcaAuthError(BcaError):
 class BcaRateLimitError(BcaError):
     retry_after: Optional[int]
 
-    def __init__(self, retry_after: Optional[int] = None) -> None:
+    def __init__(
+        self,
+        retry_after: Optional[int] = None,
+        detail: Optional[str] = None,
+    ) -> None:
         suffix = f", retry after {retry_after}s" if retry_after else ""
+        # ``detail`` is the API's own reason (which limit was hit): upstream
+        # text, fenced by the MCP server like the detail of any other 4xx.
         super().__init__(
             "BCA_RATE_LIMIT",
             f"Rate limit exceeded{suffix}",
             429,
+            detail,
         )
         self.retry_after = retry_after
 
