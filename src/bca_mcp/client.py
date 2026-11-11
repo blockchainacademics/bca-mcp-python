@@ -17,9 +17,12 @@ once the rollout is confirmed complete.
 
 from __future__ import annotations
 
+import asyncio
 import json as _json
 import logging
 import os
+import random
+import re
 import sys
 import uuid
 from typing import Any, Mapping, Optional
@@ -328,6 +331,48 @@ def _api_error_detail(res: httpx.Response) -> Optional[str]:
         return None
     return detail[:MAX_DETAIL_CHARS]
 
+
+# A 429 from the per-second limit is sent again: the API turns those calls
+# away before it counts them, so the retry costs nothing. Every other 429 (a
+# daily or monthly cap, the job queue, a vendor limit) is returned at once.
+# At most two retries, each after Retry-After (1 s when the header is absent)
+# plus 100 to 300 ms of jitter, so a call waits at most 4.6 s more. GET only:
+# a POST is never repeated. Same rule as the TS sibling.
+RATE_LIMIT_MAX_RETRIES = 2
+RATE_LIMIT_MAX_RETRY_AFTER_S = 2
+_PER_SECOND_DETAIL_RE = re.compile(r"per[- ]second|requests?/second", re.IGNORECASE)
+_WHOLE_SECONDS_RE = re.compile(r"[0-9]+")
+
+# The wait between retries; tests swap it for one that does not sleep.
+_sleep = asyncio.sleep
+
+
+def _parse_retry_after(value: Optional[str]) -> Optional[int]:
+    """Retry-After as whole seconds; None when absent or an HTTP date."""
+    if value is None or not _WHOLE_SECONDS_RE.fullmatch(value.strip()):
+        return None
+    return int(value)
+
+
+def _per_second_retry_delay(res: httpx.Response, detail: Optional[str]) -> Optional[int]:
+    """Seconds to wait before repeating a call the per-second limit turned
+    away, or None when the 429 is any other limit. The per-second limit sends
+    a Retry-After of 2 seconds or less with X-BCA-Error-Code: BCA_RATE_LIMIT
+    (a vendor limit sends a short Retry-After too, but without the code and
+    after the call was counted) or, with no Retry-After at all, a detail that
+    names it ("2 requests/second")."""
+    header = res.headers.get("retry-after")
+    if header is None:
+        return 1 if detail is not None and _PER_SECOND_DETAIL_RE.search(detail) else None
+    retry_after = _parse_retry_after(header)
+    if (
+        retry_after is not None
+        and retry_after <= RATE_LIMIT_MAX_RETRY_AFTER_S
+        and res.headers.get("x-bca-error-code") == "BCA_RATE_LIMIT"
+    ):
+        return retry_after
+    return None
+
 # Module-level guard so we only warn once per process when a non-default
 # BCA_API_BASE is in use. Exposed via `reset_nondefault_warning()` so tests
 # can reset state between cases.
@@ -488,27 +533,42 @@ class BcaClient:
         if method == "POST":
             headers["Content-Type"] = "application/json"
 
-        try:
-            async with self._build_client() as http:
-                if method == "POST":
-                    res = await http.post(
-                        url,
-                        json=dict(body) if body else None,
-                        headers=headers,
-                    )
-                else:
-                    res = await http.get(url, params=clean_params, headers=headers)
-        except httpx.LocalProtocolError as err:
-            # Raised while the request is built when a header value is not
-            # valid HTTP, and its text repeats that value. The only header
-            # value that varies is X-API-Key, so the text is never passed on:
-            # it would put the user's key in front of the host model.
-            raise BcaAuthError(
-                "BCA_API_KEY is not a valid HTTP header value (it contains "
-                "a control character); check the key"
-            ) from err
-        except httpx.HTTPError as err:
-            raise BcaNetworkError(err) from err
+        retries = 0
+        while True:
+            try:
+                async with self._build_client() as http:
+                    if method == "POST":
+                        res = await http.post(
+                            url,
+                            json=dict(body) if body else None,
+                            headers=headers,
+                        )
+                    else:
+                        res = await http.get(url, params=clean_params, headers=headers)
+            except httpx.LocalProtocolError as err:
+                # Raised while the request is built when a header value is not
+                # valid HTTP, and its text repeats that value. The only header
+                # value that varies is X-API-Key, so the text is never passed
+                # on: it would put the user's key in front of the host model.
+                raise BcaAuthError(
+                    "BCA_API_KEY is not a valid HTTP header value (it contains "
+                    "a control character); check the key"
+                ) from err
+            except httpx.HTTPError as err:
+                raise BcaNetworkError(err) from err
+            if res.status_code != 429:
+                break
+
+            detail = _render_api_error_detail(_read_error_json(res))
+            delay = (
+                _per_second_retry_delay(res, detail)
+                if method == "GET" and retries < RATE_LIMIT_MAX_RETRIES
+                else None
+            )
+            if delay is None:
+                raise BcaRateLimitError(_parse_retry_after(res.headers.get("retry-after")))
+            await _sleep(delay + 0.1 + random.random() * 0.2)
+            retries += 1
 
         # MCP-TS-2 parity: reject any 3xx response explicitly. The
         # `follow_redirects=False` flag on the AsyncClient prevents httpx
@@ -581,15 +641,6 @@ class BcaClient:
                 res.status_code,
                 detail,
             )
-        if res.status_code == 429:
-            ra = res.headers.get("retry-after")
-            retry_after: Optional[int] = None
-            if ra is not None:
-                try:
-                    retry_after = int(ra)
-                except ValueError:
-                    retry_after = None
-            raise BcaRateLimitError(retry_after)
         # 5xx stays generic: server internals never reach the host model.
         if res.status_code >= 500:
             raise BcaUpstreamError(res.status_code)
