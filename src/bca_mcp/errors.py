@@ -85,11 +85,21 @@ class BcaUpstreamError(BcaError):
         super().__init__("BCA_UPSTREAM", f"{message} (HTTP {status})", status)
 
 
+def _describe_cause(cause: object) -> str:
+    # Class and text, as the TS sibling prints an Error ("TimeoutError: The
+    # operation was aborted due to timeout"). httpx timeouts carry no text,
+    # so without the class name the message ended in a bare colon.
+    if not isinstance(cause, BaseException):
+        return str(cause)
+    text = str(cause)
+    return f"{type(cause).__name__}: {text}" if text else type(cause).__name__
+
+
 class BcaNetworkError(BcaError):
     def __init__(self, cause: object) -> None:
         super().__init__(
             "BCA_NETWORK",
-            f"Network error contacting BCA API: {cause!s}",
+            f"Network error contacting BCA API: {_describe_cause(cause)}",
         )
         self.__cause__ = cause if isinstance(cause, BaseException) else None
 

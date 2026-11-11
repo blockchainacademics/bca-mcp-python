@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 
+import httpx
 import pytest
 from mcp.types import CallToolRequest, CallToolRequestParams
 from pydantic import BaseModel, Field, ValidationError
@@ -217,6 +218,29 @@ async def test_error_shape_detail_and_non_json_bodies(httpx_mock) -> None:
     assert a["message"].endswith('<untrusted_content source="bca-api">\nconflict\n</untrusted_content>')
     b = _error(await call_tool("get_topic", {"slug": "b"}))
     assert b == {"code": "BCA_BAD_REQUEST", "message": "BCA API rejected request: HTTP 404"}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("raised", "shown"),
+    [
+        (httpx.ReadTimeout(""), "ReadTimeout"),
+        (httpx.ConnectTimeout(""), "ConnectTimeout"),
+        (httpx.ConnectError("[Errno 61] Connection refused"),
+         "ConnectError: [Errno 61] Connection refused"),
+    ],
+)
+async def test_network_error_names_the_failure(raised, shown) -> None:
+    # httpx timeouts have no text; the class name says what happened.
+    def handler(request: httpx.Request) -> httpx.Response:
+        raise raised
+
+    set_client(BcaClient(api_key="k", transport=httpx.MockTransport(handler)))
+    err = _error(await call_tool("list_topics", {}))
+    assert err == {
+        "code": "BCA_NETWORK",
+        "message": f"Network error contacting BCA API: {shown}",
+    }
 
 
 @pytest.mark.asyncio
