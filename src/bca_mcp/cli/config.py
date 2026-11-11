@@ -7,14 +7,9 @@ Config is chmod 600 — plaintext key on disk, user-scoped.
 from __future__ import annotations
 
 import os
-import sys
+import tomllib
 from pathlib import Path
 from typing import Any
-
-if sys.version_info >= (3, 11):
-    import tomllib
-else:  # pragma: no cover
-    import tomli as tomllib  # type: ignore[no-redef]
 
 import tomli_w
 

@@ -17,6 +17,7 @@ Directory review fixes (directory-submissions.md, section 4.6 rows A3, A5 and A1
 - `examples/eliza_plugin.md` links `@elizaos/plugin-mcp` on npm (its old GitHub repo answers 404).
 - Version 0.6.4 in pyproject, `__version__` and the User-Agent, and `tests/test_version.py` checks that they agree.
 - PyPI classifiers name Python 3.11, 3.12 and 3.13, the versions CI tested when they were set (CI now runs 3.14 too; its classifier waits for a green run there). 3.10 was listed although `requires-python` is `>=3.11`; `tests/test_version.py` now rejects a classifier below that floor.
+- The `dev` extra no longer installs `respx`, which no test uses, and the `tomli` requirement for Python older than 3.11 is gone, since the package needs 3.11 or later.
 
 ### Fixed
 

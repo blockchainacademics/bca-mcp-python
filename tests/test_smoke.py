@@ -9,9 +9,8 @@ Validates:
   * server `build_server(check_env=False)` works without a live key
   * server `build_server()` fail-fast when BCA_API_KEY is missing
 
-Uses `pytest-httpx` to mock the underlying httpx transport — no live
-network calls. `respx` is listed as a dev dep for parity with the
-TS sibling's test suite but is not required here.
+Uses `pytest-httpx` to mock the underlying httpx transport: no live
+network calls.
 """
 
 from __future__ import annotations
