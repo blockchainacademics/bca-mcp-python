@@ -53,7 +53,7 @@ export BCA_API_BASE="https://api.blockchainacademics.com"
 
 - Each tool call sends its arguments (for example a search phrase, a coin name, or a wallet or contract address you ask about) and your key, if you set one, over HTTPS to api.blockchainacademics.com, our own API, or to the staging or local base you set in `BCA_API_BASE`. The server sends nothing to any other host; `monitor_keyword` only looks up the webhook's host name in DNS to refuse private addresses.
 - `lookup_stats_wallet` is the exception: it does not send the wallet address. The address is matched on this machine and two characters of it are sent to the API. Asking about the vaults one by one afterwards sends each vault's address to the API.
-- `search_stats` refuses a full address before any request, so a wallet address typed into it never leaves your computer.
+- `search_stats` refuses any query that holds a full address, with or without 0x, before any request, so a wallet address typed into it never leaves your computer. `get_stats_record` and `compare_stats_records` refuse an address outside the vaults tab in the same way.
 - The MCP server stores nothing on your computer. The `bca` CLI keeps your key in `~/.bca/config.toml` (readable only by you) after `bca login`. The API counts calls per key per day and does not log request bodies or query parameters that could contain personal data.
 - Full policy, retention and your rights: [blockchainacademics.com/privacy](https://blockchainacademics.com/privacy), section 12 (Crypto API and MCP Server). Privacy requests: [privacy@blockchainacademics.com](mailto:privacy@blockchainacademics.com).
 

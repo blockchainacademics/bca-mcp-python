@@ -305,6 +305,12 @@ async def test_a_new_tab_needs_no_package_release(httpx_mock) -> None:
         "0x" + "ab" * 10 + "\u200b" + "ab" * 10,
         "０x" + "ab" * 20,
         f"<<outside:{MARK}>>0x" + "ab" * 20 + f"<</outside:{MARK}>>",
+        # Inside other words, with or without 0x (review finding 2).
+        "wallet 0x" + "ab" * 20,
+        "0x" + "ab" * 20 + "?",
+        "ab" * 20,
+        "find 0X" + "AB" * 20 + " please",
+        "vault:" + "ab" * 20,
     ],
 )
 async def test_search_refuses_a_full_address_before_any_request(httpx_mock, query) -> None:
@@ -313,6 +319,14 @@ async def test_search_refuses_a_full_address_before_any_request(httpx_mock, quer
         "search_stats takes a name. A vault address goes to get_stats_record. A wallet address goes "
         "to lookup_stats_wallet, which matches it on this machine."
     )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("query", ["Fixture " + "ab" * 19 + "a", "Fixture " + "ab" * 20 + "a", "Fixture " + "a" * 56])
+async def test_search_sends_a_run_of_hex_that_is_not_an_address(httpx_mock, query) -> None:
+    # 39 or 41 hex characters in a row are not an address, so the name is searched.
+    _output(await _call(httpx_mock, "search_stats", {"query": query}, _case("search_nothing")["body"]))
+    assert dict(httpx_mock.get_request().url.params)["q"] == query
 
 
 @pytest.mark.asyncio
@@ -380,6 +394,16 @@ async def test_a_bad_record_id_is_refused_before_any_request(httpx_mock, args) -
     await _refused(httpx_mock, "get_stats_record", args)
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("tab", ["exchanges", "wallets", "wallet", "lookup"])
+@pytest.mark.parametrize("typed", ["0x" + "ab" * 20, "ab" * 20, " 0X" + "AB" * 20, "wallet 0x" + "ab" * 20])
+async def test_an_address_outside_the_vaults_tab_is_refused_before_any_request(httpx_mock, tab, typed) -> None:
+    # Outside the vaults tab the id goes into the path as a slug, so a wallet
+    # address would reach the API and its logs (review finding 1).
+    err = await _refused(httpx_mock, "get_stats_record", {"tab": tab, "id": typed})
+    assert err["message"] == f"Invalid arguments for get_stats_record: {stats.ADDRESS_NOT_AN_EXCHANGE_ID}"
+
+
 NOT_FOUND = (
     "No published Stats record for that id. Not every vault on the venue has a record: "
     "the venue's own vaults and vaults with no details on file have none."
@@ -422,6 +446,22 @@ async def test_compare_a_list_and_a_comma_text_send_the_same_request(httpx_mock)
 )
 async def test_compare_refuses_bad_ids_before_any_request(httpx_mock, ids) -> None:
     await _refused(httpx_mock, "compare_stats_records", {"tab": "exchanges", "ids": ids})
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "ids",
+    [
+        ["kraken", "ab" * 20],
+        "kraken, wallet 0x" + "ab" * 20,
+        # A part longer than 64 characters: its whole text is read, so the
+        # address is found even past the cut an exchange id gets.
+        "kraken," + "x" * 30 + "0x" + "ab" * 20,
+    ],
+)
+async def test_compare_refuses_an_address_outside_the_vaults_tab(httpx_mock, ids) -> None:
+    err = await _refused(httpx_mock, "compare_stats_records", {"tab": "exchanges", "ids": ids})
+    assert stats.ADDRESS_NOT_AN_EXCHANGE_ID in err["message"]
 
 
 @pytest.mark.asyncio

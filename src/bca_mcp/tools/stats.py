@@ -172,6 +172,11 @@ SEARCH_ADDRESS_REFUSED = (
     "search_stats takes a name. A vault address goes to get_stats_record. A wallet address goes "
     "to lookup_stats_wallet, which matches it on this machine."
 )
+# The package's own validation text for an address given outside the vaults tab.
+ADDRESS_NOT_AN_EXCHANGE_ID = (
+    "An address is not an exchange id. A vault address goes to the vaults tab. A wallet address "
+    "goes to lookup_stats_wallet, which matches it on this machine."
+)
 MEASURE_OTHER_TAB = "That measure does not belong to that tab."
 KIND_NOT_FOR_MEASURE = "That kind does not apply to that measure."
 IDS_RULE = "Between 2 and 5 ids, with no repeats."
@@ -220,6 +225,9 @@ _HIDDEN = re.compile(
     "[\u0000-\u001f\u007f-\u009f\u00ad\u061c\u115f\u1160\u17b4\u17b5\u180b-\u180f"
     "\u200b-\u200f\u2028-\u202e\u2060-\u206f\u3164\ufe00-\ufe0f\ufeff\uffa0\ufff0-\ufffb]"
 )
+# A full address in a text: 40 hex characters in a row that are not part of a
+# longer run of hex. The x of 0x ends a run, so it is found with or without 0x.
+_ADDRESS_IN_TEXT = re.compile(r"(?<![0-9a-f])[0-9a-f]{40}(?![0-9a-f])", re.IGNORECASE)
 
 # The measures the package knows, with their tab, their kinds and whether
 # rank_stats takes them (appendix F). A known measure asked for another tab,
@@ -266,10 +274,12 @@ def exchange_id(text: str) -> Optional[str]:
     return folded if _SLUG.fullmatch(folded) else None
 
 
-def _is_full_address(text: str) -> bool:
-    """True for 0x and 40 hex characters once the light cleaner has run, so
-    also when written with hidden characters or wide letters in it."""
-    return bool(re.fullmatch(r"0x[0-9a-f]{40}", _clean_signed(text, 64), re.IGNORECASE))
+def holds_address(text: str) -> bool:
+    """True when the text holds a full address, once NFKC has run and the
+    hidden characters are out: 40 hex characters in a row, with or without
+    0x, alone or inside other words. So wide letters, a zero width space or
+    an upper case 0X do not hide one. The whole text is read, not a cut part."""
+    return bool(_ADDRESS_IN_TEXT.search(_HIDDEN.sub("", unicodedata.normalize("NFKC", text))))
 
 
 class _Args(BaseModel):
@@ -391,12 +401,19 @@ class GetStatsRecordInput(_Args):
 
 def _record_id(tab: str, text: str) -> str:
     """One id in the form the API is sent: a vault address in lower case, or
-    an exchange id folded to a slug."""
+    an exchange id folded to a slug.
+
+    Outside the vaults tab an id goes into the request path as a slug, and an
+    address is never one: a wallet address sent there would land in the
+    request logs. So an id that holds an address is refused before any
+    request, whatever the tab is called."""
     if tab == "vaults":
         trimmed = text.strip()
         if not _ADDRESS.fullmatch(trimmed):
             raise ValueError("a vault id is 0x and 40 hex characters")
         return trimmed.lower()
+    if holds_address(text):
+        raise ValueError(ADDRESS_NOT_AN_EXCHANGE_ID)
     slug = exchange_id(text)
     if slug is None or len(slug) > 64:
         raise ValueError("an exchange id is a slug or a name, such as kraken or Crypto.com")
@@ -428,13 +445,8 @@ class CompareStatsRecordsInput(_Args):
             parts = list(self.ids)
         if not 2 <= len(parts) <= 5:
             raise ValueError(IDS_RULE)
-        folded: list[str] = []
-        for part in parts:
-            one = _record_id(self.tab, part)
-            if self.tab != "vaults" and _ADDRESS.fullmatch(one):
-                # A vault address in the exchanges tab: ids from two tabs.
-                raise ValueError(IDS_RULE)
-            folded.append(one)
+        # _record_id refuses an address outside the vaults tab.
+        folded = [_record_id(self.tab, part) for part in parts]
         if len(set(folded)) != len(folded):
             raise ValueError(IDS_RULE)
         self.ids = folded
@@ -710,7 +722,9 @@ def _segment(text: str) -> str:
 
 async def run_search_stats(args: dict[str, Any], call_id: str) -> dict[str, Any]:
     parsed = SearchStatsInput.model_validate(args)
-    if _is_full_address(parsed.query):
+    # A query that holds an address in any form is refused, so no wallet
+    # address reaches the API through search (design 1.1, step 3).
+    if holds_address(parsed.query):
         raise StatsRefusal(SEARCH_ADDRESS_REFUSED)
     return await _get(
         SEARCH_STATS,
