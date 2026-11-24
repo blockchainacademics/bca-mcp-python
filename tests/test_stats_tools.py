@@ -211,6 +211,9 @@ async def test_an_unknown_argument_is_refused_before_any_request(httpx_mock, too
     [
         ("search_stats", {"query": "x"}),
         ("search_stats", {"query": "x" * 65}),
+        ("search_stats", {"query": f"<<outside:{MARK}>>" + "x" * 65 + f"<</outside:{MARK}>>"}),
+        ("search_stats", {"query": f"<<outside:{MARK}>>x<</outside:{MARK}>>"}),
+        ("search_stats", {"query": "x" * 122}),
         ("search_stats", {"query": "fix\u0007ture"}),
         ("search_stats", {"query": "fixture", "limit": 0}),
         ("search_stats", {"query": "fixture", "limit": 21}),
@@ -222,6 +225,7 @@ async def test_an_unknown_argument_is_refused_before_any_request(httpx_mock, too
         ("rank_stats", {"tab": "vaults", "measure": "money_put_in", "as_of": "24-11-2026"}),
         ("rank_stats", {"tab": "exchanges", "measure": "checks_passed", "kind": "spot"}),
         ("lookup_stats_wallet", {"address": "0x" + "a" * 39}),
+        ("lookup_stats_wallet", {"address": " " * 23 + "0x" + "a" * 40}),
         ("lookup_stats_wallet", {"address": "0x" + "g" * 40}),
         ("lookup_stats_wallet", {"address": "0x" + "a" * 40, "offset": 5_001}),
         ("get_stats_method", {"topic": "chains"}),
@@ -261,6 +265,7 @@ async def test_measure_must_match_the_strict_pattern(httpx_mock, measure) -> Non
         ({"tab": "exchanges", "measure": "money_put_in"}, stats.MEASURE_OTHER_TAB),
         ({"tab": "vaults", "measure": "checks_passed"}, stats.MEASURE_OTHER_TAB),
         ({"tab": "vaults", "measure": "yield_delivered"}, stats.MEASURE_OTHER_TAB),
+        ({"tab": "yields", "measure": "yield_delivered"}, stats.MEASURE_OTHER_TAB),
         ({"tab": "exchanges", "measure": "real_cost_buy_1000", "kind": "swap"}, stats.KIND_NOT_FOR_MEASURE),
         ({"tab": "vaults", "measure": "money_put_in", "kind": "centralised"}, stats.KIND_NOT_FOR_MEASURE),
     ],
@@ -282,8 +287,9 @@ async def test_a_measure_the_package_does_not_know_is_sent_and_the_api_sentence_
 @pytest.mark.asyncio
 async def test_a_new_tab_needs_no_package_release(httpx_mock) -> None:
     body = _case("rank_paused")["body"]
-    _output(await _call(httpx_mock, "rank_stats", {"tab": "yields", "measure": "yield_delivered"}, body))
-    assert dict(httpx_mock.get_request().url.params)["tab"] == "yields"
+    _output(await _call(httpx_mock, "rank_stats", {"tab": "chains", "measure": "chain_uptime"}, body))
+    params = dict(httpx_mock.get_request().url.params)
+    assert (params["tab"], params["measure"]) == ("chains", "chain_uptime")
 
 
 # --- search_stats ---------------------------------------------------------------------------
@@ -311,9 +317,9 @@ async def test_search_refuses_a_full_address_before_any_request(httpx_mock, quer
 
 @pytest.mark.asyncio
 async def test_search_takes_its_own_markers_out_of_the_query(httpx_mock) -> None:
-    name = "Fixture Alpha Growth Long Name"
+    name = "Fixture " + "a" * 56
     query = f"<<outside:{MARK}>>{name}<</outside:{MARK}>>"
-    assert len(query) > 64
+    assert len(name) == 64 and len(query) == 121
     _output(await _call(httpx_mock, "search_stats", {"query": query, "tab": "vaults"}, _case("search_vaults")["body"]))
     assert dict(httpx_mock.get_request().url.params) == {"q": name, "tab": "vaults", "limit": "10"}
 

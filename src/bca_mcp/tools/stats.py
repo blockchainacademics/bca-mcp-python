@@ -48,6 +48,8 @@ STATS_READ_CAP = 524_288  # bytes of one Stats answer the package reads
 SHARD_READ_CAP = 1_572_864  # bytes of one wallet shard answer
 TEXT_BLOCK_CAP = 65_536  # bytes of the text block handed to the model
 LOOKUP_RECORDS_PER_ANSWER = 50
+SEARCH_QUERY_MAX = 64  # characters of a name, once the markers are out
+MARKER_PAIR_CHARS = 57  # <<outside:16 hex>> and <</outside:16 hex>>
 
 # --- the names ----------------------------------------------------------------
 
@@ -219,19 +221,20 @@ _HIDDEN = re.compile(
     "​-‏ -‮⁠-⁯ㅤ︀-️﻿ﾠ￰-￻]"
 )
 
-# The measures the package knows, with their tab and kinds (appendix F). A
-# known measure asked for another tab, or with a kind it does not take, is
-# refused before any request. A measure the package does not know, but the
+# The measures the package knows, with their tab, their kinds and whether
+# rank_stats takes them (appendix F). A known measure asked for another tab,
+# one that is not open (yield_delivered), or one with a kind it does not take,
+# is refused before any request. A measure the package does not know, but the
 # pattern allows, is sent: the API answers.
-KNOWN_MEASURES: dict[str, tuple[str, tuple[str, ...]]] = {
-    "checks_passed": ("exchanges", ("centralised", "swap", "leveraged")),
-    "reserve_report_detail": ("exchanges", ("centralised",)),
-    "real_cost_buy_1000": ("exchanges", ("centralised",)),
-    "real_cost_swap_1000": ("exchanges", ("swap",)),
-    "real_cost_position_1000": ("exchanges", ("leveraged",)),
-    "money_put_in": ("vaults", ()),
-    "left_took_home": ("vaults", ()),
-    "yield_delivered": ("yields", ()),
+KNOWN_MEASURES: dict[str, tuple[str, tuple[str, ...], bool]] = {
+    "checks_passed": ("exchanges", ("centralised", "swap", "leveraged"), True),
+    "reserve_report_detail": ("exchanges", ("centralised",), True),
+    "real_cost_buy_1000": ("exchanges", ("centralised",), True),
+    "real_cost_swap_1000": ("exchanges", ("swap",), True),
+    "real_cost_position_1000": ("exchanges", ("leveraged",), True),
+    "money_put_in": ("vaults", (), True),
+    "left_took_home": ("vaults", (), True),
+    "yield_delivered": ("yields", (), False),
 }
 
 Kind = Literal["centralised", "swap", "leveraged"]
@@ -268,9 +271,12 @@ class _Args(BaseModel):
 
 
 class SearchStatsInput(_Args):
+    # The argument may carry one pair of markers on top of the 64 characters
+    # of a name, so a name copied back from an earlier answer still works
+    # (review finding G20). The name's own bound is checked once they are out.
     query: str = Field(
         min_length=2,
-        max_length=64,
+        max_length=SEARCH_QUERY_MAX + MARKER_PAIR_CHARS,
         description="A name, 2 to 64 characters. Not an address.",
     )
     tab: Optional[str] = Field(
@@ -284,17 +290,19 @@ class SearchStatsInput(_Args):
     @field_validator("query", mode="before")
     @classmethod
     def take_markers_out(cls, value: Any) -> Any:
-        # A name copied back from an earlier answer still works: the markers
-        # are taken out before the length is checked.
         if isinstance(value, str):
+            if len(value) > SEARCH_QUERY_MAX + MARKER_PAIR_CHARS:
+                raise ValueError(f"String should have at most {SEARCH_QUERY_MAX + MARKER_PAIR_CHARS} characters")
             return strip_markers(value).strip()
         return value
 
     @field_validator("query")
     @classmethod
-    def no_control_characters(cls, value: str) -> str:
+    def the_name_bounds(cls, value: str) -> str:
         if _CONTROL.search(value):
             raise ValueError("holds a control character")
+        if len(value) > SEARCH_QUERY_MAX:
+            raise ValueError(f"String should have at most {SEARCH_QUERY_MAX} characters")
         return value
 
 
@@ -332,7 +340,6 @@ class RankStatsInput(_Args):
     )
     as_of: Optional[str] = Field(
         default=None,
-        min_length=10,
         max_length=10,
         pattern=_DAY_PATTERN,
         description=(
@@ -349,7 +356,7 @@ class RankStatsInput(_Args):
     @model_validator(mode="after")
     def measure_fits_the_tab(self) -> "RankStatsInput":
         known = KNOWN_MEASURES.get(self.measure)
-        if known is not None and known[0] != self.tab:
+        if known is not None and (known[0] != self.tab or not known[2]):
             raise ValueError(MEASURE_OTHER_TAB)
         if self.kind is not None:
             if known is not None and self.kind not in known[1]:
@@ -429,8 +436,7 @@ class CompareStatsRecordsInput(_Args):
 
 class LookupStatsWalletInput(_Args):
     address: str = Field(
-        min_length=42,
-        max_length=42,
+        max_length=64,
         pattern=_ADDRESS_PATTERN,
         description="One full wallet address: 0x and 40 hex characters.",
     )
@@ -445,7 +451,6 @@ class LookupStatsWalletInput(_Args):
     )
     as_of: Optional[str] = Field(
         default=None,
-        min_length=10,
         max_length=10,
         pattern=_DAY_PATTERN,
         description=(
@@ -457,7 +462,11 @@ class LookupStatsWalletInput(_Args):
     @field_validator("address", mode="before")
     @classmethod
     def trim(cls, value: Any) -> Any:
-        return value.strip() if isinstance(value, str) else value
+        if isinstance(value, str):
+            if len(value) > 64:
+                raise ValueError("String should have at most 64 characters")
+            return value.strip()
+        return value
 
     @field_validator("as_of")
     @classmethod
@@ -474,7 +483,6 @@ class GetStatsMethodInput(_Args):
 class ListStatsChangesInput(_Args):
     since: Optional[str] = Field(
         default=None,
-        min_length=10,
         max_length=10,
         pattern=_DAY_PATTERN,
         description=(
