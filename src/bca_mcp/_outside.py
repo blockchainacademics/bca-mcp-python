@@ -104,14 +104,27 @@ def wrap_text(text: str, marker_id: str) -> str:
     return f"<<outside:{marker_id}>>{clean}<</outside:{marker_id}>>"
 
 
+def listed_keys_ok(listed: Any) -> bool:
+    """``data.outside_text_keys`` as a Stats answer must give it: a list of
+    key names (a lower case letter, then letters, digits or _) that holds the
+    package's nine. An answer that names any other kind of key is refused, so
+    no key the API names is ever left out of the wrapping."""
+    return (
+        isinstance(listed, list)
+        and all(isinstance(k, str) and _KEY_SHAPE.fullmatch(k) for k in listed)
+        and set(OUTSIDE_TEXT_KEYS) <= set(listed)
+    )
+
+
 def outside_keys(data: Mapping[str, Any]) -> frozenset[str]:
-    """The package's own nine keys, and any key the API names in
+    """The package's own nine keys, and every key the API names in
     ``data.outside_text_keys``, so a key the API adds later is wrapped by an
-    older package too."""
+    older package too. Nothing the API names is dropped here: a key that is
+    not in key shape refuses the whole answer first (``listed_keys_ok``)."""
     keys = set(OUTSIDE_TEXT_KEYS)
     listed = data.get("outside_text_keys")
     if isinstance(listed, list):
-        keys.update(k for k in listed if isinstance(k, str) and _KEY_SHAPE.fullmatch(k))
+        keys.update(k for k in listed if isinstance(k, str))
     return frozenset(keys)
 
 

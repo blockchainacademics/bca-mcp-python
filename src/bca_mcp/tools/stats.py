@@ -25,7 +25,7 @@ from urllib.parse import quote
 
 from pydantic import BaseModel, Field, StringConstraints, field_validator, model_validator
 
-from bca_mcp._outside import OUTSIDE_TEXT_KEYS, STATUSES, link_ok, strip_markers
+from bca_mcp._outside import STATUSES, link_ok, listed_keys_ok, strip_markers
 from bca_mcp._stats_constants import DATA_PREFIX
 from bca_mcp.client import get_client
 
@@ -638,12 +638,7 @@ def _check_data(tool: str, data: Mapping[str, Any]) -> None:
         isinstance(s, dict) and link_ok(s.get("file"), (DATA_PREFIX,)) for s in sources
     ):
         raise StatsShapeError("sources")
-    listed = data.get("outside_text_keys")
-    if (
-        not isinstance(listed, list)
-        or not all(isinstance(k, str) for k in listed)
-        or not set(OUTSIDE_TEXT_KEYS) <= set(listed)
-    ):
+    if not listed_keys_ok(data.get("outside_text_keys")):
         raise StatsShapeError("outside_text_keys")
     rows_dropped = data.get("rows_dropped")
     if not _whole(rows_dropped) or rows_dropped < 0:

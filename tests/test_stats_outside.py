@@ -153,9 +153,34 @@ def test_a_tenth_key_named_by_the_api_is_wrapped_too() -> None:
     assert out["other"] == "kept"
 
 
-def test_a_key_that_is_not_key_shaped_is_not_added() -> None:
-    keys = outside_keys({"outside_text_keys": ["Bad Key", 7, "", "a" * 70]})
-    assert keys == frozenset(OUTSIDE_TEXT_KEYS)
+def test_every_text_key_the_api_names_is_wrapped() -> None:
+    # Review finding 3: a key the API names is never dropped from the
+    # wrapping. A key out of key shape refuses the whole answer before this
+    # (listed_keys_ok, and the tool test of it in test_stats_tools.py).
+    keys = outside_keys({"outside_text_keys": [*OUTSIDE_TEXT_KEYS, "mottoByLeader", 7]})
+    assert keys == frozenset({*OUTSIDE_TEXT_KEYS, "mottoByLeader"})
+    out = wrap_outside({"mottoByLeader": "Up and away"}, MARK, keys)
+    assert out == {"mottoByLeader": f"{OPEN}Up and away{CLOSE}"}
+
+
+@pytest.mark.parametrize(
+    "listed,ok",
+    [
+        (list(OUTSIDE_TEXT_KEYS), True),
+        ([*OUTSIDE_TEXT_KEYS, "motto_by_leader"], True),
+        ([*OUTSIDE_TEXT_KEYS, "mottoByLeader"], False),
+        ([*OUTSIDE_TEXT_KEYS, "motto by leader"], False),
+        ([*OUTSIDE_TEXT_KEYS, ""], False),
+        ([*OUTSIDE_TEXT_KEYS, "a" * 65], False),
+        ([*OUTSIDE_TEXT_KEYS, "_motto"], False),
+        ([*OUTSIDE_TEXT_KEYS, 7], False),
+        (list(OUTSIDE_TEXT_KEYS)[:8], False),
+        ("name_by_leader", False),
+        (None, False),
+    ],
+)
+def test_the_listed_keys_are_key_names_that_hold_the_nine(listed, ok) -> None:
+    assert _outside.listed_keys_ok(listed) is ok
 
 
 def test_the_package_nine_are_wrapped_even_when_the_api_lists_none() -> None:
