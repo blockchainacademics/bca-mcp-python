@@ -455,14 +455,19 @@ EXPECTED_TOOL_NAMES = {
 
 
 def test_server_registers_expected_tools_with_unique_names() -> None:
+    from bca_mcp.tools import stats
+
     names = [t.name for t in TOOLS]
     # Same 113 tools as the TS sibling since 0.7.0 (the 8 Stats tools);
     # tests/test_parity.py checks the names against its tools/list.
-    # Update both numbers in lock-step when new tools ship.
-    assert len(names) == 113, f"expected 113 tools, got {len(names)}: {names}"
-    assert len(set(names)) == 113, f"duplicate tool name: {names}"
-    assert set(names) == EXPECTED_TOOL_NAMES, (
-        f"tool surface drifted: want {EXPECTED_TOOL_NAMES}, got {set(names)}"
+    # Owner switch 2 (WALLET_LOOKUP_TOOL in tools/stats.py) can leave the
+    # wallet lookup out: 112 tools then.
+    expected_names = EXPECTED_TOOL_NAMES - (set() if stats.WALLET_LOOKUP_TOOL else {"lookup_stats_wallet"})
+    expected = 113 if stats.WALLET_LOOKUP_TOOL else 112
+    assert len(names) == expected, f"expected {expected} tools, got {len(names)}: {names}"
+    assert len(set(names)) == expected, f"duplicate tool name: {names}"
+    assert set(names) == expected_names, (
+        f"tool surface drifted: want {expected_names}, got {set(names)}"
     )
 
 

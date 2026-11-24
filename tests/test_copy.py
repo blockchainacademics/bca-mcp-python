@@ -15,9 +15,11 @@ ROOT = Path(__file__).resolve().parent.parent
 EM_DASH = "—"
 
 # The API's demo allowlist (blockchainacademics-api app/api/v1/_demo_allowlist.py;
-# 2026-11-02: the 16 of 2026-10-31 plus get_article), and the 8 Stats tools of
+# 2026-11-02: the 16 of 2026-10-31 plus get_article), and the Stats tools of
 # 0.7.0 while owner decision 1 opens them to the demo key
-# (DEMO_KEY_OPENS_STATS in tools/stats.py): 25 in all.
+# (DEMO_KEY_OPENS_STATS in tools/stats.py): 25 in all with the recommended
+# answers. The Stats tools are the ones the owner's switches leave in, so a
+# flipped switch fails only the copy checks that must change with it.
 BASE_DEMO_TOOLS = (
     "get_price", "get_trending", "get_fear_greed", "get_market_overview",
     "search_news", "get_article", "get_sentiment", "get_entity",
@@ -25,12 +27,10 @@ BASE_DEMO_TOOLS = (
     "get_grant", "list_jobs", "get_job", "search_academy",
     "get_as_of_snapshot",
 )
-STATS_TOOLS = (
-    "search_stats", "list_stats_measures", "rank_stats", "get_stats_record",
-    "compare_stats_records", "lookup_stats_wallet", "get_stats_method",
-    "list_stats_changes",
-)
+STATS_TOOLS = tuple(t.name for t in TOOLS if t.output == "stats")
 DEMO_TOOLS = BASE_DEMO_TOOLS + (STATS_TOOLS if stats.DEMO_KEY_OPENS_STATS else ())
+# The free tier: the 52 older tools that name no paid tier, and the Stats tools.
+FREE_KEY_TOOLS = 52 + len(STATS_TOOLS)
 
 # The API's topic taxonomy (topic_taxonomy, scripts/seed_canonical_slugs.py).
 TAXONOMY = {
@@ -45,16 +45,41 @@ def _tool(name: str):
 
 def test_demo_banner_exact_bytes() -> None:
     assert DEMO_BANNER == (
-        "[bca-mcp] Running in DEMO mode: 25 tools work without a key, under a shared daily cap.\n"
-        "[bca-mcp] A free key opens 60 tools and paid plans open the rest: https://blockchainacademics.com/crypto-api/signup?ref=mcp-first-run\n"
+        f"[bca-mcp] Running in DEMO mode: {len(DEMO_TOOLS)} tools work without a key, under a shared daily cap.\n"
+        f"[bca-mcp] A free key opens {FREE_KEY_TOOLS} tools and paid plans open the rest: https://blockchainacademics.com/crypto-api/signup?ref=mcp-first-run\n"
         "[bca-mcp] Set: export BCA_API_KEY=bca_...   (or add to your client config)\n"
     )
     assert DEMO_BANNER.isascii()
 
 
+def test_the_banner_counts_follow_the_owner_switches(monkeypatch) -> None:
+    import importlib
+
+    from bca_mcp import _demo_banner
+
+    seen = {}
+    try:
+        for opens in (True, False):
+            for wallet in (True, False):
+                monkeypatch.setattr(stats, "DEMO_KEY_OPENS_STATS", opens)
+                monkeypatch.setattr(stats, "WALLET_LOOKUP_TOOL", wallet)
+                banner = importlib.reload(_demo_banner).DEMO_BANNER
+                seen[(opens, wallet)] = (
+                    int(banner.split("DEMO mode: ", 1)[1].split(" ", 1)[0]),
+                    int(banner.split("A free key opens ", 1)[1].split(" ", 1)[0]),
+                )
+    finally:
+        monkeypatch.undo()
+        importlib.reload(_demo_banner)
+    assert _demo_banner.DEMO_BANNER == DEMO_BANNER
+    # Design section 0, "If the owner picks the other option".
+    assert seen == {(True, True): (25, 60), (True, False): (24, 59), (False, True): (17, 60), (False, False): (17, 59)}
+
+
 def test_demo_tools_exist() -> None:
     names = {t.name for t in TOOLS}
-    assert len(DEMO_TOOLS) == 25 and set(DEMO_TOOLS) <= names
+    assert set(DEMO_TOOLS) <= names and len(set(DEMO_TOOLS)) == len(DEMO_TOOLS)
+    assert len(STATS_TOOLS) == (8 if stats.WALLET_LOOKUP_TOOL else 7)
     assert f"{len(DEMO_TOOLS)} tools work without a key" in DEMO_BANNER
 
 
@@ -84,7 +109,7 @@ def test_free_key_reach_matches_the_tool_descriptions() -> None:
     # Stats tools).
     paid = [t for t in TOOLS if re.search(r"\b(Starter|Pro|Team) tier\b", t.description)]
     free = len(TOOLS) - len(paid)
-    assert free == 60
+    assert free == FREE_KEY_TOOLS
     assert f"A free key opens {free} tools and paid plans open the rest" in DEMO_BANNER
     readme = (ROOT / "README.md").read_text("utf-8")
     assert f"A free key opens {free} tools." in readme
@@ -115,7 +140,6 @@ def test_readme_lists_the_demo_tools_and_current_counts() -> None:
     if stats.DEMO_KEY_OPENS_STATS:
         assert "17 tools" not in readme
     assert f"{len(TOOLS) - len(DEMO_TOOLS)} of the {len(TOOLS)}" in readme
-    assert "88 of the 113" in readme
     assert f"all {len(TOOLS)} at" in readme
     assert "38 academy lessons" in readme
 

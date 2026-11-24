@@ -16,6 +16,7 @@ import pytest
 
 from bca_mcp.client import _is_allowed_base
 from bca_mcp.server import TOOLS
+from bca_mcp.tools import stats as _stats
 
 SRC = Path(__file__).resolve().parent.parent / "src" / "bca_mcp"
 GUARDED = (SRC / "tools" / "stats.py", SRC / "_outside.py")
@@ -26,7 +27,7 @@ FORBIDDEN = (
 STATS_NAMES = {
     "search_stats", "list_stats_measures", "rank_stats", "get_stats_record",
     "compare_stats_records", "lookup_stats_wallet", "get_stats_method", "list_stats_changes",
-}
+} - (set() if _stats.WALLET_LOOKUP_TOOL else {"lookup_stats_wallet"})
 
 
 @pytest.mark.parametrize("path", GUARDED, ids=lambda p: p.name)

@@ -31,6 +31,12 @@ from bca_mcp.client import get_client
 
 # --- the owner's switches (design-final.md, "For the owner") ------------------
 
+# Each switch is the one place to change in the code: the tool list, the
+# descriptions, the demo banner (_demo_banner.py) and the tests follow it.
+# What does not follow by itself is copy and the TypeScript fixtures: the copy
+# tests (tests/test_copy.py) then name the README lines to change, and the
+# parity fixtures must come from a TypeScript build with the same switch.
+
 # Decision 1: the built-in demo key opens the Stats tools, on the API's own
 # Stats allowance (60 calls a day for each network, 3,000 a day in all, set in
 # the API). False when a free key is required: the eight descriptions then drop
@@ -38,7 +44,7 @@ from bca_mcp.client import get_client
 DEMO_KEY_OPENS_STATS = True
 
 # Decision 2: the wallet lookup tool ships. False leaves it out of the tool
-# list (112 tools).
+# list: 112 tools, 24 without a key and 59 on a free key.
 WALLET_LOOKUP_TOOL = True
 
 # --- fixed numbers ------------------------------------------------------------

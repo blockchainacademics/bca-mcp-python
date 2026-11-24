@@ -21,6 +21,7 @@ from mcp.types import ListToolsRequest
 
 from bca_mcp.annotations import WRITE_TOOLS, tool_annotations, tool_title
 from bca_mcp.server import TOOLS, build_server, tool_definitions
+from bca_mcp.tools import stats
 
 FIXTURE = json.loads(
     (Path(__file__).parent / "fixtures" / "ts_tools_0_7_0.json").read_text("utf-8")
@@ -41,10 +42,9 @@ SHARED_DESCRIPTIONS = (
     "summarize_whitepaper", "translate_contract", "book_kol_campaign",
     "request_custom_research", "submit_listing", "search_academy",
     "get_history_correlation",
-    # 0.7.0: the 8 Stats tools (design-final.md appendix D, word for word).
-    "search_stats", "list_stats_measures", "rank_stats", "get_stats_record",
-    "compare_stats_records", "lookup_stats_wallet", "get_stats_method",
-    "list_stats_changes",
+    # 0.7.0: the 8 Stats tools (design-final.md appendix D, word for word),
+    # the ones the owner's switch 2 leaves in.
+    *(t.name for t in TOOLS if t.output == "stats"),
 )
 # The two indicators share everything before each package's own meta.status
 # sentence (_STATUS_NOTE here, STATUS_NOTE in the TS sibling).
@@ -65,9 +65,11 @@ def _pick(prop: dict[str, Any]) -> dict[str, Any]:
 
 
 def test_tool_names_equal_the_ts_tools_list() -> None:
+    # 113 with the owner's recommended answers; the TS dump must come from a
+    # build with the same switches (tools/stats.py).
     names = [t.name for t in TOOLS]
-    assert len(TS_NAMES) == 113
-    assert len(names) == 113, f"expected 113 tools, got {len(names)}"
+    assert len(names) == (113 if stats.WALLET_LOOKUP_TOOL else 112), f"got {len(names)} tools"
+    assert len(TS_NAMES) == len(names), f"the TS tools/list has {len(TS_NAMES)} tools, this package {len(names)}"
     assert len(set(names)) == len(names), "duplicate tool name"
     missing = sorted(set(TS_NAMES) - set(names))
     extra = sorted(set(names) - set(TS_NAMES))
@@ -209,7 +211,7 @@ async def test_tools_list_wire_payload_carries_annotations(monkeypatch) -> None:
     )
     wire = result.model_dump(by_alias=True, mode="json", exclude_none=True)
     tools = {t["name"]: t for t in wire["tools"]}
-    assert len(tools) == 113
+    assert len(tools) == len(TOOLS)
     assert tools["rank_stats"]["annotations"] == {
         "title": "Rank stats",
         "readOnlyHint": True,

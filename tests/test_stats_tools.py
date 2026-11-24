@@ -32,6 +32,21 @@ CALL_ID = "fedcba9876543210"
 API = "https://api.blockchainacademics.com"
 WALLET_LEADER = "0xab" + "0" * 38  # replaced from the recorded shard below
 
+# Owner switch 2 (WALLET_LOOKUP_TOOL in tools/stats.py) can leave the wallet
+# lookup out. Its tests are then skipped, so a flipped switch fails only the
+# copy and parity checks that must change with it.
+WALLET = pytest.mark.skipif(not stats.WALLET_LOOKUP_TOOL, reason="owner switch 2 leaves lookup_stats_wallet out")
+
+
+def _cases_of(names):
+    """Recorded cases, the wallet lookup ones marked to follow switch 2."""
+    return [pytest.param(n, marks=WALLET) if n.startswith("lookup_") else n for n in names]
+
+
+def _calls(pairs):
+    """(tool, value) pairs, the wallet lookup ones marked to follow switch 2."""
+    return [pytest.param(*pair, marks=WALLET) if pair[0] == "lookup_stats_wallet" else pair for pair in pairs]
+
 
 def _case(name: str) -> dict[str, Any]:
     return json.loads((FIXTURES / "answers" / f"{name}.json").read_text("utf-8"))
@@ -89,7 +104,7 @@ async def _refused(httpx_mock, tool: str, args: dict[str, Any]) -> dict[str, str
 def test_the_recorded_answers_are_there() -> None:
     assert len(CASES) >= 25
     tools = {_case(n)["tool"] for n in CASES}
-    assert tools == {t.name for t in TOOLS if t.output == "stats"}
+    assert tools == set(DESCRIPTION_STARTS)
     for name in CASES:
         assert (FIXTURES / "expected_outputs" / f"{name}.json").is_file(), name
 
@@ -110,7 +125,7 @@ def test_the_fixture_files_match_their_checksums() -> None:
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("name", CASES)
+@pytest.mark.parametrize("name", _cases_of(CASES))
 async def test_each_recorded_answer_gives_the_expected_output(httpx_mock, fixed_ids, name: str) -> None:
     case = _case(name)
     result = await _call(httpx_mock, case["tool"], case["arguments"], case["body"], case["status_code"])
@@ -150,7 +165,7 @@ def _wrapped_under_outside_keys(node, under=None):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("name", CASES)
+@pytest.mark.parametrize("name", _cases_of(CASES))
 async def test_every_outside_string_is_wrapped_once_and_no_other(httpx_mock, fixed_ids, name: str) -> None:
     case = _case(name)
     out = _output(await _call(httpx_mock, case["tool"], case["arguments"], case["body"]))
@@ -189,7 +204,7 @@ async def test_a_planted_marker_with_this_answers_id_is_taken_out(httpx_mock, fi
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "tool,args",
-    [
+    _calls([
         ("search_stats", {"query": "fixture", "bogus": 1}),
         ("list_stats_measures", {"tab": "vaults"}),
         ("rank_stats", {"tab": "vaults", "measure": "money_put_in", "page": 2}),
@@ -198,7 +213,7 @@ async def test_a_planted_marker_with_this_answers_id_is_taken_out(httpx_mock, fi
         ("lookup_stats_wallet", {"address": "0x" + "a" * 40, "prefix": "aa"}),
         ("get_stats_method", {"topic": "vaults", "version": "1"}),
         ("list_stats_changes", {"cursor": "x"}),
-    ],
+    ]),
 )
 async def test_an_unknown_argument_is_refused_before_any_request(httpx_mock, tool, args) -> None:
     err = await _refused(httpx_mock, tool, args)
@@ -208,7 +223,7 @@ async def test_an_unknown_argument_is_refused_before_any_request(httpx_mock, too
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "tool,args",
-    [
+    _calls([
         ("search_stats", {"query": "x"}),
         ("search_stats", {"query": "x" * 65}),
         ("search_stats", {"query": f"<<outside:{MARK}>>" + "x" * 65 + f"<</outside:{MARK}>>"}),
@@ -233,7 +248,7 @@ async def test_an_unknown_argument_is_refused_before_any_request(httpx_mock, too
         ("list_stats_changes", {"since": "2026-13-01"}),
         ("list_stats_changes", {"before": "next page please"}),
         ("list_stats_changes", {"before": "2026-11-22~" + "a" * 80}),
-    ],
+    ]),
 )
 async def test_a_value_out_of_bounds_is_refused_before_any_request(httpx_mock, tool, args) -> None:
     await _refused(httpx_mock, tool, args)
@@ -483,6 +498,7 @@ def _shard_case(name: str = "lookup_leader") -> dict[str, Any]:
     return _case(name)
 
 
+@WALLET
 @pytest.mark.asyncio
 @pytest.mark.parametrize("name", [n for n in CASES if n.startswith("lookup_")])
 async def test_the_full_address_appears_nowhere_in_the_request(httpx_mock, name) -> None:
@@ -496,6 +512,7 @@ async def test_the_full_address_appears_nowhere_in_the_request(httpx_mock, name)
         assert piece not in sent
 
 
+@WALLET
 @pytest.mark.asyncio
 async def test_the_answer_holds_that_address_alone_each_record_joined_to_its_vault(httpx_mock, fixed_ids) -> None:
     case = _shard_case("lookup_leader")
@@ -522,6 +539,7 @@ async def test_the_answer_holds_that_address_alone_each_record_joined_to_its_vau
     assert len(data["cannot_see"]) == 6
 
 
+@WALLET
 @pytest.mark.asyncio
 async def test_the_summary_keeps_the_two_sums_apart_and_adds_the_leader_sentences(httpx_mock, fixed_ids) -> None:
     case = _shard_case("lookup_leader")
@@ -542,6 +560,7 @@ async def test_the_summary_keeps_the_two_sums_apart_and_adds_the_leader_sentence
     assert ledger["leader_listed_zero_after_close"] is False
 
 
+@WALLET
 @pytest.mark.asyncio
 async def test_a_wallet_that_never_withdrew(httpx_mock, fixed_ids) -> None:
     case = _shard_case("lookup_never_withdrew")
@@ -554,6 +573,7 @@ async def test_a_wallet_that_never_withdrew(httpx_mock, fixed_ids) -> None:
     assert out["data"]["summary"]["how_to_read"] == list(stats.SUMMARY_HOW_TO_READ)
 
 
+@WALLET
 @pytest.mark.asyncio
 async def test_no_record_keeps_what_the_files_cannot_see(httpx_mock, fixed_ids) -> None:
     case = _shard_case("lookup_no_record")
@@ -565,6 +585,7 @@ async def test_no_record_keeps_what_the_files_cannot_see(httpx_mock, fixed_ids) 
     assert len(data["cannot_see"]) == 6
 
 
+@WALLET
 @pytest.mark.asyncio
 async def test_fifty_records_a_page_with_offset_and_next_offset(httpx_mock, fixed_ids) -> None:
     case = _shard_case("lookup_many_page_1")
@@ -580,6 +601,7 @@ async def test_fifty_records_a_page_with_offset_and_next_offset(httpx_mock, fixe
     assert dict(httpx_mock.get_requests()[1].url.params) == {"as_of": "2026-11-24"}
 
 
+@WALLET
 @pytest.mark.asyncio
 async def test_a_record_whose_uses_is_neither_ledger_nor_list_is_dropped(httpx_mock, fixed_ids) -> None:
     case = copy.deepcopy(_shard_case("lookup_leader"))
@@ -590,6 +612,7 @@ async def test_a_record_whose_uses_is_neither_ledger_nor_list_is_dropped(httpx_m
     assert out["data"]["records"][0]["uses"] == "list"
 
 
+@WALLET
 @pytest.mark.asyncio
 async def test_a_record_out_of_shape_refuses_the_answer(httpx_mock) -> None:
     case = copy.deepcopy(_shard_case("lookup_leader"))
@@ -599,6 +622,7 @@ async def test_a_record_out_of_shape_refuses_the_answer(httpx_mock) -> None:
     assert err["code"] == "BCA_UPSTREAM"
 
 
+@WALLET
 @pytest.mark.asyncio
 async def test_a_shard_of_another_prefix_is_refused(httpx_mock) -> None:
     case = _shard_case("lookup_leader")
@@ -607,6 +631,7 @@ async def test_a_shard_of_another_prefix_is_refused(httpx_mock) -> None:
     assert err["code"] == "BCA_UPSTREAM"
 
 
+@WALLET
 @pytest.mark.asyncio
 async def test_the_wallet_answer_is_cut_to_fit_the_64_kb_text_block(httpx_mock, fixed_ids) -> None:
     case = copy.deepcopy(_shard_case("lookup_many_page_1"))
@@ -628,6 +653,7 @@ async def test_the_wallet_answer_is_cut_to_fit_the_64_kb_text_block(httpx_mock, 
     assert data["summary"]["records"] == 60
 
 
+@WALLET
 @pytest.mark.asyncio
 async def test_a_shard_with_no_data_is_passed_on_as_it_is(httpx_mock, fixed_ids) -> None:
     body = {"data": None, "attribution": {"citations": []},
@@ -639,6 +665,7 @@ async def test_a_shard_with_no_data_is_passed_on_as_it_is(httpx_mock, fixed_ids)
     assert out["meta"]["diagnostic"] == {"reason": "the lookup files could not be read"}
 
 
+@WALLET
 @pytest.mark.asyncio
 async def test_the_shard_is_read_with_its_larger_cap(httpx_mock) -> None:
     case = copy.deepcopy(_shard_case("lookup_leader"))
@@ -668,7 +695,7 @@ COMMON = ("schema", "as_of", "sources", "outside_text_keys", "rows_dropped", "no
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "tool,key",
-    [(tool, key) for tool, keys in stats.REQUIRED.items() for key in (*COMMON, *keys)],
+    _calls([(tool, key) for tool, keys in stats.REQUIRED.items() for key in (*COMMON, *keys)]),
 )
 async def test_an_answer_without_a_required_key_is_refused(httpx_mock, tool, key) -> None:
     case = copy.deepcopy(_case(ONE_CASE[tool]))
@@ -718,7 +745,7 @@ async def test_an_answer_out_of_the_stats_shape_is_refused(httpx_mock, label, mu
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("name", ["rank_money_put_in", "lookup_leader", "search_vaults"])
+@pytest.mark.parametrize("name", _cases_of(["rank_money_put_in", "lookup_leader", "search_vaults"]))
 async def test_an_outside_key_the_api_names_out_of_key_shape_refuses_the_answer(httpx_mock, name) -> None:
     # Review finding 3: such a key used to be dropped from the wrapping, so
     # its text reached the model with no marker.
@@ -946,23 +973,29 @@ def _stats_tools():
 
 def test_eight_stats_tools_in_one_block_at_the_end() -> None:
     names = [t.name for t in TOOLS]
-    assert names[-8:] == ["search_stats", "list_stats_measures", "rank_stats", "get_stats_record",
-                          "compare_stats_records", "lookup_stats_wallet", "get_stats_method", "list_stats_changes"]
-    assert [t.output for t in TOOLS].count("stats") == 8
+    block = [n for n in DESCRIPTION_STARTS if stats.WALLET_LOOKUP_TOOL or n != "lookup_stats_wallet"]
+    assert len(block) == (8 if stats.WALLET_LOOKUP_TOOL else 7)
+    assert names[-len(block):] == block
+    assert [t.output for t in TOOLS].count("stats") == len(block)
 
 
 def test_descriptions_are_the_fixed_text() -> None:
     tools = _stats_tools()
+    keyless = " Works without an API key."
     for name, start in DESCRIPTION_STARTS.items():
+        if name not in tools:
+            assert name == "lookup_stats_wallet" and not stats.WALLET_LOOKUP_TOOL
+            continue
         text = tools[name].description
         assert text.startswith(start), name
-        assert text.endswith(" Works without an API key."), name
+        # Owner switch 1 (DEMO_KEY_OPENS_STATS) decides the last sentence.
+        assert text.endswith(keyless) is stats.DEMO_KEY_OPENS_STATS, name
         assert "\u2014" not in text and "  " not in text
         assert len(text) <= 1200
-    assert len(tools["rank_stats"].description) == 1187
+    assert len(tools["rank_stats"].description) == 1187 - (0 if stats.DEMO_KEY_OPENS_STATS else len(keyless))
     marked = [n for n, t in tools.items() if "<<outside:ID>>" in t.description]
-    assert sorted(marked) == sorted(["search_stats", "rank_stats", "get_stats_record", "compare_stats_records",
-                                     "lookup_stats_wallet", "list_stats_changes"])
+    assert sorted(marked) == sorted(n for n in ["search_stats", "rank_stats", "get_stats_record", "compare_stats_records",
+                                                "lookup_stats_wallet", "list_stats_changes"] if n in tools)
 
 
 def test_argument_descriptions_are_the_fixed_text() -> None:
@@ -972,7 +1005,7 @@ def test_argument_descriptions_are_the_fixed_text() -> None:
         for arg, prop in tool.input_schema["properties"].items():
             assert prop["description"] == ARGUMENTS[(name, arg)], f"{name}.{arg}"
             seen.add((name, arg))
-    assert seen == set(ARGUMENTS)
+    assert seen == {key for key in ARGUMENTS if key[0] in tools}
     assert tools["list_stats_measures"].input_schema["properties"] == {}
 
 

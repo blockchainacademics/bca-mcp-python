@@ -24,10 +24,8 @@ from mcp.server import Server
 
 from bca_mcp import __version__
 from bca_mcp._demo_banner import DEMO_BANNER
-
-FIXTURE = json.loads(
-    (Path(__file__).parent / "fixtures" / "ts_tools_0_7_0.json").read_text("utf-8")
-)
+from bca_mcp.server import TOOLS
+from bca_mcp.tools import stats
 
 # Features of the installed mcp SDK (pyproject allows any 1.x release).
 HAS_ANNOTATIONS = hasattr(mcp_types, "ToolAnnotations")
@@ -66,7 +64,9 @@ async def test_stdio_server_without_key() -> None:
         assert out["init"].serverInfo.version == __version__
 
     tools = {t.name: t for t in out["tools"]}
-    assert set(tools) == set(FIXTURE["names"]) and len(out["tools"]) == 113
+    # The tools the owner's switches leave in (tools/stats.py); tests/test_parity.py
+    # checks the same names against the TS tools/list.
+    assert set(tools) == {t.name for t in TOOLS} and len(out["tools"]) == len(TOOLS)
 
     entity = tools["get_entity"].inputSchema["properties"]
     explainer = tools["get_explainer"].inputSchema["properties"]
@@ -87,7 +87,7 @@ async def test_stdio_server_without_key() -> None:
         body = json.loads(result.content[0].text)
         assert body["error"]["code"] == "BCA_BAD_REQUEST", key
     assert json.loads(out["address"].content[0].text)["error"]["message"].startswith("search_stats takes a name.")
-    if HAS_ANNOTATIONS:
+    if HAS_ANNOTATIONS and stats.WALLET_LOOKUP_TOOL:
         assert tools["lookup_stats_wallet"].annotations.readOnlyHint is True
 
     if HAS_ERRLOG:
