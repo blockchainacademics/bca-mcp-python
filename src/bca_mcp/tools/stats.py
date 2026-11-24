@@ -221,6 +221,9 @@ _NAME_PATTERN = r"^[a-z][a-z0-9_]{1,39}$"
 _DAY_PATTERN = r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
 _ADDRESS_PATTERN = r"^0x[0-9a-fA-F]{40}$"
 _BEFORE_PATTERN = r"^[0-9]{4}-[0-9]{2}-[0-9]{2}~[a-z0-9]+(-[a-z0-9]+)*$"
+# No control character, U+0000 to U+001F and U+007F to U+009F. The query and
+# the record id advertise it in their schema, as the TypeScript package does.
+_NO_CONTROL_PATTERN = r"^[^\x00-\x1f\x7f-\x9f]*$"
 _ADDRESS = re.compile(r"0x[0-9a-fA-F]{40}")
 _LOWER_ADDRESS = re.compile(r"0x[0-9a-f]{40}")
 _SLUG = re.compile(r"[a-z0-9]+(-[a-z0-9]+)*")
@@ -300,6 +303,7 @@ class SearchStatsInput(_Args):
     query: str = Field(
         min_length=2,
         max_length=SEARCH_QUERY_MAX + MARKER_PAIR_CHARS,
+        pattern=_NO_CONTROL_PATTERN,
         description="A name, 2 to 64 characters. Not an address.",
     )
     tab: Optional[str] = Field(
@@ -394,11 +398,20 @@ class GetStatsRecordInput(_Args):
     id: str = Field(
         min_length=1,
         max_length=64,
+        pattern=_NO_CONTROL_PATTERN,
         description=(
             "An exchange id or name (for example kraken or Crypto.com), or a vault address "
             "(0x and 40 hex characters)."
         ),
     )
+
+    @field_validator("id")
+    @classmethod
+    def no_control_character(cls, value: str) -> str:
+        # The pattern above says so too; this holds on every regex engine.
+        if _CONTROL.search(value):
+            raise ValueError("holds a control character")
+        return value
 
     @model_validator(mode="after")
     def fold_the_id(self) -> "GetStatsRecordInput":

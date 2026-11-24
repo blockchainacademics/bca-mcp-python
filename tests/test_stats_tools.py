@@ -376,7 +376,6 @@ async def test_search_nothing_matches_is_unseeded_with_what_was_searched(httpx_m
         ("test_exchange.A", "test-exchange-a"),
         ("\uff2b\uff52\uff41\uff4b\uff45\uff4e", "kraken"),
         ("Kra\u200bken", "kraken"),
-        ("kra\nken", "kraken"),
         ("Stra\u00dfe", "strasse"),
     ],
 )
@@ -407,6 +406,21 @@ async def test_a_vault_id_is_lowered_before_it_is_sent(httpx_mock) -> None:
 )
 async def test_a_bad_record_id_is_refused_before_any_request(httpx_mock, args) -> None:
     await _refused(httpx_mock, "get_stats_record", args)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("typed", ["kra\nken", "kraken\t", "kra\u0085ken", "kra\u007fken", "\u0000kraken"])
+@pytest.mark.parametrize("tab", ["exchanges", "vaults"])
+async def test_a_record_id_with_a_control_character_is_refused_before_any_request(httpx_mock, tab, typed) -> None:
+    # Review finding 4: refused, as the TypeScript package does, not folded
+    # into another id.
+    await _refused(httpx_mock, "get_stats_record", {"tab": tab, "id": typed})
+
+
+@pytest.mark.parametrize("tool,field", [("search_stats", "query"), ("get_stats_record", "id")])
+def test_the_query_and_the_record_id_advertise_no_control_character(tool, field) -> None:
+    prop = next(t for t in TOOLS if t.name == tool).input_schema["properties"][field]
+    assert prop["pattern"] == "^[^\\x00-\\x1f\\x7f-\\x9f]*$"
 
 
 @pytest.mark.asyncio
