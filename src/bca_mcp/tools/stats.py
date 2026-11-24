@@ -34,7 +34,8 @@ from bca_mcp.client import get_client
 # Each switch is the one place to change in the code: the tool list, the
 # descriptions, the demo banner (_demo_banner.py) and the tests follow it.
 # What does not follow by itself is copy and the TypeScript fixtures: the copy
-# tests (tests/test_copy.py) then name the README lines to change, and the
+# tests (tests/test_copy.py) then name the README lines to change,
+# tests/test_release_workflow.py the tool count in the two workflows, and the
 # parity fixtures must come from a TypeScript build with the same switch.
 
 # Decision 1: the built-in demo key opens the Stats tools, on the API's own
