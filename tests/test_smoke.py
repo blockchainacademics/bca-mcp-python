@@ -442,16 +442,25 @@ EXPECTED_TOOL_NAMES = {
     # currencies (2)
     "list_currencies",
     "get_currency_feed",
+    # --- stats (8, 0.7.0) --- design-final.md, the same block in the TS sibling
+    "search_stats",
+    "list_stats_measures",
+    "rank_stats",
+    "get_stats_record",
+    "compare_stats_records",
+    "lookup_stats_wallet",
+    "get_stats_method",
+    "list_stats_changes",
 }
 
 
 def test_server_registers_expected_tools_with_unique_names() -> None:
     names = [t.name for t in TOOLS]
-    # Same 105 tools as the TS sibling since 0.6.3 (get_as_of_snapshot
-    # ported); tests/test_parity.py checks the names against its tools/list.
+    # Same 113 tools as the TS sibling since 0.7.0 (the 8 Stats tools);
+    # tests/test_parity.py checks the names against its tools/list.
     # Update both numbers in lock-step when new tools ship.
-    assert len(names) == 105, f"expected 105 tools, got {len(names)}: {names}"
-    assert len(set(names)) == 105, f"duplicate tool name: {names}"
+    assert len(names) == 113, f"expected 113 tools, got {len(names)}: {names}"
+    assert len(set(names)) == 113, f"duplicate tool name: {names}"
     assert set(names) == EXPECTED_TOOL_NAMES, (
         f"tool surface drifted: want {EXPECTED_TOOL_NAMES}, got {set(names)}"
     )
@@ -768,12 +777,13 @@ def test_demo_banner_text_invariants() -> None:
 def test_demo_banner_byte_identical_to_ts_sibling() -> None:
     """The TS sibling and Python sibling MUST emit the exact same banner
     bytes so MCP host log filtering / regex matching works on either side.
-    tests/fixtures/ts_demo_banner_0_6_4.ts is bca-mcp-ts src/demo_banner.ts
-    at release/0.6.4, copied unchanged, so the check also runs in CI."""
+    tests/fixtures/ts_demo_banner_0_7_0.ts stands for bca-mcp-ts
+    src/demo_banner.ts of 0.7.0, so the check also runs in CI (see the note at
+    its top)."""
     from bca_mcp._demo_banner import DEMO_BANNER
     from pathlib import Path
 
-    ts_file = Path(__file__).resolve().parent / "fixtures" / "ts_demo_banner_0_6_4.ts"
+    ts_file = Path(__file__).resolve().parent / "fixtures" / "ts_demo_banner_0_7_0.ts"
     ts_src = ts_file.read_text(encoding="utf-8")
     # Extract the three string literals between double quotes that start
     # with "[bca-mcp]".

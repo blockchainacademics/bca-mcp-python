@@ -4,6 +4,26 @@ All notable changes to `bca-mcp` are documented here.
 
 This project follows [Semantic Versioning](https://semver.org/) and [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.7.0] (unreleased)
+
+The Stats tools, in lockstep with @blockchainacademics/mcp 0.7.0. 105 → 113 tools.
+
+### Added
+
+- Eight Stats tools that read the Blockchain Academics Stats files through the API: `search_stats`, `list_stats_measures`, `rank_stats`, `get_stats_record`, `compare_stats_records`, `lookup_stats_wallet`, `get_stats_method` and `list_stats_changes`. They cover the 8 centralised exchanges Stats lists and the Hyperliquid vaults in its open files. Each one reads and never writes, and each works without a key, on an allowance of its own on the demo key.
+- Every Stats answer carries the data day, the address of each open file it read, the method version or variant, and a check state on every exchange fact. An exchange that a person has not confirmed yet is marked as being checked and has no value. `meta.status` says so for the answer as a whole.
+- Outside text in a Stats answer, such as a vault name chosen by its leader or a quote from a source, comes back between `<<outside:ID>>` and `<</outside:ID>>` markers, each string on its own, with an ID made new for each answer. Marker shapes in the text are taken out first. The citations and `meta` are checked field by field: a citation link must start with `https://data.blockchainacademics.com/` or `https://blockchainacademics.com/`. The answer is one compact JSON text block of at most 65,536 bytes, and the same object comes back as structured content.
+- `lookup_stats_wallet` matches the wallet address on this machine. Two characters of it are sent to the API, which answers with that page of the lookup and a short row for each listed vault on it, so no second call is needed. The answer keeps the wallet's records alone, 50 a page, with a summary over all of them that keeps the result on money withdrawn apart from the result on the venue's own list.
+- `search_stats` refuses a full address before any request is made, written with hidden characters or wide letters too.
+- A Stats error is one fixed sentence with the request id the call sent as `X-Request-ID`. The API's own text comes through when it is one of the API's fixed sentences, word for word; a 404 reads the same for a hidden id and an unknown one. An answer that is not the canonical envelope, lacks a key its tool needs or has no status is refused, and the old flat shape is never taken for a Stats tool.
+- The client takes a lower read cap for one call (512 KiB for a Stats answer, 1.5 MiB for the wallet shard), a request id, and a raw mode the Stats check uses.
+
+### Changed
+
+- 113 tools: 25 work without a key, a free key opens 60, and 88 need a key of your own. The demo banner, the README, the docs and the examples say so.
+- Version 0.7.0 in pyproject, `__version__` and the User-Agent. The parity fixtures are `tests/fixtures/ts_tools_0_7_0.json` and `tests/fixtures/ts_demo_banner_0_7_0.ts`.
+- The unused `check_env` argument of `build_server` stays until 0.8.0, and the port to mcp 2.x moves to 0.8.0 too: 0.7.0 still needs `mcp>=1.21.1,<2.0.0`. mcp 1.21.1 has `CallToolResult.structuredContent`, so the floor stays.
+
 ## [0.6.4] (unreleased)
 
 Directory review fixes (directory-submissions.md, section 4.6 rows A3, A5 and A10, and the package fixes of section 20), in lockstep with @blockchainacademics/mcp 0.6.4. Same 105 tools, same arguments and schemas.

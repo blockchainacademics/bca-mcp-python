@@ -9,19 +9,28 @@ from pathlib import Path
 
 from bca_mcp._demo_banner import DEMO_BANNER
 from bca_mcp.server import TOOLS
+from bca_mcp.tools import stats
 
 ROOT = Path(__file__).resolve().parent.parent
 EM_DASH = "—"
 
 # The API's demo allowlist (blockchainacademics-api app/api/v1/_demo_allowlist.py;
-# 2026-11-02: the 16 of 2026-10-31 plus get_article).
-DEMO_TOOLS = (
+# 2026-11-02: the 16 of 2026-10-31 plus get_article), and the 8 Stats tools of
+# 0.7.0 while owner decision 1 opens them to the demo key
+# (DEMO_KEY_OPENS_STATS in tools/stats.py): 25 in all.
+BASE_DEMO_TOOLS = (
     "get_price", "get_trending", "get_fear_greed", "get_market_overview",
     "search_news", "get_article", "get_sentiment", "get_entity",
     "get_explainer", "get_recent_stories", "get_topic", "search_grants",
     "get_grant", "list_jobs", "get_job", "search_academy",
     "get_as_of_snapshot",
 )
+STATS_TOOLS = (
+    "search_stats", "list_stats_measures", "rank_stats", "get_stats_record",
+    "compare_stats_records", "lookup_stats_wallet", "get_stats_method",
+    "list_stats_changes",
+)
+DEMO_TOOLS = BASE_DEMO_TOOLS + (STATS_TOOLS if stats.DEMO_KEY_OPENS_STATS else ())
 
 # The API's topic taxonomy (topic_taxonomy, scripts/seed_canonical_slugs.py).
 TAXONOMY = {
@@ -36,8 +45,8 @@ def _tool(name: str):
 
 def test_demo_banner_exact_bytes() -> None:
     assert DEMO_BANNER == (
-        "[bca-mcp] Running in DEMO mode: 17 tools work without a key, under a shared daily cap.\n"
-        "[bca-mcp] A free key opens 52 tools and paid plans open the rest: https://blockchainacademics.com/crypto-api/signup?ref=mcp-first-run\n"
+        "[bca-mcp] Running in DEMO mode: 25 tools work without a key, under a shared daily cap.\n"
+        "[bca-mcp] A free key opens 60 tools and paid plans open the rest: https://blockchainacademics.com/crypto-api/signup?ref=mcp-first-run\n"
         "[bca-mcp] Set: export BCA_API_KEY=bca_...   (or add to your client config)\n"
     )
     assert DEMO_BANNER.isascii()
@@ -45,7 +54,7 @@ def test_demo_banner_exact_bytes() -> None:
 
 def test_demo_tools_exist() -> None:
     names = {t.name for t in TOOLS}
-    assert len(DEMO_TOOLS) == 17 and set(DEMO_TOOLS) <= names
+    assert len(DEMO_TOOLS) == 25 and set(DEMO_TOOLS) <= names
     assert f"{len(DEMO_TOOLS)} tools work without a key" in DEMO_BANNER
 
 
@@ -71,10 +80,11 @@ def test_no_copy_still_counts_16_demo_tools() -> None:
 
 def test_free_key_reach_matches_the_tool_descriptions() -> None:
     # A tool on a paid plan names its tier in its description; the others are
-    # the free tier (52 of the 105 on 2026-11-01).
+    # the free tier (60 of the 113 in 0.7.0: the 52 of 2026-11-01 and the 8
+    # Stats tools).
     paid = [t for t in TOOLS if re.search(r"\b(Starter|Pro|Team) tier\b", t.description)]
     free = len(TOOLS) - len(paid)
-    assert free == 52
+    assert free == 60
     assert f"A free key opens {free} tools and paid plans open the rest" in DEMO_BANNER
     readme = (ROOT / "README.md").read_text("utf-8")
     assert f"A free key opens {free} tools." in readme
@@ -91,17 +101,22 @@ def test_free_key_reach_matches_the_tool_descriptions() -> None:
         assert not stale.search(text), f"{where} says a free key opens every tool"
 
 
-def test_readme_lists_the_17_demo_tools_and_current_counts() -> None:
+def test_readme_lists_the_demo_tools_and_current_counts() -> None:
     readme = (ROOT / "README.md").read_text("utf-8")
     section = readme.split("## Zero-config first run", 1)[1].split("\n## ", 1)[0]
     listed = re.findall(r"`([a-z_]+)`", section)
     assert [t for t in listed if t in {x.name for x in TOOLS}] == list(DEMO_TOOLS)
-    assert "17 tools" in section
+    assert f"{len(DEMO_TOOLS)} tools" in section
     assert "upgrade message" in section
     for stale in ("10 marquee", "first 8 tools", "8 tools", "1,000 calls", "99-tool",
-                  "91 of the 105", "89 of the 105", "16 tools", "43 academy", "102 tools"):
+                  "91 of the 105", "89 of the 105", "88 of the 105", "16 tools", "43 academy",
+                  "102 tools", "105-tool", "all 105", "same 105"):
         assert stale not in readme, stale
-    assert "88 of the 105" in readme
+    if stats.DEMO_KEY_OPENS_STATS:
+        assert "17 tools" not in readme
+    assert f"{len(TOOLS) - len(DEMO_TOOLS)} of the {len(TOOLS)}" in readme
+    assert "88 of the 113" in readme
+    assert f"all {len(TOOLS)} at" in readme
     assert "38 academy lessons" in readme
 
 

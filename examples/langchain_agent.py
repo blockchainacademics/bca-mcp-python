@@ -8,7 +8,7 @@ Install:
 
     pip install bca-mcp "langchain[mcp]>=1.4.0"
 
-Run (BCA_API_KEY is optional: without it 17 tools work in demo mode):
+Run (BCA_API_KEY is optional: without it 25 tools work in demo mode):
 
     BCA_API_KEY=... python examples/langchain_agent.py
 

@@ -2,8 +2,8 @@
 
 **Status:** Draft (task #73, Phase 5 Registry blitz)
 **Owner:** Blockchain Academics
-**Target package:** [`bca-mcp`](https://pypi.org/project/bca-mcp/) 0.6.3
-**Drafted:** 2026-04-21, counts and facts updated 2026-11-01
+**Target package:** [`bca-mcp`](https://pypi.org/project/bca-mcp/) 0.7.0
+**Drafted:** 2026-04-21, counts and facts updated 2026-11-24
 
 > **Before filing:** verify the two assumptions marked `VERIFY` below against the live LangChain CONTRIBUTING.md and the `langchain-mcp-adapters` README. Web research was blocked during drafting.
 
@@ -52,7 +52,7 @@ If a reviewer pushes back and insists on a tool wrapper in `libs/community`, the
 Adds a new third-party integration entry for [`bca-mcp`](https://pypi.org/project/bca-mcp/),
 a Python MCP server that exposes the Blockchain Academics crypto corpus (3,800+ editorial
 articles, 150+ entity dossiers, 38 academy lessons in 8 courses, live market data) as
-105 MCP tools, 17 of which work without an API key.
+113 MCP tools, 25 of which work without an API key.
 
 Changes:
 - **New provider page:** `docs/docs/integrations/providers/blockchain_academics.mdx`
@@ -69,9 +69,9 @@ Changes:
   corpus is the typical mitigation. No existing LangChain integration covers crypto editorial
   + entity dossiers with a structured `attribution` envelope (`citations[]` with cite_url,
   as_of, source_hash) and an honest `meta.status` on every answer.
-- `bca-mcp` has a TypeScript sibling (`@blockchainacademics/mcp`) with the same 105 tools,
+- `bca-mcp` has a TypeScript sibling (`@blockchainacademics/mcp`) with the same 113 tools,
   already listed in the MCP community registry; this PR closes the Python-side docs gap.
-- 17 tools work without a key (demo mode), a free API key opens 52 (every tool the notebook
+- 25 tools work without a key (demo mode), a free API key opens 60 (every tool the notebook
   calls among them) and paid plans open the rest, so reviewers and new users can run the
   notebook end-to-end with no billing friction.
 
@@ -116,11 +116,11 @@ Changes:
 
 | # | Type | Purpose |
 |---|---|---|
-| 1 | Markdown | **Header + one-paragraph overview.** What BCA is, what the 105 tools cover (17 without a key), the attribution contract, link to the signup page for a free key. |
+| 1 | Markdown | **Header + one-paragraph overview.** What BCA is, what the 113 tools cover (25 without a key), the attribution contract, link to the signup page for a free key. |
 | 2 | Markdown | **Setup.** Note: needs Python 3.11 or later, a free `BCA_API_KEY`, and `langchain-mcp-adapters`. |
 | 3 | Code | **Install.** `%pip install --quiet bca-mcp langchain-mcp-adapters langgraph` plus the chat model package of the reader's choice. |
 | 4 | Code | **Imports + env.** `import asyncio, os, sys; from mcp import ClientSession, StdioServerParameters; from mcp.client.stdio import stdio_client; from langchain_mcp_adapters.tools import load_mcp_tools`. Sets `os.environ["BCA_API_KEY"]` via `getpass` if not already set. |
-| 5 | Code | **Instantiate MCP client.** Build `StdioServerParameters(command=sys.executable, args=["-m", "bca_mcp"], env={...})`. Open `stdio_client` + `ClientSession` as async context managers. Call `session.initialize()`. `tools = await load_mcp_tools(session)`. Print `[t.name for t in tools]`, which confirms the 105 tools loaded. |
+| 5 | Code | **Instantiate MCP client.** Build `StdioServerParameters(command=sys.executable, args=["-m", "bca_mcp"], env={...})`. Open `stdio_client` + `ClientSession` as async context managers. Call `session.initialize()`. `tools = await load_mcp_tools(session)`. Print `[t.name for t in tools]`, which confirms the 113 tools loaded. |
 | 6 | Markdown | **Tool 1: `search_news`.** Explain the tool and its envelope shape. |
 | 7 | Code | **Call `search_news`.** `result = await tools_by_name["search_news"].ainvoke({"query": "stablecoin regulation", "limit": 3})`; print a results table (title, link, published date). |
 | 8 | Code | **Call `list_entity_mentions`** for bitcoin with a 30 day `since` window (free tier). `get_coverage_index` is in the tool list too, but it needs a Pro key; mention it as the upgrade path. |
@@ -142,7 +142,7 @@ Changes:
 - [ ] **Rotate PyPI publish token**: revoke the v0.1.0 upload token, mint a scoped-to-`bca-mcp` token, store in 1Password under `PyPI / bca-mcp` (or publish through the trusted publishing workflow)
 - [ ] `pip install bca-mcp` installs clean on fresh venvs: 3.11, 3.12 (macOS arm64, Linux x86_64)
 - [ ] `pipx install bca-mcp && bca --help` works (console script entry points register)
-- [ ] `python -m bca_mcp` starts without `BCA_API_KEY` set in demo mode: a one-time stderr banner, and 17 tools answer
+- [ ] `python -m bca_mcp` starts without `BCA_API_KEY` set in demo mode: a one-time stderr banner, and 25 tools answer
 - [ ] `dist/` contains both wheel + sdist; both pass `twine check`
 
 ### README coverage
@@ -155,8 +155,8 @@ Changes:
 
 ### Repo hygiene
 
-- [x] `mcp>=1.21.1,<2.0.0` in pyproject.toml (0.6.3), so no SDK release that drops the session can be installed
-- [ ] `CHANGELOG.md` has a 0.6.3 entry (105 tools, parity with the TS package)
+- [x] `mcp>=1.21.1,<2.0.0` in pyproject.toml (0.7.0), so no SDK release that drops the session can be installed
+- [ ] `CHANGELOG.md` has a 0.7.0 entry (113 tools, parity with the TS package)
 - [ ] GitHub repo has a top-level `examples/langchain_agent.py` that matches the notebook logic (README references it; confirm it runs)
 - [ ] CI green on main (pytest, `twine check`, build)
 - [ ] LICENSE is MIT and the file is present at repo root
@@ -196,11 +196,11 @@ Changes:
 
 ### Q4. "Does the Python package cover the same tools as the TypeScript one?"
 
-**Answer:** Yes. Both packages expose the same 105 tools with the same names, input schemas and annotations, and both talk to the same REST API with the same attribution contract. 17 of them work without a key, a free key opens 52, and paid plans open the rest; without a key, the other 88 answer with a clean upgrade message. Reviewers can test end-to-end on a free-tier key.
+**Answer:** Yes. Both packages expose the same 113 tools with the same names, input schemas and annotations, and both talk to the same REST API with the same attribution contract. 25 of them work without a key, a free key opens 60, and paid plans open the rest; without a key, the other 88 answer with a clean upgrade message. Reviewers can test end-to-end on a free-tier key.
 
 ### Q5. "How do you handle auth? API key in env var is fine for Claude Desktop but what about shared infra?"
 
-**Answer:** The `BCA_API_KEY` env var is the only supported auth mode in 0.6.3, the standard MCP pattern. Without it the server runs in demo mode on a shared, rate-limited public key. The CLI additionally supports `~/.bca/config.toml` with `chmod 600`. For shared / multi-tenant infra, the recommended pattern is per-user MCP server instances with per-user env vars (same as every other MCP server). No shared-secret brokering yet; a future version may add OIDC once the MCP spec stabilizes auth.
+**Answer:** The `BCA_API_KEY` env var is the only supported auth mode in 0.7.0, the standard MCP pattern. Without it the server runs in demo mode on a shared, rate-limited public key. The CLI additionally supports `~/.bca/config.toml` with `chmod 600`. For shared / multi-tenant infra, the recommended pattern is per-user MCP server instances with per-user env vars (same as every other MCP server). No shared-secret brokering yet; a future version may add OIDC once the MCP spec stabilizes auth.
 
 ### Q6. "What's the licensing on the corpus? Can LangChain users freely call this in production?"
 
@@ -208,7 +208,7 @@ Changes:
 
 ### Q7. "Does this work with both stdio and SSE/streamable-HTTP transports?"
 
-**Answer:** 0.6.3 ships stdio only. Streamable HTTP is on the roadmap. The notebook uses stdio because (a) it's the most widely supported transport across MCP clients today and (b) it matches the Claude Desktop configuration most of our users start with.
+**Answer:** 0.7.0 ships stdio only. Streamable HTTP is on the roadmap. The notebook uses stdio because (a) it's the most widely supported transport across MCP clients today and (b) it matches the Claude Desktop configuration most of our users start with.
 
 ### Q8. "Tests?"
 
