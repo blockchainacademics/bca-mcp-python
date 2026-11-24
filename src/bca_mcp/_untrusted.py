@@ -25,11 +25,23 @@ touched.
 Kept behaviourally identical to the TS sibling (``src/untrusted.ts``): both
 neutralize to the same ``&lt;…&gt;`` bytes so the two servers emit identical
 output for the same payload.
+
+0.7.0 (AGENTS-08 fixes 1, 2 and 7): before the whole-data fence neutralizes
+tags, every string of the payload is cleaned with ``clean_fence_value``:
+NFKC, so fullwidth brackets become plain ones, then the hidden characters
+out, so a zero width space or a soft hyphen cannot split a tag name. A
+look-alike tag then becomes a plain tag, which ``neutralize_fence_tokens``
+catches. Tab, line feed and carriage return stay, so article bodies and
+contract code keep their lines. The fence itself carries an id made new for
+each answer (``new_fence_id``), which a tag planted upstream cannot know.
 """
 
 from __future__ import annotations
 
 import re
+import secrets
+import unicodedata
+from typing import Any
 
 # Matches an opening OR closing untrusted_content tag. ``/?`` covers the
 # closing slash; the leading/trailing ``\s*`` and the ``\s*`` around the slash
@@ -53,6 +65,40 @@ def neutralize_fence_tokens(text: str) -> str:
     if not isinstance(text, str) or not text:
         return text
     return _FENCE_TAG_RE.sub(_escape_tag, text)
+
+
+# The hidden characters of the Stats design's cleaners (design-final.md
+# appendix C), less tab, line feed and carriage return. The same set as
+# FENCE_HIDDEN_RE in the TS sibling's src/untrusted.ts.
+_FENCE_HIDDEN_RE = re.compile(
+    "[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f\u00ad\u061c\u115f\u1160"
+    "\u17b4\u17b5\u180b-\u180f\u200b-\u200f\u2028-\u202e\u2060-\u206f\u3164"
+    "\ufe00-\ufe0f\ufeff\uffa0\ufff0-\ufffb]"
+)
+
+
+def clean_fence_text(text: str) -> str:
+    """One text cleaned before the whole-data fence neutralizes tags: NFKC,
+    then the hidden characters out."""
+    return _FENCE_HIDDEN_RE.sub("", unicodedata.normalize("NFKC", text))
+
+
+def clean_fence_value(value: Any) -> Any:
+    """A copy of a payload with every string in it cleaned. Keys and every
+    other value stay as they are."""
+    if isinstance(value, str):
+        return clean_fence_text(value)
+    if isinstance(value, list):
+        return [clean_fence_value(v) for v in value]
+    if isinstance(value, dict):
+        return {k: clean_fence_value(v) for k, v in value.items()}
+    return value
+
+
+def new_fence_id() -> str:
+    """The id of one whole-data fence: 16 hex characters from the system's
+    random source, made new for each answer."""
+    return secrets.token_hex(8)
 
 
 def wrap_untrusted(source: str, text: str) -> str:
