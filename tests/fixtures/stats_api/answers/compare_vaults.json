@@ -1,0 +1,176 @@
+{
+ "tool": "compare_stats_records",
+ "arguments": {
+  "tab": "vaults",
+  "ids": [
+   "0x13f187abb68af4bb5aaa13b87dd59108e4724c78",
+   "0x04566393c5cb08287d874ea1bb67a3e357805ea3"
+  ]
+ },
+ "request": {
+  "path": "/v1/stats/compare",
+  "query": {
+   "tab": "vaults",
+   "ids": "0x13f187abb68af4bb5aaa13b87dd59108e4724c78,0x04566393c5cb08287d874ea1bb67a3e357805ea3"
+  }
+ },
+ "status_code": 200,
+ "body": {
+  "data": {
+   "schema": "bca.stats/1",
+   "as_of": "2026-11-24",
+   "uploaded_at": "2026-11-24T02:47:20Z",
+   "method_version": "1",
+   "variant": null,
+   "sources": [
+    {
+     "file": "https://data.blockchainacademics.com/vaults/v1/list.json",
+     "as_of": "2026-11-24",
+     "sha256": "53ac36b67911707a75c18ecbeb4e68bab7ead5a61e1e18ae714fd68ab185fce4"
+    }
+   ],
+   "outside_text_keys": [
+    "name_by_leader",
+    "subject_by_outsider",
+    "text_as_published",
+    "value_from_source",
+    "link_from_source",
+    "quote_from_source",
+    "source_url",
+    "source_name",
+    "reason_as_published"
+   ],
+   "rows_dropped": 0,
+   "notes": [
+    "A vault name is chosen by its leader. It is not a statement by Blockchain Academics.",
+    "The venue's own vaults are not covered here. A vault whose name resembles one of them is run by a user."
+   ],
+   "read_me": [
+    "venue_rate_pct is the venue's own trailing figure. It is not a promise and not our measure.",
+    "our_yearly_rate_pct is our estimate from weekly points. A young vault can show an extreme figure.",
+    "left_took_home counts every withdrawal, partial ones and the leader's own included.",
+    "value_history and value_30_days show what the vault held. Deposits and withdrawals move them, so a rise is not a profit.",
+    "A percent is a percent number: 9.5 means 9.5%. A null is held back or cannot be worked out. It is never zero."
+   ],
+   "tab": "vaults",
+   "ids_asked": 2,
+   "count": 2,
+   "records": [
+    {
+     "address": "0x13f187abb68af4bb5aaa13b87dd59108e4724c78",
+     "name_by_leader": "Fixture Alpha ♾ Growth ♾",
+     "name_state": "shown",
+     "leader": "0xacfed76a5cc1d97bfc0562103757ce3c95704bac",
+     "venue": "Hyperliquid",
+     "status": "open",
+     "small": false,
+     "opened_on": "2025-06-01",
+     "closed_on": null,
+     "days_open": 541,
+     "deposits_usd": 5000000,
+     "withdrawn_usd": 3400000,
+     "inside_usd": 2000000,
+     "inside_cost_usd": 1800000,
+     "left_took_home_usd": 300000,
+     "left_took_home_pct": 8.1,
+     "venue_rate_pct": 25.5,
+     "our_yearly_rate_pct": 18.2,
+     "wallets_ahead": 3,
+     "wallets_behind": 2,
+     "wallets_even": 1,
+     "lockup_days": 1,
+     "leader_cut_pct": 10.0,
+     "books": {
+      "adds_up": true,
+      "gap_pct": 0.0
+     },
+     "results_held_back": false,
+     "floor": {
+      "meets": true,
+      "days_counted": 400,
+      "days_needed": 180,
+      "outside_depositors_with_money": 99,
+      "depositors_needed": 10,
+      "depositors_count_is_a_minimum": true
+     },
+     "value_30_days": {
+      "start_usd": 1800000,
+      "end_usd": 2000000
+     },
+     "other_vaults_with_name": 0,
+     "name_also_used_by_older_vault": false,
+     "name_resembles_venue_own": false
+    },
+    {
+     "address": "0x04566393c5cb08287d874ea1bb67a3e357805ea3",
+     "name_by_leader": "Fixture Beta",
+     "name_state": "shown",
+     "leader": "0xbbe5e528054e73d7f524460ad8b60772b7f66193",
+     "venue": "Hyperliquid",
+     "status": "open",
+     "small": false,
+     "opened_on": "2025-09-01",
+     "closed_on": null,
+     "days_open": 449,
+     "deposits_usd": 3000000,
+     "withdrawn_usd": 1500000,
+     "inside_usd": 900000,
+     "inside_cost_usd": 900000,
+     "left_took_home_usd": -150000,
+     "left_took_home_pct": -6.2,
+     "venue_rate_pct": 7.22,
+     "our_yearly_rate_pct": -11.4,
+     "wallets_ahead": 3,
+     "wallets_behind": 2,
+     "wallets_even": 1,
+     "lockup_days": 1,
+     "leader_cut_pct": 10.0,
+     "books": {
+      "adds_up": true,
+      "gap_pct": 0.0
+     },
+     "results_held_back": false,
+     "floor": {
+      "meets": true,
+      "days_counted": 300,
+      "days_needed": 180,
+      "outside_depositors_with_money": 40,
+      "depositors_needed": 10,
+      "depositors_count_is_a_minimum": false
+     },
+     "value_30_days": {
+      "start_usd": 810000,
+      "end_usd": 900000
+     },
+     "other_vaults_with_name": 1,
+     "name_also_used_by_older_vault": false,
+     "name_resembles_venue_own": false
+    }
+   ],
+   "not_published": [],
+   "not_returned": [],
+   "ranking": null
+  },
+  "attribution": {
+   "citations": [
+    {
+     "cite_url": "https://data.blockchainacademics.com/vaults/v1/list.json",
+     "as_of": "2026-11-24T00:00:00Z",
+     "source_hash": "sha256:53ac36b67911707a"
+    }
+   ]
+  },
+  "meta": {
+   "status": "complete",
+   "request_id": "fixture000000017",
+   "pageInfo": {
+    "hasNextPage": false,
+    "hasPreviousPage": false,
+    "startCursor": null,
+    "endCursor": null
+   },
+   "tier": "demo",
+   "upgrade_url": "https://blockchainacademics.com/crypto-api/signup?ref=mcp-demo-tier"
+  }
+ }
+}

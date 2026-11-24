@@ -1,0 +1,225 @@
+{
+ "tool": "list_stats_measures",
+ "arguments": {},
+ "request": {
+  "path": "/v1/stats/measures",
+  "query": {}
+ },
+ "status_code": 200,
+ "body": {
+  "data": {
+   "schema": "bca.stats/1",
+   "as_of": "2026-11-24",
+   "uploaded_at": "2026-11-24T02:47:20Z",
+   "method_version": null,
+   "variant": null,
+   "sources": [
+    {
+     "file": "https://data.blockchainacademics.com/exchanges/v1/list.json",
+     "as_of": "2026-11-24",
+     "sha256": "b71908c557ed8ceda71c89a9808375719c08f55d9052c207cf3c581f3f204c4e"
+    },
+    {
+     "file": "https://data.blockchainacademics.com/vaults/v1/list.json",
+     "as_of": "2026-11-24",
+     "sha256": "53ac36b67911707a75c18ecbeb4e68bab7ead5a61e1e18ae714fd68ab185fce4"
+    },
+    {
+     "file": "https://data.blockchainacademics.com/vaults/v1/totals.json",
+     "as_of": "2026-11-24",
+     "sha256": "7d74a22ec76a4d4db1cd8701bf6419dc38a144c8b14436b3e5e8160c9c9c4e9a"
+    }
+   ],
+   "outside_text_keys": [
+    "name_by_leader",
+    "subject_by_outsider",
+    "text_as_published",
+    "value_from_source",
+    "link_from_source",
+    "quote_from_source",
+    "source_url",
+    "source_name",
+    "reason_as_published"
+   ],
+   "rows_dropped": 0,
+   "notes": [
+    "The list of measures is fixed by Blockchain Academics. The tabs block is counted from the two list files."
+   ],
+   "count": 8,
+   "measures": [
+    {
+     "id": "checks_passed",
+     "tab": "exchanges",
+     "kinds": [
+      "centralised",
+      "swap",
+      "leveraged"
+     ],
+     "state": "open",
+     "label": "Most checks passed",
+     "direction": "highest_at_top",
+     "unit": "checks passed",
+     "definition": "Checks passed out of the checks for that kind of venue: six for a centralised exchange or a swap venue, eight for a leveraged venue. A tie is broken by the reserve report detail, then A to Z.",
+     "floor_rule": null,
+     "covers": null
+    },
+    {
+     "id": "reserve_report_detail",
+     "tab": "exchanges",
+     "kinds": [
+      "centralised"
+     ],
+     "state": "open",
+     "label": "Reserve report in detail",
+     "direction": "highest_at_top",
+     "unit": "points passed out of five",
+     "definition": "Points passed out of five on a centralised exchange's reserve report: its age, what it compares, the outside firm, the balance check and the wallet list.",
+     "floor_rule": null,
+     "covers": null
+    },
+    {
+     "id": "real_cost_buy_1000",
+     "tab": "exchanges",
+     "kinds": [
+      "centralised"
+     ],
+     "state": "not_measured_yet",
+     "label": "Lowest real cost to buy 1,000 dollars of bitcoin",
+     "direction": "lowest_at_top",
+     "unit": "percent of the purchase",
+     "definition": "Fee plus price gap on our own test purchase at a centralised exchange, in percent of the purchase. Opens once the test purchases are done.",
+     "floor_rule": null,
+     "covers": null
+    },
+    {
+     "id": "real_cost_swap_1000",
+     "tab": "exchanges",
+     "kinds": [
+      "swap"
+     ],
+     "state": "not_measured_yet",
+     "label": "Lowest real cost of a 1,000 dollar swap",
+     "direction": "lowest_at_top",
+     "unit": "percent of the swap",
+     "definition": "Fee plus price gap on our own test swap at a swap venue, in percent of the swap. Opens once the test swaps are done.",
+     "floor_rule": null,
+     "covers": null
+    },
+    {
+     "id": "real_cost_position_1000",
+     "tab": "exchanges",
+     "kinds": [
+      "leveraged"
+     ],
+     "state": "not_measured_yet",
+     "label": "Lowest real cost of a 1,000 dollar leveraged position",
+     "direction": "lowest_at_top",
+     "unit": "percent of the position",
+     "definition": "Fee plus price gap on our own test position at a leveraged venue, in percent of the position. Opens once the test positions are done.",
+     "floor_rule": null,
+     "covers": null
+    },
+    {
+     "id": "money_put_in",
+     "tab": "vaults",
+     "kinds": null,
+     "state": "open",
+     "label": "Most money put in",
+     "direction": "highest_at_top",
+     "unit": "US dollars",
+     "definition": "All the money put into the vault since it opened, in dollars. It counts the leader's own money and money put in more than once.",
+     "floor_rule": "A vault is ranked once it is 180 days old, holds 10,000 dollars of outside money and has at least 10 outside depositors.",
+     "covers": "Open vaults above the ranking floor. Closed and small vaults are not ranked."
+    },
+    {
+     "id": "left_took_home",
+     "tab": "vaults",
+     "kinds": null,
+     "state": "open",
+     "label": "What withdrawals took home",
+     "direction": "highest_at_top",
+     "unit": "US dollars",
+     "definition": "What was taken out, less what that money had cost, after the leader's cut, in dollars. It counts every withdrawal, the leader's own and partial ones included.",
+     "floor_rule": "A vault is ranked once it is 180 days old, holds 10,000 dollars of outside money and has at least 10 outside depositors.",
+     "covers": "Open vaults above the ranking floor. Closed and small vaults are not ranked."
+    },
+    {
+     "id": "yield_delivered",
+     "tab": "yields",
+     "kinds": null,
+     "state": "not_open_yet",
+     "label": "Yield delivered next to yield advertised",
+     "direction": "highest_at_top",
+     "unit": "percent a year",
+     "definition": "The rate depositors were paid over 12 months, next to the rate on the product's page.",
+     "floor_rule": null,
+     "covers": null
+    }
+   ],
+   "tabs": [
+    {
+     "tab": "exchanges",
+     "loaded": true,
+     "as_of": "2026-11-24",
+     "kinds": {
+      "centralised": {
+       "rows": 3,
+       "ranked": 2,
+       "being_checked": 1
+      },
+      "swap": {
+       "rows": 0,
+       "ranked": 0,
+       "being_checked": 0
+      },
+      "leveraged": {
+       "rows": 0,
+       "ranked": 0,
+       "being_checked": 0
+      }
+     }
+    },
+    {
+     "tab": "vaults",
+     "loaded": true,
+     "as_of": "2026-11-24",
+     "venues": [
+      "Hyperliquid"
+     ],
+     "rows": 14,
+     "open": 10,
+     "open_small": 1,
+     "closed": 3,
+     "ranked": 6,
+     "open_on_venue_list_with_no_row_here": 14
+    }
+   ]
+  },
+  "attribution": {
+   "citations": [
+    {
+     "cite_url": "https://data.blockchainacademics.com/exchanges/v1/list.json",
+     "as_of": "2026-11-24T00:00:00Z",
+     "source_hash": "sha256:b71908c557ed8ced"
+    }
+   ]
+  },
+  "meta": {
+   "status": "stale",
+   "request_id": "fixture000000300",
+   "pageInfo": {
+    "hasNextPage": false,
+    "hasPreviousPage": false,
+    "startCursor": null,
+    "endCursor": null
+   },
+   "tier": "demo",
+   "upgrade_url": "https://blockchainacademics.com/crypto-api/signup?ref=mcp-demo-tier",
+   "diagnostic": {
+    "reason": "the Stats files are older than one day",
+    "as_of": "2026-11-24T00:00:00Z",
+    "age_seconds": 201600
+   }
+  }
+ }
+}

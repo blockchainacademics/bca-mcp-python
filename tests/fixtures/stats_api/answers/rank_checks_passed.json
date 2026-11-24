@@ -1,0 +1,160 @@
+{
+ "tool": "rank_stats",
+ "arguments": {
+  "tab": "exchanges",
+  "measure": "checks_passed"
+ },
+ "request": {
+  "path": "/v1/stats/rank",
+  "query": {
+   "tab": "exchanges",
+   "measure": "checks_passed",
+   "order": "top",
+   "limit": "20",
+   "offset": "0"
+  }
+ },
+ "status_code": 200,
+ "body": {
+  "data": {
+   "schema": "bca.stats/1",
+   "as_of": "2026-11-24",
+   "uploaded_at": "2026-11-24T02:47:20Z",
+   "method_version": null,
+   "variant": "combined",
+   "sources": [
+    {
+     "file": "https://data.blockchainacademics.com/exchanges/v1/list.json",
+     "as_of": "2026-11-24",
+     "sha256": "b71908c557ed8ceda71c89a9808375719c08f55d9052c207cf3c581f3f204c4e"
+    }
+   ],
+   "outside_text_keys": [
+    "name_by_leader",
+    "subject_by_outsider",
+    "text_as_published",
+    "value_from_source",
+    "link_from_source",
+    "quote_from_source",
+    "source_url",
+    "source_name",
+    "reason_as_published"
+   ],
+   "rows_dropped": 0,
+   "notes": [
+    "Being checked: a person has not confirmed its checks against the source yet. No fact is published.",
+    "paid_sponsor is true when the exchange pays for a spot. Paying changes no check and no rank."
+   ],
+   "tab": "exchanges",
+   "kind": "centralised",
+   "measure": {
+    "id": "checks_passed",
+    "label": "Most checks passed",
+    "definition": "Checks passed out of the checks for that kind of venue: six for a centralised exchange or a swap venue, eight for a leveraged venue. A tie is broken by the reserve report detail, then A to Z.",
+    "state": "open",
+    "direction": "highest_at_top",
+    "unit": "checks passed"
+   },
+   "order": "top",
+   "order_rule": "Ordered by checks passed (out of six). A tie is broken by the reserve report detail (out of five). A tie after that is broken A to Z. Paying changes nothing.",
+   "floor_rule": null,
+   "sample_size": 2,
+   "counts": {
+    "ranked": 2,
+    "not_ranked": 1,
+    "being_checked": 1
+   },
+   "count": 3,
+   "total": 3,
+   "limit": 20,
+   "offset": 0,
+   "results": [
+    {
+     "rank": 1,
+     "rank_state": "ranked",
+     "value": 5,
+     "slug": "test-exchange-a",
+     "exchange": "Test Exchange A",
+     "kind": "centralised",
+     "state": "ranked",
+     "passed": 5,
+     "of": 6,
+     "waiting": 0,
+     "reserve_detail": {
+      "passed": 4,
+      "of": 5
+     },
+     "paid_sponsor": false
+    },
+    {
+     "rank": 2,
+     "rank_state": "ranked",
+     "value": 3,
+     "slug": "test-exchange-b",
+     "exchange": "Test Exchange B",
+     "kind": "centralised",
+     "state": "ranked",
+     "passed": 3,
+     "of": 6,
+     "waiting": 0,
+     "reserve_detail": {
+      "passed": 5,
+      "of": 5
+     },
+     "paid_sponsor": true
+    },
+    {
+     "rank": null,
+     "rank_state": "being_checked",
+     "value": null,
+     "slug": "test-exchange-c",
+     "exchange": "Test.Exchange C",
+     "kind": "centralised",
+     "state": "being_checked",
+     "passed": null,
+     "of": 6,
+     "waiting": 6,
+     "reserve_detail": {
+      "passed": null,
+      "of": 5
+     },
+     "paid_sponsor": false
+    }
+   ],
+   "what_is_missing": [
+    "1 of 3 exchanges in this table are being checked by a person."
+   ],
+   "fact_words": null,
+   "fact_status_words": null,
+   "trimmed": false,
+   "next_offset": null
+  },
+  "attribution": {
+   "citations": [
+    {
+     "cite_url": "https://data.blockchainacademics.com/exchanges/v1/list.json",
+     "as_of": "2026-11-24T00:00:00Z",
+     "source_hash": "sha256:b71908c557ed8ced"
+    }
+   ]
+  },
+  "meta": {
+   "status": "partial",
+   "request_id": "fixture000000006",
+   "pageInfo": {
+    "hasNextPage": false,
+    "hasPreviousPage": false,
+    "startCursor": null,
+    "endCursor": null
+   },
+   "diagnostic": {
+    "reason": "some exchanges in this table are being checked by a person",
+    "missing": [
+     "test-exchange-c"
+    ]
+   },
+   "tier": "demo",
+   "upgrade_url": "https://blockchainacademics.com/crypto-api/signup?ref=mcp-demo-tier"
+  }
+ }
+}

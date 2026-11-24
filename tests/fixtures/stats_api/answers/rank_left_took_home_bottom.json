@@ -1,0 +1,267 @@
+{
+ "tool": "rank_stats",
+ "arguments": {
+  "tab": "vaults",
+  "measure": "left_took_home",
+  "order": "bottom",
+  "limit": 4,
+  "offset": 0,
+  "as_of": "2026-11-24"
+ },
+ "request": {
+  "path": "/v1/stats/rank",
+  "query": {
+   "tab": "vaults",
+   "measure": "left_took_home",
+   "order": "bottom",
+   "limit": "4",
+   "offset": "0",
+   "as_of": "2026-11-24"
+  }
+ },
+ "status_code": 200,
+ "body": {
+  "data": {
+   "schema": "bca.stats/1",
+   "as_of": "2026-11-24",
+   "uploaded_at": "2026-11-24T02:47:20Z",
+   "method_version": "1",
+   "variant": null,
+   "sources": [
+    {
+     "file": "https://data.blockchainacademics.com/vaults/v1/list.json",
+     "as_of": "2026-11-24",
+     "sha256": "53ac36b67911707a75c18ecbeb4e68bab7ead5a61e1e18ae714fd68ab185fce4"
+    },
+    {
+     "file": "https://data.blockchainacademics.com/vaults/v1/totals.json",
+     "as_of": "2026-11-24",
+     "sha256": "7d74a22ec76a4d4db1cd8701bf6419dc38a144c8b14436b3e5e8160c9c9c4e9a"
+    },
+    {
+     "file": "https://data.blockchainacademics.com/vaults/v1/groups.json",
+     "as_of": "2026-11-24",
+     "sha256": "672e2f12480f05c5d065a681607be784a198ce9a94cf3dfb0a315eec0e02e93a"
+    }
+   ],
+   "outside_text_keys": [
+    "name_by_leader",
+    "subject_by_outsider",
+    "text_as_published",
+    "value_from_source",
+    "link_from_source",
+    "quote_from_source",
+    "source_url",
+    "source_name",
+    "reason_as_published"
+   ],
+   "rows_dropped": 0,
+   "notes": [
+    "A vault name is chosen by its leader. It is not a statement by Blockchain Academics.",
+    "The venue's own vaults are not covered here. A vault whose name resembles one of them is run by a user."
+   ],
+   "tab": "vaults",
+   "kind": null,
+   "venues": [
+    "Hyperliquid"
+   ],
+   "measure": {
+    "id": "left_took_home",
+    "label": "What withdrawals took home",
+    "definition": "What was taken out, less what that money had cost, after the leader's cut, in dollars. It counts every withdrawal, the leader's own and partial ones included.",
+    "state": "open",
+    "direction": "highest_at_top",
+    "unit": "US dollars"
+   },
+   "order": "bottom",
+   "order_rule": "Ordered by what withdrawals took home, in dollars, from largest to smallest, among open vaults above the ranking floor. This answer reads the same list from the other end. The rank numbers are unchanged.",
+   "floor_rule": "A vault is ranked once it is 180 days old, holds 10,000 dollars of outside money and has at least 10 outside depositors.",
+   "sample_size": 5,
+   "counts": {
+    "ranked": 5,
+    "not_ranked": 5,
+    "below_floor": 4,
+    "results_held_back": 0,
+    "no_withdrawals_yet": 1
+   },
+   "left_out": {
+    "closed_rows": {
+     "count": 3,
+     "why": "A closed vault is not ranked. The totals block has the closed vaults' results."
+    },
+    "small_rows": {
+     "count": 1,
+     "why": "A small vault has under 10,000 dollars put in and is not ranked."
+    },
+    "open_on_venue_list_with_no_row_here": {
+     "count": 14,
+     "why": "Open vaults on the venue's list with no row in these files: the venue's own vaults, vaults with no details on file, and vaults where the cost of the money inside is not known."
+    }
+   },
+   "totals": {
+    "venue_list": {
+     "tracked": 40,
+     "open": 25,
+     "closed": 15,
+     "what": "Every vault on the venue's own public list. It is larger than the rows here."
+    },
+    "rows_here": {
+     "open_with_page": 9,
+     "books_checked": 15,
+     "books_add_up": 14
+    },
+    "closed_vaults": {
+     "with_result": 2,
+     "depositors_behind": 2,
+     "depositors_ahead": 0,
+     "about_even": 0,
+     "deposits_usd": 76979,
+     "took_home_usd": -2120,
+     "what": "Closed vaults whose books add up. Behind and ahead mean by more than 1%."
+    },
+    "inside_open_and_small": {
+     "usd": 9197000,
+     "what": "Money inside the 11 open and small vaults in these files. 14 open vaults on the venue's list have no row here, the venue's own vaults among them, and are not counted."
+    }
+   },
+   "count": 4,
+   "total": 10,
+   "limit": 4,
+   "offset": 0,
+   "results": [
+    {
+     "rank": 5,
+     "rank_state": "ranked",
+     "value_usd": -150000,
+     "address": "0x04566393c5cb08287d874ea1bb67a3e357805ea3",
+     "name_by_leader": "Fixture Beta",
+     "name_state": "shown",
+     "opened_on": "2025-09-01",
+     "days_open": 449,
+     "deposits_usd": 3000000,
+     "inside_usd": 900000,
+     "left_took_home_usd": -150000,
+     "left_took_home_pct": -6.2,
+     "venue_rate_pct": 7.22,
+     "our_yearly_rate_pct": -11.4,
+     "value_30_days": {
+      "start_usd": 810000,
+      "end_usd": 900000
+     },
+     "other_vaults_with_name": 1,
+     "name_also_used_by_older_vault": false,
+     "floor": {
+      "meets": true,
+      "days_counted": 300,
+      "outside_depositors_with_money": 40
+     }
+    },
+    {
+     "rank": 4,
+     "rank_state": "ranked",
+     "value_usd": 1200,
+     "address": "0x8da14244c6e6cb98e078f4460ffadff32ab9c845",
+     "name_by_leader": "Fixture Gamma",
+     "name_state": "shown",
+     "opened_on": "2026-04-01",
+     "days_open": 237,
+     "deposits_usd": 20000,
+     "inside_usd": 15000,
+     "left_took_home_usd": 1200,
+     "left_took_home_pct": 6.0,
+     "venue_rate_pct": 12.0,
+     "our_yearly_rate_pct": 9.0,
+     "value_30_days": {
+      "start_usd": 13500,
+      "end_usd": 15000
+     },
+     "other_vaults_with_name": 0,
+     "name_also_used_by_older_vault": false,
+     "floor": {
+      "meets": true,
+      "days_counted": 200,
+      "outside_depositors_with_money": 12
+     }
+    },
+    {
+     "rank": 3,
+     "rank_state": "ranked",
+     "value_usd": 2000,
+     "address": "0xd773ddda217c622f849dbbb722e5cadb7b3a92cb",
+     "name_by_leader": "",
+     "name_state": "empty_after_cleaning",
+     "opened_on": "2025-11-01",
+     "days_open": 388,
+     "deposits_usd": 70000,
+     "inside_usd": 65000,
+     "left_took_home_usd": 2000,
+     "left_took_home_pct": 3.1,
+     "venue_rate_pct": 0.0,
+     "our_yearly_rate_pct": 0.0,
+     "value_30_days": {
+      "start_usd": 58500,
+      "end_usd": 65000
+     },
+     "other_vaults_with_name": 0,
+     "name_also_used_by_older_vault": false,
+     "floor": {
+      "meets": true,
+      "days_counted": 190,
+      "outside_depositors_with_money": 11
+     }
+    },
+    {
+     "rank": 2,
+     "rank_state": "ranked",
+     "value_usd": 10000,
+     "address": "0x6f644a27b5fd57fba719a0e379592865dff6e94c",
+     "name_by_leader": "Fixture Beta",
+     "name_state": "shown",
+     "opened_on": "2026-02-01",
+     "days_open": 296,
+     "deposits_usd": 1000000,
+     "inside_usd": 950000,
+     "left_took_home_usd": 10000,
+     "left_took_home_pct": 1.2,
+     "venue_rate_pct": 40.0,
+     "our_yearly_rate_pct": 35.0,
+     "value_30_days": {
+      "start_usd": 855000,
+      "end_usd": 950000
+     },
+     "other_vaults_with_name": 1,
+     "name_also_used_by_older_vault": true,
+     "floor": {
+      "meets": true,
+      "days_counted": 200,
+      "outside_depositors_with_money": 30
+     }
+    }
+   ],
+   "what_is_missing": [],
+   "trimmed": false,
+   "next_offset": 4
+  },
+  "attribution": {
+   "citations": [
+    {
+     "cite_url": "https://data.blockchainacademics.com/vaults/v1/list.json",
+     "as_of": "2026-11-24T00:00:00Z",
+     "source_hash": "sha256:53ac36b67911707a"
+    }
+   ]
+  },
+  "meta": {
+   "status": "complete",
+   "request_id": "fixture000000009",
+   "pageInfo": {
+    "hasNextPage": true,
+    "hasPreviousPage": false,
+    "startCursor": null,
+    "endCursor": null
+   },
+   "tier": "demo",
+   "upgrade_url": "https://blockchainacademics.com/crypto-api/signup?ref=mcp-demo-tier"
+  }
+ }
+}

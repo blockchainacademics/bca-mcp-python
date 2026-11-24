@@ -1,0 +1,140 @@
+{
+ "tool": "get_stats_record",
+ "arguments": {
+  "tab": "vaults",
+  "id": "0x03636158a35113bcc99ff06b3d5a0e36d7f4e8c8"
+ },
+ "request": {
+  "path": "/v1/stats/vaults/0x03636158a35113bcc99ff06b3d5a0e36d7f4e8c8",
+  "query": {}
+ },
+ "status_code": 200,
+ "body": {
+  "data": {
+   "schema": "bca.stats/1",
+   "as_of": "2026-11-24",
+   "uploaded_at": "2026-11-24T02:47:20Z",
+   "method_version": "1",
+   "variant": null,
+   "sources": [
+    {
+     "file": "https://data.blockchainacademics.com/vaults/v1/records/0x03636158a35113bcc99ff06b3d5a0e36d7f4e8c8.json",
+     "as_of": "2026-11-24",
+     "sha256": "b3e30183db9b0f9bb7fae11d19ee1590c8c1820058ee50f15a3df76f4b9b76cb"
+    },
+    {
+     "file": "https://data.blockchainacademics.com/vaults/v1/list.json",
+     "as_of": "2026-11-24",
+     "sha256": "53ac36b67911707a75c18ecbeb4e68bab7ead5a61e1e18ae714fd68ab185fce4"
+    }
+   ],
+   "outside_text_keys": [
+    "name_by_leader",
+    "subject_by_outsider",
+    "text_as_published",
+    "value_from_source",
+    "link_from_source",
+    "quote_from_source",
+    "source_url",
+    "source_name",
+    "reason_as_published"
+   ],
+   "rows_dropped": 0,
+   "notes": [
+    "A vault name is chosen by its leader. It is not a statement by Blockchain Academics.",
+    "Our sums do not match the venue's own figure for this vault, so its results are held back.",
+    "The venue's own vaults are not covered here. A vault whose name resembles one of them is run by a user."
+   ],
+   "tab": "vaults",
+   "record": {
+    "address": "0x03636158a35113bcc99ff06b3d5a0e36d7f4e8c8",
+    "name_by_leader": "Fixture Held",
+    "name_state": "shown",
+    "leader": "0x9e95e681d720379d8695298d05cdca1a342f6aa7",
+    "venue": "Hyperliquid",
+    "status": "closed",
+    "small": false,
+    "opened_on": "2024-03-01",
+    "closed_on": "2024-05-01",
+    "days_open": 61,
+    "deposits_usd": 800000,
+    "withdrawn_usd": 400000,
+    "inside_usd": 0,
+    "inside_cost_usd": null,
+    "left_took_home_usd": null,
+    "left_took_home_pct": null,
+    "venue_rate_pct": null,
+    "our_yearly_rate_pct": null,
+    "wallets_ahead": 3,
+    "wallets_behind": 2,
+    "wallets_even": 1,
+    "lockup_days": 1,
+    "leader_cut_pct": 10.0,
+    "books": {
+     "adds_up": false,
+     "gap_pct": 0.94
+    },
+    "results_held_back": true,
+    "floor": null,
+    "value_30_days": null,
+    "other_vaults_with_name": 0,
+    "name_also_used_by_older_vault": false,
+    "name_resembles_venue_own": false,
+    "value_history": null,
+    "history_points_total": null,
+    "daily_from": null,
+    "cuts_paid_usd": null,
+    "leader_own_usd": null,
+    "leader_own_pct": null,
+    "depositors_on_venue_list": 0,
+    "scored_checks": {
+     "state": "not_written_yet"
+    }
+   },
+   "read_me": [
+    "venue_rate_pct is the venue's own trailing figure. It is not a promise and not our measure.",
+    "our_yearly_rate_pct is our estimate from weekly points. A young vault can show an extreme figure.",
+    "left_took_home counts every withdrawal, partial ones and the leader's own included.",
+    "value_history and value_30_days show what the vault held. Deposits and withdrawals move them, so a rise is not a profit.",
+    "A percent is a percent number: 9.5 means 9.5%. A null is held back or cannot be worked out. It is never zero."
+   ]
+  },
+  "attribution": {
+   "citations": [
+    {
+     "cite_url": "https://data.blockchainacademics.com/vaults/v1/records/0x03636158a35113bcc99ff06b3d5a0e36d7f4e8c8.json",
+     "as_of": "2026-11-24T00:00:00Z",
+     "source_hash": "sha256:b3e30183db9b0f9b"
+    }
+   ]
+  },
+  "meta": {
+   "status": "partial",
+   "request_id": "fixture000000014",
+   "pageInfo": {
+    "hasNextPage": false,
+    "hasPreviousPage": false,
+    "startCursor": null,
+    "endCursor": null
+   },
+   "diagnostic": {
+    "reason": "the results of this vault are held back",
+    "missing": [
+     "value_history",
+     "cuts_paid_usd",
+     "leader_own_usd",
+     "leader_own_pct",
+     "inside_cost_usd",
+     "left_took_home_usd",
+     "left_took_home_pct",
+     "our_yearly_rate_pct",
+     "wallets_ahead",
+     "wallets_behind",
+     "wallets_even"
+    ]
+   },
+   "tier": "demo",
+   "upgrade_url": "https://blockchainacademics.com/crypto-api/signup?ref=mcp-demo-tier"
+  }
+ }
+}

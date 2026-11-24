@@ -1,0 +1,565 @@
+{
+ "tool": "get_stats_record",
+ "arguments": {
+  "tab": "exchanges",
+  "id": "Test Exchange A"
+ },
+ "request": {
+  "path": "/v1/stats/exchanges/test-exchange-a",
+  "query": {}
+ },
+ "status_code": 200,
+ "body": {
+  "data": {
+   "schema": "bca.stats/1",
+   "as_of": "2026-11-24",
+   "uploaded_at": "2026-11-24T02:47:20Z",
+   "method_version": null,
+   "variant": "combined",
+   "sources": [
+    {
+     "file": "https://data.blockchainacademics.com/exchanges/v1/records/test-exchange-a.json",
+     "as_of": "2026-11-24",
+     "sha256": "12e370eab4bde871334ee9a76e33ab1fdd71bea35287118975a08dcfdada3f71"
+    },
+    {
+     "file": "https://data.blockchainacademics.com/exchanges/v1/list.json",
+     "as_of": "2026-11-24",
+     "sha256": "b71908c557ed8ceda71c89a9808375719c08f55d9052c207cf3c581f3f204c4e"
+    }
+   ],
+   "outside_text_keys": [
+    "name_by_leader",
+    "subject_by_outsider",
+    "text_as_published",
+    "value_from_source",
+    "link_from_source",
+    "quote_from_source",
+    "source_url",
+    "source_name",
+    "reason_as_published"
+   ],
+   "rows_dropped": 0,
+   "notes": [
+    "paid_sponsor is true when the exchange pays for a spot. Paying changes no check and no rank."
+   ],
+   "tab": "exchanges",
+   "record": {
+    "slug": "test-exchange-a",
+    "exchange": "Test Exchange A",
+    "kind": "centralised",
+    "state": "ranked",
+    "rank": 1,
+    "position": 1,
+    "passed": 5,
+    "of": 6,
+    "waiting": 0,
+    "reserve_detail": {
+     "passed": 4,
+     "of": 5,
+     "checks": [
+      {
+       "id": "reserve_report_fresh",
+       "outcome": "passed",
+       "passes_when": "The report is 120 days old or less.",
+       "reason": null,
+       "reason_as_published": "the report shows it",
+       "uses": []
+      },
+      {
+       "id": "reserve_compares",
+       "outcome": "passed",
+       "passes_when": "It compares holdings with what customers are owed.",
+       "reason": null,
+       "reason_as_published": "the report shows it",
+       "uses": []
+      },
+      {
+       "id": "reserve_self_check",
+       "outcome": "passed",
+       "passes_when": "A customer can check that their own balance is included.",
+       "reason": null,
+       "reason_as_published": "the report shows it",
+       "uses": []
+      },
+      {
+       "id": "reserve_outside_firm",
+       "outcome": "passed",
+       "passes_when": "It names an outside firm.",
+       "reason": null,
+       "reason_as_published": "the report shows it",
+       "uses": []
+      },
+      {
+       "id": "reserve_wallet_list",
+       "outcome": "failed",
+       "passes_when": "A wallet list is published.",
+       "reason": null,
+       "reason_as_published": "no wallet list is published",
+       "uses": []
+      }
+     ]
+    },
+    "paid_sponsor": false,
+    "sponsor_since": null,
+    "checks": [
+     {
+      "id": "reserve_report_fresh",
+      "outcome": "passed",
+      "passes_when": "There is a reserve report 120 days old or less.",
+      "reason": null,
+      "reason_as_published": "the report is dated 2026-10-01, 54 days before the data day",
+      "uses": [
+       "reserve_report_date"
+      ]
+     },
+     {
+      "id": "firm_and_compares",
+      "outcome": "passed",
+      "passes_when": "The report names an outside firm and compares holdings with what customers are owed.",
+      "reason": null,
+      "reason_as_published": "the report names Fixture Audit LLP and compares holdings with balances",
+      "uses": [
+       "reserve_report_date",
+       "reserve_outside_firm",
+       "reserve_compares_liabilities"
+      ]
+     },
+     {
+      "id": "self_check_or_wallet_list",
+      "outcome": "passed",
+      "passes_when": "A customer can check their own balance, or a wallet list is published.",
+      "reason": null,
+      "reason_as_published": "a customer can check their own balance",
+      "uses": [
+       "reserve_report_date",
+       "reserve_self_check",
+       "reserve_wallet_list"
+      ]
+     },
+     {
+      "id": "register_row_and_not_warned",
+      "outcome": "passed",
+      "passes_when": "The EU register has a row for the company and it is not on the EU warning list.",
+      "reason": null,
+      "reason_as_published": "the register has a row for Fixture Exchange Europe Ltd and it is not on the warning list",
+      "uses": [
+       "eu_entity_name"
+      ]
+     },
+     {
+      "id": "losses_repaid",
+      "outcome": "passed",
+      "passes_when": "Every customer loss in the last 5 years is marked repaid in full.",
+      "reason": null,
+      "reason_as_published": "no customer loss is on record in the last 5 years",
+      "uses": []
+     },
+     {
+      "id": "audited_accounts",
+      "outcome": "failed",
+      "passes_when": "The company publishes audited accounts.",
+      "reason": null,
+      "reason_as_published": "only a local company of the group publishes audited accounts (Fixture Holdings Ltd)",
+      "uses": [
+       "audited_accounts"
+      ]
+     }
+    ],
+    "facts": [
+     {
+      "id": "reserve_report_date",
+      "what": "the date of the newest reserve report",
+      "check_state": "confirmed",
+      "status": "found",
+      "status_words": "the source states it",
+      "value": "2026-10-01",
+      "value_from_source": null,
+      "link_from_source": null,
+      "value_cut": false,
+      "value_left_out": false,
+      "source_url": "https://proof.test-exchange-a.example/report",
+      "source_domain": "test-exchange-a.example",
+      "source_kind": "exchange",
+      "source_name": "Test Exchange A reserve page",
+      "quote_from_source": "Report dated 1 October 2026",
+      "date_read": "2026-11-20",
+      "checked_by": "research desk",
+      "checked_on": "2026-11-21",
+      "used_by_checks": [
+       "reserve_report_fresh",
+       "firm_and_compares",
+       "self_check_or_wallet_list"
+      ]
+     },
+     {
+      "id": "reserve_report_url",
+      "what": "the link to the newest reserve report",
+      "check_state": "confirmed",
+      "status": "found",
+      "status_words": "the source states it",
+      "value": null,
+      "value_from_source": null,
+      "link_from_source": "https://proof.test-exchange-a.example/report.pdf",
+      "value_cut": false,
+      "value_left_out": false,
+      "source_url": "https://proof.test-exchange-a.example/report",
+      "source_domain": "test-exchange-a.example",
+      "source_kind": "exchange",
+      "source_name": "Test Exchange A reserve page",
+      "quote_from_source": "Download the report",
+      "date_read": "2026-11-20",
+      "checked_by": "research desk",
+      "checked_on": "2026-11-21",
+      "used_by_checks": []
+     },
+     {
+      "id": "reserve_outside_firm",
+      "what": "whether the reserve report names an outside firm",
+      "check_state": "confirmed",
+      "status": "found",
+      "status_words": "the source states it",
+      "value": "yes",
+      "value_from_source": null,
+      "link_from_source": null,
+      "value_cut": false,
+      "value_left_out": false,
+      "source_url": "https://proof.test-exchange-a.example/report",
+      "source_domain": "test-exchange-a.example",
+      "source_kind": "exchange",
+      "source_name": "Test Exchange A reserve page",
+      "quote_from_source": "Reviewed by Fixture Audit LLP",
+      "date_read": "2026-11-20",
+      "checked_by": "research desk",
+      "checked_on": "2026-11-21",
+      "used_by_checks": [
+       "firm_and_compares"
+      ]
+     },
+     {
+      "id": "reserve_compares_liabilities",
+      "what": "whether the reserve report compares holdings with what customers are owed",
+      "check_state": "confirmed",
+      "status": "found",
+      "status_words": "the source states it",
+      "value": "yes",
+      "value_from_source": null,
+      "link_from_source": null,
+      "value_cut": false,
+      "value_left_out": false,
+      "source_url": "https://proof.test-exchange-a.example/report",
+      "source_domain": "test-exchange-a.example",
+      "source_kind": "exchange",
+      "source_name": "Test Exchange A reserve page",
+      "quote_from_source": "Assets cover 104% of customer balances",
+      "date_read": "2026-11-20",
+      "checked_by": "research desk",
+      "checked_on": "2026-11-21",
+      "used_by_checks": [
+       "firm_and_compares"
+      ]
+     },
+     {
+      "id": "reserve_self_check",
+      "what": "whether a customer can check that their own balance is included",
+      "check_state": "confirmed",
+      "status": "found",
+      "status_words": "the source states it",
+      "value": "yes",
+      "value_from_source": null,
+      "link_from_source": null,
+      "value_cut": false,
+      "value_left_out": false,
+      "source_url": "https://proof.test-exchange-a.example/check",
+      "source_domain": "test-exchange-a.example",
+      "source_kind": "exchange",
+      "source_name": "Test Exchange A reserve page",
+      "quote_from_source": "Check that your balance is included",
+      "date_read": "2026-11-20",
+      "checked_by": "research desk",
+      "checked_on": "2026-11-21",
+      "used_by_checks": [
+       "self_check_or_wallet_list"
+      ]
+     },
+     {
+      "id": "reserve_wallet_list",
+      "what": "whether a wallet list is published",
+      "check_state": "confirmed",
+      "status": "found",
+      "status_words": "the source states it",
+      "value": "no",
+      "value_from_source": null,
+      "link_from_source": null,
+      "value_cut": false,
+      "value_left_out": false,
+      "source_url": "https://proof.test-exchange-a.example/report",
+      "source_domain": "test-exchange-a.example",
+      "source_kind": "exchange",
+      "source_name": "Test Exchange A reserve page",
+      "quote_from_source": "Wallet addresses are not listed",
+      "date_read": "2026-11-20",
+      "checked_by": "research desk",
+      "checked_on": "2026-11-21",
+      "used_by_checks": [
+       "self_check_or_wallet_list"
+      ]
+     },
+     {
+      "id": "protection_fund_stated",
+      "what": "the protection fund the exchange states",
+      "check_state": "confirmed",
+      "status": "found",
+      "status_words": "the source states it",
+      "value": null,
+      "value_from_source": "A fund of 100 BTC kept apart for customer losses",
+      "link_from_source": null,
+      "value_cut": false,
+      "value_left_out": false,
+      "source_url": "https://www.test-exchange-a.example/fees",
+      "source_domain": "test-exchange-a.example",
+      "source_kind": "exchange",
+      "source_name": "Test Exchange A fee page",
+      "quote_from_source": "A fund of 100 BTC",
+      "date_read": "2026-11-20",
+      "checked_by": "research desk",
+      "checked_on": "2026-11-21",
+      "used_by_checks": []
+     },
+     {
+      "id": "protection_fund_wallet",
+      "what": "the protection fund wallet",
+      "check_state": "confirmed",
+      "status": "found",
+      "status_words": "the source states it",
+      "value": null,
+      "value_from_source": "Not stated on the page",
+      "link_from_source": null,
+      "value_cut": false,
+      "value_left_out": false,
+      "source_url": "https://www.test-exchange-a.example/fees",
+      "source_domain": "test-exchange-a.example",
+      "source_kind": "exchange",
+      "source_name": "Test Exchange A fee page",
+      "quote_from_source": "No wallet given",
+      "date_read": "2026-11-20",
+      "checked_by": "research desk",
+      "checked_on": "2026-11-21",
+      "used_by_checks": []
+     },
+     {
+      "id": "eu_entity_name",
+      "what": "the company named for customers in the EU",
+      "check_state": "confirmed",
+      "status": "found",
+      "status_words": "the source states it",
+      "value": null,
+      "value_from_source": "Fixture Exchange Europe Ltd",
+      "link_from_source": null,
+      "value_cut": false,
+      "value_left_out": false,
+      "source_url": null,
+      "source_domain": "test-exchange-a.example",
+      "source_kind": "exchange",
+      "source_name": "EU register row",
+      "quote_from_source": "Fixture Exchange Europe Ltd",
+      "date_read": "2026-11-20",
+      "checked_by": "research desk",
+      "checked_on": "2026-11-21",
+      "used_by_checks": [
+       "register_row_and_not_warned"
+      ]
+     },
+     {
+      "id": "eu_authorisation_claim",
+      "what": "what the exchange says about its EU authorisation",
+      "check_state": "confirmed",
+      "status": "found",
+      "status_words": "the source states it",
+      "value": null,
+      "value_from_source": "Authorised as a crypto service provider in one EU country",
+      "link_from_source": null,
+      "value_cut": false,
+      "value_left_out": false,
+      "source_url": "https://www.test-exchange-a.example/fees",
+      "source_domain": "test-exchange-a.example",
+      "source_kind": "exchange",
+      "source_name": "Test Exchange A legal page",
+      "quote_from_source": "Authorised in one EU country",
+      "date_read": "2026-11-20",
+      "checked_by": "research desk",
+      "checked_on": "2026-11-21",
+      "used_by_checks": []
+     },
+     {
+      "id": "contract_company_eea",
+      "what": "the company named in the user terms for an EEA country",
+      "check_state": "confirmed",
+      "status": "found",
+      "status_words": "the source states it",
+      "value": null,
+      "value_from_source": "Fixture Exchange Europe Ltd",
+      "link_from_source": null,
+      "value_cut": false,
+      "value_left_out": false,
+      "source_url": "https://www.test-exchange-a.example/fees",
+      "source_domain": "test-exchange-a.example",
+      "source_kind": "exchange",
+      "source_name": "Test Exchange A user terms",
+      "quote_from_source": "Your contract is with Fixture Exchange Europe Ltd",
+      "date_read": "2026-11-20",
+      "checked_by": "research desk",
+      "checked_on": "2026-11-21",
+      "used_by_checks": []
+     },
+     {
+      "id": "simple_buy_fee",
+      "what": "the fee stated for the simple buy screen",
+      "check_state": "confirmed",
+      "status": "found",
+      "status_words": "the source states it",
+      "value": null,
+      "value_from_source": "1.49% plus a spread shown before you buy",
+      "link_from_source": null,
+      "value_cut": false,
+      "value_left_out": false,
+      "source_url": "https://www.test-exchange-a.example/fees",
+      "source_domain": "test-exchange-a.example",
+      "source_kind": "exchange",
+      "source_name": "Test Exchange A fee page",
+      "quote_from_source": "Simple buy fee 1.49%",
+      "date_read": "2026-11-20",
+      "checked_by": "research desk",
+      "checked_on": "2026-11-21",
+      "used_by_checks": []
+     },
+     {
+      "id": "spot_taker_fee",
+      "what": "the spot taker fee stated",
+      "check_state": "confirmed",
+      "status": "found",
+      "status_words": "the source states it",
+      "value": null,
+      "value_from_source": "0.10% for a taker order",
+      "link_from_source": null,
+      "value_cut": false,
+      "value_left_out": false,
+      "source_url": "https://www.test-exchange-a.example/fees",
+      "source_domain": "test-exchange-a.example",
+      "source_kind": "exchange",
+      "source_name": "Test Exchange A fee page",
+      "quote_from_source": "Taker 0.10%",
+      "date_read": "2026-11-20",
+      "checked_by": "research desk",
+      "checked_on": "2026-11-21",
+      "used_by_checks": []
+     },
+     {
+      "id": "btc_withdrawal_fee",
+      "what": "the fee stated for a bitcoin withdrawal",
+      "check_state": "confirmed",
+      "status": "found",
+      "status_words": "the source states it",
+      "value": null,
+      "value_from_source": "0.0002 BTC for each withdrawal",
+      "link_from_source": null,
+      "value_cut": false,
+      "value_left_out": false,
+      "source_url": "https://www.test-exchange-a.example/fees",
+      "source_domain": "test-exchange-a.example",
+      "source_kind": "exchange",
+      "source_name": "Test Exchange A fee page",
+      "quote_from_source": "BTC withdrawal 0.0002",
+      "date_read": "2026-11-20",
+      "checked_by": "research desk",
+      "checked_on": "2026-11-21",
+      "used_by_checks": []
+     },
+     {
+      "id": "audited_accounts",
+      "what": "whether the company publishes audited accounts",
+      "check_state": "confirmed",
+      "status": "found",
+      "status_words": "the source states it",
+      "value": "no",
+      "value_from_source": null,
+      "link_from_source": null,
+      "value_cut": false,
+      "value_left_out": false,
+      "source_url": "https://www.test-exchange-a.example/fees",
+      "source_domain": "test-exchange-a.example",
+      "source_kind": "exchange",
+      "source_name": "Test Exchange A about page",
+      "quote_from_source": "Accounts of the group company",
+      "date_read": "2026-11-20",
+      "checked_by": "research desk",
+      "checked_on": "2026-11-21",
+      "used_by_checks": [
+       "audited_accounts"
+      ]
+     },
+     {
+      "id": "data_terms_clause",
+      "what": "whether outsiders may publish statistics from its market data",
+      "check_state": "confirmed",
+      "status": "found",
+      "status_words": "the source states it",
+      "value": "only_with_written_permission",
+      "value_from_source": null,
+      "link_from_source": null,
+      "value_cut": false,
+      "value_left_out": false,
+      "source_url": "https://www.test-exchange-a.example/fees",
+      "source_domain": "test-exchange-a.example",
+      "source_kind": "exchange",
+      "source_name": "Test Exchange A terms",
+      "quote_from_source": "Market data may be published with our written permission",
+      "date_read": "2026-11-20",
+      "checked_by": "research desk",
+      "checked_on": "2026-11-21",
+      "used_by_checks": []
+     }
+    ],
+    "facts_not_on_file": [],
+    "incidents": {
+     "state": "confirmed",
+     "count": 0,
+     "checked_on": "2026-11-21"
+    },
+    "register": {
+     "day": "2026-11-16",
+     "state": "confirmed",
+     "rows_found": 0
+    }
+   },
+   "counts": {
+    "facts": 16,
+    "confirmed": 16,
+    "being_checked": 0,
+    "needs_primary_source": 0
+   },
+   "left_out_for_size": []
+  },
+  "attribution": {
+   "citations": [
+    {
+     "cite_url": "https://data.blockchainacademics.com/exchanges/v1/records/test-exchange-a.json",
+     "as_of": "2026-11-24T00:00:00Z",
+     "source_hash": "sha256:12e370eab4bde871"
+    }
+   ]
+  },
+  "meta": {
+   "status": "complete",
+   "request_id": "fixture000000010",
+   "pageInfo": {
+    "hasNextPage": false,
+    "hasPreviousPage": false,
+    "startCursor": null,
+    "endCursor": null
+   },
+   "tier": "demo",
+   "upgrade_url": "https://blockchainacademics.com/crypto-api/signup?ref=mcp-demo-tier"
+  }
+ }
+}

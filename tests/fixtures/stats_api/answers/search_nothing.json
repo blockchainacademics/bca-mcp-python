@@ -1,0 +1,88 @@
+{
+ "tool": "search_stats",
+ "arguments": {
+  "query": "zzzz-nothing"
+ },
+ "request": {
+  "path": "/v1/stats/search",
+  "query": {
+   "q": "zzzz-nothing",
+   "limit": "10"
+  }
+ },
+ "status_code": 200,
+ "body": {
+  "data": {
+   "schema": "bca.stats/1",
+   "as_of": "2026-11-24",
+   "uploaded_at": "2026-11-24T02:47:20Z",
+   "method_version": "1",
+   "variant": null,
+   "sources": [
+    {
+     "file": "https://data.blockchainacademics.com/exchanges/v1/list.json",
+     "as_of": "2026-11-24",
+     "sha256": "b71908c557ed8ceda71c89a9808375719c08f55d9052c207cf3c581f3f204c4e"
+    },
+    {
+     "file": "https://data.blockchainacademics.com/vaults/v1/list.json",
+     "as_of": "2026-11-24",
+     "sha256": "53ac36b67911707a75c18ecbeb4e68bab7ead5a61e1e18ae714fd68ab185fce4"
+    }
+   ],
+   "outside_text_keys": [
+    "name_by_leader",
+    "subject_by_outsider",
+    "text_as_published",
+    "value_from_source",
+    "link_from_source",
+    "quote_from_source",
+    "source_url",
+    "source_name",
+    "reason_as_published"
+   ],
+   "rows_dropped": 0,
+   "notes": [],
+   "tab": null,
+   "matched_as": "name",
+   "count": 0,
+   "matches_total": 0,
+   "limit": 10,
+   "results": [],
+   "left_out": {
+    "young_vaults": 0
+   },
+   "searched": {
+    "exchanges": 3,
+    "vaults_with_a_name": 11
+   },
+   "order": "Exchanges come before vaults, A to Z. Vaults are ordered by money inside, largest at the top, then the older vault. A closer text match never moves a row up.",
+   "more": null
+  },
+  "attribution": {
+   "citations": [
+    {
+     "cite_url": "https://data.blockchainacademics.com/exchanges/v1/list.json",
+     "as_of": "2026-11-24T00:00:00Z",
+     "source_hash": "sha256:b71908c557ed8ced"
+    }
+   ]
+  },
+  "meta": {
+   "status": "unseeded",
+   "request_id": "fixture000000003",
+   "pageInfo": {
+    "hasNextPage": false,
+    "hasPreviousPage": false,
+    "startCursor": null,
+    "endCursor": null
+   },
+   "diagnostic": {
+    "reason": "nothing in the Stats files matches that query",
+    "eta": "not scheduled"
+   },
+   "tier": "demo",
+   "upgrade_url": "https://blockchainacademics.com/crypto-api/signup?ref=mcp-demo-tier"
+  }
+ }
+}

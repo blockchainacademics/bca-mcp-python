@@ -120,10 +120,29 @@ def test_one_of_tools_advertise_their_inputs(name: str) -> None:
         assert p["type"] == "string" and p["description"]
 
 
+# The one union on purpose: compare_stats_records takes its ids as a list or
+# as one text with commas, with this schema in both packages (design 1.5).
+STATS_IDS_SCHEMA = {
+    "anyOf": [
+        {"type": "array", "minItems": 2, "maxItems": 5,
+         "items": {"type": "string", "minLength": 1, "maxLength": 64}},
+        {"type": "string", "minLength": 3, "maxLength": 400},
+    ]
+}
+
+
+def test_compare_stats_records_ids_is_the_designed_union() -> None:
+    prop = dict(next(t for t in TOOLS if t.name == "compare_stats_records").input_schema["properties"]["ids"])
+    assert prop.pop("description")
+    assert prop == STATS_IDS_SCHEMA
+
+
 def test_optional_fields_have_no_null_branch_or_titles() -> None:
     for t in TOOLS:
         assert "title" not in t.input_schema, t.name
         for name, prop in t.input_schema["properties"].items():
+            if (t.name, name) == ("compare_stats_records", "ids"):
+                continue  # checked against STATS_IDS_SCHEMA above
             assert "anyOf" not in prop, f"{t.name}.{name}"
             assert "title" not in prop, f"{t.name}.{name}"
             assert prop.get("default", "unset") is not None, f"{t.name}.{name}"

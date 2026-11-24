@@ -2,16 +2,21 @@
 
 Mirrors the behavior of the TypeScript sibling:
   * `tools/list` advertises name, description, input JSON Schema and the
-    MCP tool annotations (`bca_mcp.annotations`) for all 105 tools.
+    MCP tool annotations (`bca_mcp.annotations`) for all 113 tools.
   * `tools/call` validates arguments with the tool's pydantic model, fences
     the `data` payload as untrusted content on success, and on failure
     returns a `CallToolResult` with `isError: true` and a
     `{"error": {"code", "message"}}` body. The process never dies on a bad
     call or an upstream error.
+  * The eight Stats tools answer in their own output mode instead: each
+    outside string wrapped on its own with a marker made new for each
+    answer, one compact JSON text block of at most 65,536 bytes, the same
+    object as `structuredContent`, and fixed error sentences with a call id
+    (design-final.md 1.0, AGENTS-08 and AGENTS-09).
   * Without `BCA_API_KEY` the client falls back to the public demo key and
     `run_stdio()` prints a three line banner on stderr.
 
-Tool surface (105 tools, the same names as `@blockchainacademics/mcp`),
+Tool surface (113 tools, the same names as `@blockchainacademics/mcp`),
 every tool emitting the canonical envelope
 ``{data, attribution.citations[], meta}``:
 
@@ -36,11 +41,16 @@ every tool emitting the canonical envelope
                       microstructure, narrative, regulatory, security,
                       services POST, history, corpus meta, memos+theses,
                       currencies (mirrors ``src/tools/extended.ts``)
+    stats        (8)  search_stats, list_stats_measures, rank_stats,
+                      get_stats_record, compare_stats_records,
+                      lookup_stats_wallet, get_stats_method,
+                      list_stats_changes (``tools/stats.py``)
 """
 
 from __future__ import annotations
 
 import json as _json
+import secrets
 import sys
 from dataclasses import dataclass
 from typing import Any, Awaitable, Callable, Mapping, Optional
@@ -61,10 +71,17 @@ try:  # ToolAnnotations arrived in mcp 1.x after 1.0; older SDKs list without th
 except ImportError:  # pragma: no cover - only on very old mcp releases
     _ToolAnnotations = None  # type: ignore[assignment,misc]
 
+from bca_mcp import _outside
 from bca_mcp._schema import mcp_input_schema
 from bca_mcp._untrusted import neutralize_fence_tokens, wrap_untrusted
 from bca_mcp.annotations import tool_annotations
-from bca_mcp.errors import BcaError, format_validation_error
+from bca_mcp.errors import (
+    BcaBadRequestError,
+    BcaError,
+    BcaNetworkError,
+    BcaUpstreamError,
+    format_validation_error,
+)
 from bca_mcp.tools import agent_jobs as _agent_jobs
 from bca_mcp.tools import content as _content
 from bca_mcp.tools import extended as _extended
@@ -76,6 +93,7 @@ from bca_mcp.tools import market as _market
 from bca_mcp.tools import onchain as _onchain
 from bca_mcp.tools import search_news as _search_news
 from bca_mcp.tools import sentiment as _sentiment
+from bca_mcp.tools import stats as _stats
 
 
 @dataclass(frozen=True)
@@ -83,7 +101,14 @@ class ToolEntry:
     name: str
     description: str
     input_schema: dict[str, Any]
-    run: Callable[[dict[str, Any]], Awaitable[dict[str, Any]]]
+    run: Callable[..., Awaitable[dict[str, Any]]]
+    # "fenced": the whole `data` payload in one untrusted_content fence (the
+    # 105 older tools). "stats": each outside string wrapped on its own and
+    # structured content; `run` then takes (arguments, call id).
+    output: str = "fenced"
+    # Stats mode: takes one row off an answer that is over the text block
+    # cap; False when nothing is left to take. None: the answer is refused.
+    trim: Optional[Callable[[dict[str, Any]], bool]] = None
 
     def __post_init__(self) -> None:
         # Store the schema exactly as tools/list advertises it (optional
@@ -361,6 +386,18 @@ TOOLS: tuple[ToolEntry, ...] = (
         )
         for (_name, _description, _schema, _runner) in _extended.EXTENDED_TOOL_ENTRIES
     ),
+    # --- stats (8) --- design-final.md, one block at the end in both packages
+    *(
+        ToolEntry(
+            name=_name,
+            description=_description,
+            input_schema=_schema,
+            run=_runner,
+            output="stats",
+            trim=_trim,
+        )
+        for (_name, _description, _schema, _runner, _trim) in _stats.stats_tool_entries()
+    ),
 )
 
 
@@ -434,6 +471,108 @@ def _fence_envelope_data(envelope: Any) -> Any:
     return out
 
 
+# --- Stats tools: answers and errors (design-final.md 1.0) --------------------
+
+# The API's fixed 4xx sentences. A Stats tool passes one on word for word when
+# the API's `detail` is the whole sentence; any other 4xx text is replaced
+# with STATS_REFUSED. The TypeScript package holds the same list.
+STATS_API_SENTENCES: tuple[str, ...] = (
+    "Unknown parameter.",
+    "That measure does not belong to that tab.",
+    "That kind does not apply to that measure.",
+    "The query is too short after cleaning.",
+    "A full address is not a search query.",
+    "Between 2 and 5 ids, with no repeats.",
+    "That value was not given by an earlier answer.",
+    "The data changed since that page. Start again at offset 0.",
+)
+# The answer to an API 404, the same for an id that is hidden and one that is
+# unknown.
+STATS_NOT_FOUND = (
+    "No published Stats record for that id. Not every vault on the venue has a record: "
+    "the venue's own vaults and vaults with no details on file have none."
+)
+STATS_REFUSED = "The API refused this Stats request. Request id: {id}."
+STATS_FAILED = "The Stats API call failed. Request id: {id}."
+STATS_NETWORK = "Could not reach the Blockchain Academics API. Request id: {id}."
+STATS_SHAPE = "The API answer did not have the Stats shape. Request id: {id}."
+STATS_TOO_LARGE = "The answer is larger than the 64 KB cap. Ask for fewer rows."
+STATS_UNKNOWN = "The Stats tool failed. Request id: {id}."
+
+
+class _StatsTooLarge(Exception):
+    pass
+
+
+def _new_call_id() -> str:
+    """16 hex characters, sent as X-Request-ID, so an id in an error matches
+    the API's log."""
+    return secrets.token_hex(8)
+
+
+def _compact(obj: Any) -> str:
+    """The Stats text block: compact JSON, UTF-8, letters outside ASCII written
+    as they are, keys in the order the API sent them."""
+    return _json.dumps(obj, separators=(",", ":"), ensure_ascii=False, allow_nan=False)
+
+
+def _stats_result(tool: ToolEntry, envelope: dict[str, Any], call_id: str) -> CallToolResult:
+    marker_id = _outside.new_marker_id()
+    while True:
+        out = _outside.stats_output(envelope, marker_id, call_id)
+        text = _compact(out)
+        if len(text.encode("utf-8")) <= _stats.TEXT_BLOCK_CAP:
+            return CallToolResult(
+                content=[TextContent(type="text", text=text)],
+                structuredContent=out,
+                isError=False,
+            )
+        if tool.trim is None or not tool.trim(envelope):
+            raise _StatsTooLarge()
+
+
+def _stats_error(tool: ToolEntry, err: Exception, call_id: str) -> CallToolResult:
+    """The Stats error table. No raw error text reaches the model: each case
+    is a fixed sentence, with the call id where it helps."""
+    if isinstance(err, ValidationError):
+        return _error_result("BCA_BAD_REQUEST", format_validation_error(tool.name, err))
+    if isinstance(err, _stats.StatsRefusal):
+        return _error_result("BCA_BAD_REQUEST", str(err))
+    if isinstance(err, _stats.StatsShapeError):
+        return _error_result("BCA_UPSTREAM", STATS_SHAPE.format(id=call_id))
+    if isinstance(err, _StatsTooLarge):
+        return _error_result("BCA_UPSTREAM", STATS_TOO_LARGE)
+    if isinstance(err, BcaBadRequestError) and err.status is not None and 400 <= err.status < 500:
+        if err.status == 404:
+            return _error_result("BCA_BAD_REQUEST", STATS_NOT_FOUND)
+        if err.detail in STATS_API_SENTENCES:
+            return _error_result("BCA_BAD_REQUEST", err.detail)
+        return _error_result("BCA_BAD_REQUEST", STATS_REFUSED.format(id=call_id))
+    if isinstance(err, BcaNetworkError):
+        return _error_result("BCA_NETWORK", STATS_NETWORK.format(id=call_id))
+    if isinstance(err, BcaUpstreamError):
+        if err.status is not None and 200 <= err.status < 300:
+            # A success status with a body that is too large or not JSON.
+            return _error_result("BCA_UPSTREAM", STATS_SHAPE.format(id=call_id))
+        return _error_result("BCA_UPSTREAM", STATS_FAILED.format(id=call_id))
+    if isinstance(err, BcaError) and err.code in ("BCA_AUTH", "BCA_RATE_LIMIT", "BCA_TIER_LOCKED"):
+        # No key, a locked plan or a rate limit: the API's own sentence, as
+        # for every other tool.
+        return _error_result(err.code, _bca_error_message(err))
+    # The class name goes to stderr, never the text.
+    sys.stderr.write(f"[bca-mcp] {tool.name}: {type(err).__name__}, request id {call_id}\n")
+    return _error_result("BCA_UNKNOWN", STATS_UNKNOWN.format(id=call_id))
+
+
+async def _call_stats_tool(tool: ToolEntry, arguments: dict[str, Any]) -> CallToolResult:
+    call_id = _new_call_id()
+    try:
+        envelope = await tool.run(arguments, call_id)
+        return _stats_result(tool, envelope, call_id)
+    except Exception as err:  # noqa: BLE001 - every failure maps to a fixed sentence
+        return _stats_error(tool, err, call_id)
+
+
 def _tool_definition(t: ToolEntry) -> Tool:
     if _ToolAnnotations is None:  # pragma: no cover - mcp without annotations
         return Tool(name=t.name, description=t.description, inputSchema=t.input_schema)
@@ -465,6 +604,9 @@ async def call_tool(
     if tool is None:
         return _error_result("BCA_BAD_REQUEST", f"Unknown tool: {name}")
 
+    if tool.output == "stats":
+        return await _call_stats_tool(tool, dict(arguments or {}))
+
     try:
         envelope = await tool.run(dict(arguments or {}))
     except ValidationError as err:
@@ -492,7 +634,7 @@ async def call_tool(
 
 
 def build_server(check_env: bool = True) -> Server:
-    """Construct the MCP `Server` with the 105-tool surface wired up.
+    """Construct the MCP `Server` with the 113-tool surface wired up.
 
     Args:
         check_env: Deprecated as of v0.5.0 (kept as no-op for one release
@@ -501,7 +643,7 @@ def build_server(check_env: bool = True) -> Server:
             public demo key so first-run zero-config works. The demo banner
             in `run_stdio()` informs the user when this fallback is active.
     """
-    # check_env intentionally ignored (see docstring). Kept for compatibility; slated for removal in v0.7.0.
+    # check_env intentionally ignored (see docstring). Kept for compatibility; slated for removal in v0.8.0.
     _ = check_env
 
     # serverInfo reports this package's version, as the TS sibling does

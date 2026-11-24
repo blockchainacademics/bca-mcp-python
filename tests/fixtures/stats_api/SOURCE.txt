@@ -1,0 +1,22 @@
+Interim recorded answers of the Stats API, for the package tests.
+
+Every row here is made up. Vault and wallet addresses are 0x plus SHA-256
+of a bca-fixture string. Every vault name starts with Fixture. The
+exchanges are test-exchange-a, test-exchange-b and test-exchange-c. The
+lookup sentences are the pinned method text of address-index-2, not rows.
+
+How they were made: the rules of design-final.md (its reference script,
+stats_reference.py, SHA-256 7d5b932f7492a33c3fd85848a5005270a87ec236bdb9363ab26517ba34d62693)
+were run over a made-up night folder of 2026-11-24, and each data block
+was put in the API's envelope: meta.status, meta.diagnostic, pageInfo,
+one citation to the open file, and the demo tier.
+
+answers/ holds one call each: the tool, its arguments, the request the
+package must send, and the API's answer. expected_outputs/ holds what the
+package hands the model for that answer, with the marker id
+0123456789abcdef and the call id fedcba9876543210
+(tests/test_stats_tools.py). SHA256SUMS covers both folders.
+
+To replace: when the dump of task A1 exists (scripts/dump_stats_answers.py
+in the API), copy it here, make expected_outputs again, update SHA256SUMS,
+and check that the TypeScript package's expected outputs are the same.

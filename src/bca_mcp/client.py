@@ -56,7 +56,7 @@ except ImportError:
     BCA_DEMO_KEY_FALLBACK = "bca_demo_a3e1cc71b2b32872cb32516ffc7e8ad8203acb9d"
 
 DEFAULT_BASE = "https://api.blockchainacademics.com"
-USER_AGENT = "bca-mcp/0.6.4 (+https://github.com/blockchainacademics/bca-mcp-python)"
+USER_AGENT = "bca-mcp/0.7.0 (+https://github.com/blockchainacademics/bca-mcp-python)"
 
 # H-1: strict allowlist of base URLs. Env vars and constructor args are both
 # validated against this list at startup. An attacker who controls
@@ -257,6 +257,10 @@ def _canonicalize_envelope(payload: Any) -> ResponseEnvelope[Any]:
 # this API returns (largest real responses — agent-job outputs — are ~200 KB).
 # Mirrors `MAX_BODY_BYTES` in `src/client.ts`.
 MAX_BODY_BYTES = 10 * 1024 * 1024
+
+# A request id the caller sends as X-Request-ID (the Stats tools send 16 hex
+# characters, so an id in an error matches the API's log).
+_REQUEST_ID_RE = re.compile(r"[A-Za-z0-9_-]{1,64}")
 
 # Error bodies are only read for their detail, so they get a far smaller cap.
 MAX_ERROR_BODY_BYTES = 64 * 1024
@@ -501,9 +505,28 @@ class BcaClient:
         self,
         path: str,
         params: Optional[Mapping[str, Any]] = None,
+        *,
+        max_body_bytes: Optional[int] = None,
+        request_id: Optional[str] = None,
+        canonicalize: bool = True,
     ) -> ResponseEnvelope[Any]:
-        """GET request. Alias for `call("GET", ...)`."""
-        return await self._call("GET", path, params=params)
+        """GET request. Alias for `call("GET", ...)`.
+
+        ``max_body_bytes`` lowers the read cap of a success body for this call
+        (the Stats tools read at most 512 KiB, 1.5 MiB for the wallet shard).
+        ``request_id`` is sent as ``X-Request-ID``. With ``canonicalize``
+        false the parsed body comes back as the API sent it: the Stats tools
+        check the canonical envelope themselves and never take the old flat
+        shape or a raw body.
+        """
+        return await self._call(
+            "GET",
+            path,
+            params=params,
+            max_body_bytes=max_body_bytes,
+            request_id=request_id,
+            canonicalize=canonicalize,
+        )
 
     async def post(
         self,
@@ -519,6 +542,9 @@ class BcaClient:
         path: str,
         params: Optional[Mapping[str, Any]] = None,
         body: Optional[Mapping[str, Any]] = None,
+        max_body_bytes: Optional[int] = None,
+        request_id: Optional[str] = None,
+        canonicalize: bool = True,
     ) -> ResponseEnvelope[Any]:
         # No explicit no-key throw: the fallback chain in __init__ guarantees
         # _api_key is set (user key or baked-in demo). If both are somehow
@@ -541,9 +567,17 @@ class BcaClient:
                     continue
                 clean_params[k] = str(v)
 
+        body_cap = MAX_BODY_BYTES if max_body_bytes is None else max_body_bytes
+        if not 0 < body_cap <= MAX_BODY_BYTES:
+            raise ValueError("max_body_bytes is between 1 and MAX_BODY_BYTES")
+
         headers: dict[str, str] = {"X-API-Key": self._api_key}
         if method == "POST":
             headers["Content-Type"] = "application/json"
+        if request_id is not None:
+            if not _REQUEST_ID_RE.fullmatch(request_id):
+                raise ValueError("request_id is 1 to 64 letters, digits, hyphens or underscores")
+            headers["X-Request-ID"] = request_id
 
         retries = 0
         while True:
@@ -562,7 +596,7 @@ class BcaClient:
                         # Error bodies are read only for their detail, so
                         # they get the far smaller cap.
                         raw = await _read_capped(
-                            res, MAX_BODY_BYTES if res.is_success else MAX_ERROR_BODY_BYTES
+                            res, body_cap if res.is_success else MAX_ERROR_BODY_BYTES
                         )
             except httpx.LocalProtocolError as err:
                 # Raised while the request is built when a header value is not
@@ -690,7 +724,7 @@ class BcaClient:
         if raw is None:
             raise BcaUpstreamError(
                 res.status_code,
-                f"response exceeded {MAX_BODY_BYTES} byte cap",
+                f"response exceeded {body_cap} byte cap",
             )
 
         try:
@@ -704,6 +738,10 @@ class BcaClient:
         # Canonical-envelope-aware: passthrough if already canonical,
         # upgrade legacy flat shape (with one-time warning), else wrap
         # as a best-effort canonical envelope.
+        # The Stats tools ask for the body as it came and check its shape
+        # themselves (canonicalize=False).
+        if not canonicalize:
+            return payload  # type: ignore[no-any-return]
         return _canonicalize_envelope(payload)
 
 

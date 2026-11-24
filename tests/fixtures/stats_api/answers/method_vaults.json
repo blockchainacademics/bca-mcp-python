@@ -1,0 +1,177 @@
+{
+ "tool": "get_stats_method",
+ "arguments": {
+  "topic": "vaults"
+ },
+ "request": {
+  "path": "/v1/stats/method",
+  "query": {
+   "topic": "vaults"
+  }
+ },
+ "status_code": 200,
+ "body": {
+  "data": {
+   "schema": "bca.stats/1",
+   "as_of": "2026-11-24",
+   "uploaded_at": "2026-11-24T02:47:20Z",
+   "method_version": "1",
+   "variant": null,
+   "sources": [
+    {
+     "file": "https://data.blockchainacademics.com/vaults/v1/list.json",
+     "as_of": "2026-11-24",
+     "sha256": "53ac36b67911707a75c18ecbeb4e68bab7ead5a61e1e18ae714fd68ab185fce4"
+    },
+    {
+     "file": "https://data.blockchainacademics.com/vaults/v1/totals.json",
+     "as_of": "2026-11-24",
+     "sha256": "7d74a22ec76a4d4db1cd8701bf6419dc38a144c8b14436b3e5e8160c9c9c4e9a"
+    },
+    {
+     "file": "https://data.blockchainacademics.com/vaults/v1/groups.json",
+     "as_of": "2026-11-24",
+     "sha256": "672e2f12480f05c5d065a681607be784a198ce9a94cf3dfb0a315eec0e02e93a"
+    }
+   ],
+   "outside_text_keys": [
+    "name_by_leader",
+    "subject_by_outsider",
+    "text_as_published",
+    "value_from_source",
+    "link_from_source",
+    "quote_from_source",
+    "source_url",
+    "source_name",
+    "reason_as_published"
+   ],
+   "rows_dropped": 0,
+   "notes": [],
+   "topic": "vaults",
+   "text": {
+    "venues": [
+     "Hyperliquid"
+    ],
+    "floor_rule": "A vault is ranked once it is 180 days old, holds 10,000 dollars of outside money and has at least 10 outside depositors.",
+    "order_rule": {
+     "money_put_in": "Ordered by money put in, from largest to smallest, among open vaults above the ranking floor.",
+     "left_took_home": "Ordered by what withdrawals took home, in dollars, from largest to smallest, among open vaults above the ranking floor."
+    },
+    "read_me": [
+     "venue_rate_pct is the venue's own trailing figure. It is not a promise and not our measure.",
+     "our_yearly_rate_pct is our estimate from weekly points. A young vault can show an extreme figure.",
+     "left_took_home counts every withdrawal, partial ones and the leader's own included.",
+     "value_history and value_30_days show what the vault held. Deposits and withdrawals move them, so a rise is not a profit.",
+     "A percent is a percent number: 9.5 means 9.5%. A null is held back or cannot be worked out. It is never zero."
+    ],
+    "fields": {
+     "address": "The vault's address. It is what identifies a vault.",
+     "name_by_leader": "The name the vault's leader chose, cleaned. Empty for a small vault, for a name we replaced and for a name with nothing left after cleaning.",
+     "name_state": "shown, small_vault_no_public_name, replaced_by_us or empty_after_cleaning.",
+     "leader": "The address of the leader, the trader who runs the vault.",
+     "venue": "The venue the vault runs on.",
+     "status": "open or closed. A closed vault has paid everyone out.",
+     "small": "True for an open vault with under 10,000 dollars put in. It has no public name, no page and no history file.",
+     "opened_on, closed_on": "UTC days. closed_on is null unless the vault is closed.",
+     "days_open": "Whole days from the opening day to the closing day, or to the data day while the vault is open.",
+     "deposits_usd": "All the money put in since the vault opened, in whole US dollars. It counts the leader's own money and money put in more than once.",
+     "withdrawn_usd": "All the money taken out after the leader's cut, the closing payout included.",
+     "inside_usd": "What the money still inside is worth on the data day, the leader's included. 0 once closed.",
+     "inside_cost_usd": "What the money still inside cost to put in. Null when the results are held back.",
+     "left_took_home_usd": "What was taken out, less what that money had cost, after the leader's cut. It counts every withdrawal, the leader's own and partial ones included. Below zero is a loss. Null when the results are held back.",
+     "left_took_home_pct": "The same as a percent of what that money had cost. Null when nobody has withdrawn yet or the results are held back.",
+     "venue_rate_pct": "The yearly rate the venue itself shows for the vault, in percent. It is the venue's trailing figure, not a promise and not our measure. 0 can mean an idle vault or no rate shown. Null for a closed vault.",
+     "our_yearly_rate_pct": "Our money-weighted yearly rate over the last 12 months, estimated from the venue's weekly points, in percent. A young vault can show an extreme figure. Null when no rate can be worked out or the results are held back.",
+     "wallets_ahead, wallets_behind, wallets_even": "Wallets that withdrew and came out ahead, behind, or within 1% of what the money cost. All three are null when a closing payout cannot be split by wallet or the results are held back.",
+     "lockup_days": "Days a deposit must stay before it can be taken out. It is the venue's own rule.",
+     "leader_cut_pct": "The leader's share of the profit, in percent.",
+     "books.adds_up": "Whether our sums match the venue's own figure within 5 dollars or 0.1%.",
+     "books.gap_pct": "How far apart the two are, in percent. Null when the gap cannot be measured.",
+     "results_held_back": "True while the books do not add up. The results are then null.",
+     "floor": "The ranking floor, for an open vault. Null for a closed vault.",
+     "floor.meets": "Whether the vault meets the ranking floor: open, books add up, days_counted of 180 or more and outside_depositors_with_money of 10 or more.",
+     "floor.days_counted": "Whole days since the vault was created, counted while it holds 10,000 dollars or more of outside money today, else 0. It is not days_open.",
+     "floor.outside_depositors_with_money": "Outside wallets on the venue's list with a cent or more inside. The list can stop at 100 names, so 99 is a least number (depositors_count_is_a_minimum).",
+     "floor.days_needed": "180: the days of outside money the ranking floor asks for.",
+     "floor.depositors_needed": "10: the outside depositors with money the ranking floor asks for.",
+     "floor.depositors_count_is_a_minimum": "True at 99: the venue's list can stop at 100 names, the leader among them, so the real count may be higher.",
+     "value_30_days": "What the vault held 29 days before its last point (start_usd) and at its last point (end_usd). Deposits and withdrawals move it, so a rise is not a profit. Null for a closed vault.",
+     "other_vaults_with_name": "How many other vaults on the venue's whole list carry the same name.",
+     "name_also_used_by_older_vault": "True when an older vault in these files carries the same name, after folding case, symbols and look-alike letters.",
+     "name_resembles_venue_own": "True when the name looks like the name of one of the venue's own vaults. The venue's own vaults are not covered here.",
+     "value_history": "The vault's value over time, the newest 120 points, in whole dollars. Deposits and withdrawals move it: it is not profit. Before daily_from the points are the venue's weekly estimates. From daily_from on there is one point a day from our own readings. For a closed vault it ends at the closing day. Null for a small vault and when the results are held back.",
+     "history_points_total": "How many points the value history holds in all, after the cut at the closing day. The answer carries the newest 120.",
+     "daily_from": "The day our own daily readings start. Null for a closed vault.",
+     "cuts_paid_usd": "What the leader has been paid in cuts on withdrawals so far. Null when the results are held back.",
+     "leader_own_usd, leader_own_pct": "The leader's own money in the vault and its share of the vault. Null for a closed vault and when the results are held back.",
+     "depositors_on_venue_list": "Depositor lines on the venue's own list, the leader not counted. It can include wallets with nothing left inside.",
+     "scored_checks": "state is not_written_yet while the scored checks of the vault page are not published."
+    },
+    "left_out_of_rankings": {
+     "closed_rows": {
+      "count": 3,
+      "why": "A closed vault is not ranked. The totals block has the closed vaults' results."
+     },
+     "small_rows": {
+      "count": 1,
+      "why": "A small vault has under 10,000 dollars put in and is not ranked."
+     },
+     "open_on_venue_list_with_no_row_here": {
+      "count": 14,
+      "why": "Open vaults on the venue's list with no row in these files: the venue's own vaults, vaults with no details on file, and vaults where the cost of the money inside is not known."
+     }
+    },
+    "totals": {
+     "venue_list": {
+      "tracked": 40,
+      "open": 25,
+      "closed": 15,
+      "what": "Every vault on the venue's own public list. It is larger than the rows here."
+     },
+     "rows_here": {
+      "open_with_page": 9,
+      "books_checked": 15,
+      "books_add_up": 14
+     },
+     "closed_vaults": {
+      "with_result": 2,
+      "depositors_behind": 2,
+      "depositors_ahead": 0,
+      "about_even": 0,
+      "deposits_usd": 76979,
+      "took_home_usd": -2120,
+      "what": "Closed vaults whose books add up. Behind and ahead mean by more than 1%."
+     },
+     "inside_open_and_small": {
+      "usd": 9197000,
+      "what": "Money inside the 11 open and small vaults in these files. 14 open vaults on the venue's list have no row here, the venue's own vaults among them, and are not counted."
+     }
+    },
+    "blanks": [
+     "A null result means it is held back or cannot be worked out. It never means zero."
+    ]
+   }
+  },
+  "attribution": {
+   "citations": [
+    {
+     "cite_url": "https://data.blockchainacademics.com/vaults/v1/list.json",
+     "as_of": "2026-11-24T00:00:00Z",
+     "source_hash": "sha256:53ac36b67911707a"
+    }
+   ]
+  },
+  "meta": {
+   "status": "complete",
+   "request_id": "fixture000000019",
+   "pageInfo": {
+    "hasNextPage": false,
+    "hasPreviousPage": false,
+    "startCursor": null,
+    "endCursor": null
+   },
+   "tier": "demo",
+   "upgrade_url": "https://blockchainacademics.com/crypto-api/signup?ref=mcp-demo-tier"
+  }
+ }
+}

@@ -1,0 +1,98 @@
+{
+ "tool": "search_stats",
+ "arguments": {
+  "query": "Test.Exchange C"
+ },
+ "request": {
+  "path": "/v1/stats/search",
+  "query": {
+   "q": "Test.Exchange C",
+   "limit": "10"
+  }
+ },
+ "status_code": 200,
+ "body": {
+  "data": {
+   "schema": "bca.stats/1",
+   "as_of": "2026-11-24",
+   "uploaded_at": "2026-11-24T02:47:20Z",
+   "method_version": null,
+   "variant": "combined",
+   "sources": [
+    {
+     "file": "https://data.blockchainacademics.com/exchanges/v1/list.json",
+     "as_of": "2026-11-24",
+     "sha256": "b71908c557ed8ceda71c89a9808375719c08f55d9052c207cf3c581f3f204c4e"
+    },
+    {
+     "file": "https://data.blockchainacademics.com/vaults/v1/list.json",
+     "as_of": "2026-11-24",
+     "sha256": "53ac36b67911707a75c18ecbeb4e68bab7ead5a61e1e18ae714fd68ab185fce4"
+    }
+   ],
+   "outside_text_keys": [
+    "name_by_leader",
+    "subject_by_outsider",
+    "text_as_published",
+    "value_from_source",
+    "link_from_source",
+    "quote_from_source",
+    "source_url",
+    "source_name",
+    "reason_as_published"
+   ],
+   "rows_dropped": 0,
+   "notes": [
+    "paid_sponsor is true when the exchange pays for a spot. Paying changes no check and no rank."
+   ],
+   "tab": null,
+   "matched_as": "name",
+   "count": 1,
+   "matches_total": 1,
+   "limit": 10,
+   "results": [
+    {
+     "record_type": "exchange",
+     "slug": "test-exchange-c",
+     "exchange": "Test.Exchange C",
+     "kind": "centralised",
+     "state": "being_checked",
+     "rank": null,
+     "passed": null,
+     "of": 6,
+     "paid_sponsor": false
+    }
+   ],
+   "left_out": {
+    "young_vaults": 0
+   },
+   "searched": {
+    "exchanges": 3,
+    "vaults_with_a_name": 11
+   },
+   "order": "Exchanges come before vaults, A to Z. Vaults are ordered by money inside, largest at the top, then the older vault. A closer text match never moves a row up.",
+   "more": null
+  },
+  "attribution": {
+   "citations": [
+    {
+     "cite_url": "https://data.blockchainacademics.com/exchanges/v1/list.json",
+     "as_of": "2026-11-24T00:00:00Z",
+     "source_hash": "sha256:b71908c557ed8ced"
+    }
+   ]
+  },
+  "meta": {
+   "status": "complete",
+   "request_id": "fixture000000002",
+   "pageInfo": {
+    "hasNextPage": false,
+    "hasPreviousPage": false,
+    "startCursor": null,
+    "endCursor": null
+   },
+   "tier": "demo",
+   "upgrade_url": "https://blockchainacademics.com/crypto-api/signup?ref=mcp-demo-tier"
+  }
+ }
+}
