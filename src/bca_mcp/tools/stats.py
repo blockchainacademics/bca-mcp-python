@@ -839,6 +839,14 @@ async def run_list_stats_changes(args: dict[str, Any], call_id: str) -> dict[str
 
 _RECORD_NUMBERS = ("cost", "received", "result", "cut", "listed_result")
 _USES = ("ledger", "list")
+# The 12 keys of a lookup record in the file, in the file's order, and the
+# vault_listed the API adds (design 1.6 and 3.1, rule 12). A record in the
+# answer is built from these by name, so a key the shard carries beyond them
+# never reaches the model. The TypeScript package builds it the same way.
+_LOOKUP_RECORD_KEYS = (
+    "vault", "vault_state", "leader", "status", "withdrawals", "cost", "received", "result", "cut",
+    "listed_result", "uses", "why", "vault_listed",
+)
 
 
 def _record_ok(record: Mapping[str, Any]) -> bool:
@@ -859,7 +867,7 @@ def _record_ok(record: Mapping[str, Any]) -> bool:
 
 
 def _joined(record: Mapping[str, Any], row: Optional[Mapping[str, Any]]) -> dict[str, Any]:
-    item = dict(record)
+    item = {key: record[key] for key in _LOOKUP_RECORD_KEYS}
     item["figure_the_file_uses"] = record["result"] if record["uses"] == "ledger" else record["listed_result"]
     item["leader_listed_zero_after_close"] = bool(
         record["leader"] and record["vault_state"] == "closed" and record["listed_result"] == 0
