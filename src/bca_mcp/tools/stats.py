@@ -222,6 +222,7 @@ _DAY_PATTERN = r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
 _ADDRESS_PATTERN = r"^0x[0-9a-fA-F]{40}$"
 _BEFORE_PATTERN = r"^[0-9]{4}-[0-9]{2}-[0-9]{2}~[a-z0-9]+(-[a-z0-9]+)*$"
 _ADDRESS = re.compile(r"0x[0-9a-fA-F]{40}")
+_LOWER_ADDRESS = re.compile(r"0x[0-9a-f]{40}")
 _SLUG = re.compile(r"[a-z0-9]+(-[a-z0-9]+)*")
 _SEPARATORS = re.compile(r"[\s._]+")
 _CONTROL = re.compile(r"[\x00-\x1f\x7f-\x9f]")
@@ -546,7 +547,8 @@ class StatsShapeError(Exception):
 
 
 def _whole(value: Any) -> bool:
-    return isinstance(value, int) and not isinstance(value, bool)
+    """A whole number: 0, 1, 2 and so on. A count is never below zero."""
+    return isinstance(value, int) and not isinstance(value, bool) and value >= 0
 
 
 def _number_or_null(value: Any) -> bool:
@@ -555,6 +557,10 @@ def _number_or_null(value: Any) -> bool:
 
 def _text(value: Any) -> bool:
     return isinstance(value, str)
+
+
+def _text_list(value: Any) -> bool:
+    return isinstance(value, list) and all(isinstance(v, str) for v in value)
 
 
 def _day(value: Any) -> bool:
@@ -575,7 +581,6 @@ _KINDS: dict[str, Callable[[Any], bool]] = {
     "bool": lambda v: isinstance(v, bool),
     "whole_or_null": lambda v: v is None or _whole(v),
     "text_or_null": lambda v: v is None or _text(v),
-    "present": lambda v: True,
     "prefix": lambda v: isinstance(v, str) and bool(re.fullmatch(r"[0-9a-f]{2}", v)),
     "sha256": lambda v: isinstance(v, str) and bool(re.fullmatch(r"[0-9a-f]{64}", v)),
 }
@@ -595,7 +600,7 @@ REQUIRED: dict[str, dict[str, str]] = {
     },
     GET_STATS_RECORD: {"tab": "text", "record": "object"},
     COMPARE_STATS_RECORDS: {
-        "tab": "text", "ids_asked": "present", "count": "whole", "records": "list",
+        "tab": "text", "ids_asked": "whole", "count": "whole", "records": "list",
         "not_published": "list", "not_returned": "list",
     },
     LOOKUP_STATS_WALLET: {
@@ -609,7 +614,15 @@ REQUIRED: dict[str, dict[str, str]] = {
     },
 }
 
-_LOOKUP_NOTE_KEYS = ("fields", "status_meanings", "uses_meanings", "why_sentences", "rounding", "cannot_see")
+# The six blocks of pinned lookup sentences in a shard answer, with their kinds.
+_LOOKUP_NOTE_KINDS: dict[str, Callable[[Any], bool]] = {
+    "fields": lambda v: isinstance(v, dict),
+    "status_meanings": lambda v: isinstance(v, dict),
+    "uses_meanings": lambda v: isinstance(v, dict),
+    "why_sentences": _text_list,
+    "rounding": _text,
+    "cannot_see": _text_list,
+}
 _DIGITS = re.compile(r"[0-9]+")
 
 
@@ -646,8 +659,7 @@ def _check_data(tool: str, data: Mapping[str, Any]) -> None:
         raise StatsShapeError("sources")
     if not listed_keys_ok(data.get("outside_text_keys")):
         raise StatsShapeError("outside_text_keys")
-    rows_dropped = data.get("rows_dropped")
-    if not _whole(rows_dropped) or rows_dropped < 0:
+    if not _whole(data.get("rows_dropped")):
         raise StatsShapeError("rows_dropped")
     notes = data.get("notes")
     if not isinstance(notes, list) or not all(isinstance(n, str) for n in notes):
@@ -657,13 +669,7 @@ def _check_data(tool: str, data: Mapping[str, Any]) -> None:
             raise StatsShapeError(key)
     if tool == LOOKUP_STATS_WALLET:
         notes_block = data["lookup_notes"]
-        if not all(k in notes_block for k in _LOOKUP_NOTE_KEYS):
-            raise StatsShapeError("lookup_notes")
-        if not (
-            isinstance(notes_block["status_meanings"], dict)
-            and isinstance(notes_block["uses_meanings"], dict)
-            and isinstance(notes_block["cannot_see"], list)
-        ):
+        if not all(k in notes_block and ok(notes_block[k]) for k, ok in _LOOKUP_NOTE_KINDS.items()):
             raise StatsShapeError("lookup_notes")
     if not _walk_is_plain(data):
         raise StatsShapeError("keys or numbers")
@@ -796,33 +802,41 @@ _RECORD_NUMBERS = ("cost", "received", "result", "cut", "listed_result")
 _USES = ("ledger", "list")
 
 
-def _record_ok(record: Any) -> bool:
+def _record_ok(record: Mapping[str, Any]) -> bool:
     """One lookup record as the API hands it on: the 12 keys of the file and
-    vault_listed, each of its kind."""
+    vault_listed, each of its kind. The vault address is in lower case, as
+    the lookup files write it. ``uses`` is checked before this."""
     return (
-        isinstance(record, dict)
-        and isinstance(record.get("vault"), str)
-        and bool(_ADDRESS.fullmatch(record["vault"]))
+        isinstance(record.get("vault"), str)
+        and bool(_LOWER_ADDRESS.fullmatch(record["vault"]))
         and record.get("vault_state") in ("open", "closed")
         and isinstance(record.get("leader"), bool)
         and isinstance(record.get("status"), str)
         and _whole(record.get("withdrawals"))
         and all(k in record and _number_or_null(record[k]) for k in _RECORD_NUMBERS)
-        and isinstance(record.get("uses"), str)
         and isinstance(record.get("why"), str)
         and isinstance(record.get("vault_listed"), bool)
     )
 
 
-def _joined(record: Mapping[str, Any], vaults: Mapping[str, Any]) -> dict[str, Any]:
+def _joined(record: Mapping[str, Any], row: Optional[Mapping[str, Any]]) -> dict[str, Any]:
     item = dict(record)
     item["figure_the_file_uses"] = record["result"] if record["uses"] == "ledger" else record["listed_result"]
     item["leader_listed_zero_after_close"] = bool(
         record["leader"] and record["vault_state"] == "closed" and record["listed_result"] == 0
     )
-    row = vaults.get(record["vault"], vaults.get(record["vault"].lower()))
-    item["vault_row"] = dict(row) if isinstance(row, dict) else None
+    item["vault_row"] = dict(row) if row is not None else None
     return item
+
+
+def _named(page: list[dict[str, Any]]) -> bool:
+    """Whether a vault row on the page shows a name its leader chose."""
+    return any(
+        isinstance(r["vault_row"], dict)
+        and isinstance(r["vault_row"].get("name_by_leader"), str)
+        and r["vault_row"]["name_by_leader"] != ""
+        for r in page
+    )
 
 
 def _summary(every: list[dict[str, Any]]) -> Optional[dict[str, Any]]:
@@ -874,23 +888,36 @@ def wallet_answer(shard: Mapping[str, Any], address: str, offset: int = 0) -> di
     address = address.strip().lower()
     vaults = shard["vaults"]
     notes_block = shard["lookup_notes"]
-    wallets = {k.lower(): v for k, v in shard["wallets"].items() if isinstance(k, str)}
-    rows = wallets.get(address, [])
-    if not isinstance(rows, list) or not all(_record_ok(r) for r in rows):
+    # The lookup files write wallet and vault addresses in lower case; both
+    # are matched as written, as the TypeScript package does.
+    rows = shard["wallets"].get(address, [])
+    if not isinstance(rows, list):
         raise StatsShapeError("wallets")
-    # The package checks uses again and drops a record with any other value.
-    every = [_joined(r, vaults) for r in rows if r["uses"] in _USES]
+    every: list[dict[str, Any]] = []
+    for record in rows:
+        if not isinstance(record, dict):
+            raise StatsShapeError("wallets")
+        # The package checks uses again and drops a record with any other
+        # value (design 3.1, rule 12), before it checks the rest of it.
+        if record.get("uses") not in _USES:
+            continue
+        if not _record_ok(record):
+            raise StatsShapeError("wallets")
+        row = None
+        if record["vault"] in vaults:
+            row = vaults[record["vault"]]
+            if not isinstance(row, dict):
+                raise StatsShapeError("vaults")
+        every.append(_joined(record, row))
     page = every[offset : offset + LOOKUP_RECORDS_PER_ANSWER]
     data: dict[str, Any] = {
         k: shard.get(k)
         for k in ("schema", "as_of", "uploaded_at", "method_version", "variant", "sources",
                   "outside_text_keys", "rows_dropped")
     }
-    notes = list(LOOKUP_NOTES)
-    notes += [n for n in shard["notes"] if n not in notes]
-    if any((r["vault_row"] or {}).get("name_by_leader") for r in page) and NAME_NOTE not in notes:
-        notes.append(NAME_NOTE)
-    data["notes"] = notes
+    # The lookup's own two notes, and the name note when a row on the page
+    # shows a name, as the design's reference does (lookup_in_package).
+    data["notes"] = list(LOOKUP_NOTES) + ([NAME_NOTE] if _named(page) else [])
     data.update(
         {
             "address": address,
@@ -954,7 +981,10 @@ def trim_wallet_answer(envelope: dict[str, Any]) -> bool:
         return False
     data["records"].pop()
     data["count"] = len(data["records"])
-    data["next_offset"] = data["offset"] + data["count"] if data["count"] else None
+    # The next page starts at the first record left out, even when none is
+    # left on this one (design 1.0: next_offset names the row the next page
+    # starts at).
+    data["next_offset"] = data["offset"] + data["count"]
     meta = envelope.get("meta")
     if isinstance(meta, dict):
         meta["pageInfo"] = _wallet_page_info(data)

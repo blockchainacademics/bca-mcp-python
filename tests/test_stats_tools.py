@@ -485,6 +485,16 @@ async def test_compare_vault_ids_must_be_addresses(httpx_mock) -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("ids_asked", ["kraken,coinbase", ["kraken", "coinbase"], -2, None, 2.0, True])
+async def test_compare_ids_asked_must_be_a_whole_number(httpx_mock, ids_asked) -> None:
+    # Review finding 4: ids_asked is a count, as the TypeScript package checks it.
+    case = copy.deepcopy(_case("compare_vaults"))
+    case["body"]["data"]["ids_asked"] = ids_asked
+    err = _error(await _call(httpx_mock, "compare_stats_records", case["arguments"], case["body"]))
+    assert err["code"] == "BCA_UPSTREAM"
+
+
+@pytest.mark.asyncio
 async def test_compare_with_no_published_record_is_the_404_sentence(httpx_mock) -> None:
     err = _error(await _call(httpx_mock, "compare_stats_records", {"tab": "exchanges", "ids": "x-one,x-two"},
                              {"detail": NOT_FOUND}, status=404))
@@ -614,6 +624,75 @@ async def test_a_record_whose_uses_is_neither_ledger_nor_list_is_dropped(httpx_m
 
 @WALLET
 @pytest.mark.asyncio
+async def test_a_record_whose_uses_is_not_even_text_is_dropped_before_its_shape_is_checked(httpx_mock, fixed_ids) -> None:
+    # Review finding 4: uses is checked first, as in the TypeScript package,
+    # so a uses of another kind drops that record and refuses nothing.
+    case = copy.deepcopy(_shard_case("lookup_leader"))
+    address = case["arguments"]["address"]
+    case["body"]["data"]["wallets"][address][0]["uses"] = 5
+    out = _output(await _call(httpx_mock, "lookup_stats_wallet", {"address": address}, case["body"]))
+    assert [r["uses"] for r in out["data"]["records"]] == ["list"]
+
+
+def _lookup_mutation(change) -> dict[str, Any]:
+    case = copy.deepcopy(_shard_case("lookup_leader"))
+    change(case["body"]["data"], case["arguments"]["address"])
+    return case
+
+
+@WALLET
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "label,change",
+    [
+        ("a vault address in upper case", lambda d, a: d["wallets"][a][0].update(vault=d["wallets"][a][0]["vault"].upper().replace("0X", "0x"))),
+        ("withdrawals below zero", lambda d, a: d["wallets"][a][0].update(withdrawals=-1)),
+        ("a vault row that is text", lambda d, a: d["vaults"].update({d["wallets"][a][0]["vault"]: "Fixture row"})),
+        ("a vault row that is null", lambda d, a: d["vaults"].update({d["wallets"][a][0]["vault"]: None})),
+        ("a record that is not an object", lambda d, a: d["wallets"][a].append("Fixture record")),
+        ("rounding that is not text", lambda d, a: d["lookup_notes"].update(rounding=5)),
+        ("why_sentences that hold a number", lambda d, a: d["lookup_notes"].update(why_sentences=[1])),
+        ("fields that are a list", lambda d, a: d["lookup_notes"].update(fields=[])),
+        ("cannot_see that holds a number", lambda d, a: d["lookup_notes"].update(cannot_see=[1])),
+    ],
+    ids=lambda v: v if isinstance(v, str) else "",
+)
+async def test_a_shard_out_of_shape_refuses_the_answer(httpx_mock, label, change) -> None:
+    case = _lookup_mutation(change)
+    err = _error(await _call(httpx_mock, "lookup_stats_wallet", case["arguments"], case["body"]))
+    assert err["code"] == "BCA_UPSTREAM", label
+
+
+@WALLET
+@pytest.mark.asyncio
+async def test_the_wallet_keys_are_matched_as_the_lookup_files_write_them(httpx_mock, fixed_ids) -> None:
+    # The files write addresses in lower case. A key in another case is not
+    # this address, as in the TypeScript package.
+    case = _lookup_mutation(lambda d, a: d["wallets"].update({a.upper().replace("0X", "0x"): d["wallets"].pop(a)}))
+    out = _output(await _call(httpx_mock, "lookup_stats_wallet", case["arguments"], case["body"]))
+    assert out["data"]["found"] is False and out["data"]["records"] == []
+
+
+@WALLET
+@pytest.mark.asyncio
+async def test_the_wallet_notes_are_the_lookup_notes_and_the_name_note(httpx_mock, fixed_ids) -> None:
+    # As the design's reference builds them (lookup_in_package): the notes of
+    # the shard answer itself are not carried over (review finding 4).
+    case = _lookup_mutation(lambda d, a: d.update(notes=["Fixture shard note."]))
+    out = _output(await _call(httpx_mock, "lookup_stats_wallet", case["arguments"], case["body"]))
+    assert out["data"]["notes"] == [*stats.LOOKUP_NOTES, stats.NAME_NOTE]
+
+    def unnamed(d, a):
+        for record in d["wallets"][a]:
+            d["vaults"][record["vault"]]["name_by_leader"] = 5 if record["leader"] else ""
+
+    case = _lookup_mutation(unnamed)
+    out = _output(await _call(httpx_mock, "lookup_stats_wallet", case["arguments"], case["body"]))
+    assert out["data"]["notes"] == list(stats.LOOKUP_NOTES)
+
+
+@WALLET
+@pytest.mark.asyncio
 async def test_a_record_out_of_shape_refuses_the_answer(httpx_mock) -> None:
     case = copy.deepcopy(_shard_case("lookup_leader"))
     address = case["arguments"]["address"]
@@ -651,6 +730,23 @@ async def test_the_wallet_answer_is_cut_to_fit_the_64_kb_text_block(httpx_mock, 
     assert data["next_offset"] == data["count"]
     assert out["meta"]["pageInfo"]["hasNextPage"] is True
     assert data["summary"]["records"] == 60
+
+
+@WALLET
+@pytest.mark.asyncio
+async def test_a_page_cut_to_no_record_points_next_offset_at_the_record_left_out(httpx_mock, fixed_ids) -> None:
+    # Design 1.0: next_offset names the row the next page starts at. The
+    # TypeScript package and the design's reference (fit_wallet_answer) do
+    # the same.
+    case = copy.deepcopy(_shard_case("lookup_leader"))
+    address = case["arguments"]["address"]
+    shard = case["body"]["data"]
+    shard["vaults"][shard["wallets"][address][0]["vault"]]["name_by_leader"] = "Fixture " + "w" * 70_000
+    out = _output(await _call(httpx_mock, "lookup_stats_wallet", {"address": address}, case["body"]))
+    data = out["data"]
+    assert (data["count"], data["records"], data["total"], data["offset"]) == (0, [], 2, 0)
+    assert data["next_offset"] == 0
+    assert out["meta"]["pageInfo"]["hasNextPage"] is True
 
 
 @WALLET
@@ -730,6 +826,9 @@ def _mutations() -> list[tuple[str, Any]]:
         ("a note that is not text", lambda b: {**b, "data": {**b["data"], "notes": [1]}}),
         ("a key of digits", lambda b: {**b, "data": {**b["data"], "counts": {**b["data"]["counts"], "62": 1}}}),
         ("count as text", lambda b: {**b, "data": {**b["data"], "count": "5"}}),
+        ("count below zero", lambda b: {**b, "data": {**b["data"], "count": -1}}),
+        ("next_offset below zero", lambda b: {**b, "data": {**b["data"], "next_offset": -20}}),
+        ("sample_size below zero", lambda b: {**b, "data": {**b["data"], "sample_size": -1}}),
         ("trimmed as text", lambda b: {**b, "data": {**b["data"], "trimmed": "no"}}),
         ("next_offset as text", lambda b: {**b, "data": {**b["data"], "next_offset": "5"}}),
     ]
