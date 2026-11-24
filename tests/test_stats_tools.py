@@ -1041,6 +1041,19 @@ async def test_an_answer_over_the_text_block_cap_is_refused(httpx_mock) -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("letter", ["\u00e9", "\U0001f680"], ids=["two-byte letters", "four-byte signs"])
+async def test_the_cap_counts_bytes_not_characters(httpx_mock, letter) -> None:
+    # Design 1.0: the 65,536 byte cap is counted on the bytes of the text
+    # block. This text is under 65,536 characters and over 65,536 bytes.
+    case = copy.deepcopy(_case("changes"))
+    covers = letter * (40_000 if len(letter.encode()) == 2 else 20_000)
+    assert len(covers) < stats.TEXT_BLOCK_CAP < len(covers.encode("utf-8"))
+    case["body"]["data"]["covers"] = covers
+    err = _error(await _call(httpx_mock, "list_stats_changes", case["arguments"], case["body"]))
+    assert err == {"code": "BCA_UPSTREAM", "message": "The answer is larger than the 64 KB cap. Ask for fewer rows."}
+
+
+@pytest.mark.asyncio
 async def test_no_key_a_locked_plan_and_a_rate_limit_read_as_today(httpx_mock) -> None:
     httpx_mock.add_response(status_code=401, json={"detail": "Invalid or missing API key."})
     assert _error(await call_tool("list_stats_measures", {}))["code"] == "BCA_AUTH"
