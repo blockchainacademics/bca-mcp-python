@@ -1,0 +1,12 @@
+{
+ "call": "lookup_nobody",
+ "tool": "lookup_stats_wallet",
+ "args": {
+  "address": "0x3b9da1fedf45b7d45eedba893ffefbd4225eab3c"
+ },
+ "request": {
+  "path": "/v1/stats/wallets/shard/3b",
+  "query": {}
+ },
+ "envelope_file": "shards/3b.json"
+}

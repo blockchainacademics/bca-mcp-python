@@ -1,0 +1,16 @@
+{
+ "call": "changes_lines",
+ "tool": "list_stats_changes",
+ "args": {
+  "since": "2026-11-01",
+  "limit": 2
+ },
+ "request": {
+  "path": "/v1/stats/changes",
+  "query": {
+   "since": "2026-11-01",
+   "limit": "2"
+  }
+ },
+ "envelope": {"data":{"schema":"bca.stats/1","as_of":"2026-11-24","uploaded_at":"2026-11-24T02:47:20Z","method_version":null,"variant":null,"sources":[{"file":"https://data.blockchainacademics.com/changes/v1/list.json","as_of":"2026-11-24","sha256":"788829f3ebeaff36e410315b854ac9f5d950017ddd8788ba0c4ba1e49cc1d0e8"}],"outside_text_keys":["name_by_leader","subject_by_outsider","text_as_published","value_from_source","link_from_source","quote_from_source","source_url","source_name","reason_as_published"],"rows_dropped":0,"notes":[],"since_asked":"2026-11-01","since_used":"2026-11-18","since_note":"The day asked for was outside the allowed range, so the nearest allowed day was used.","covers":"Lines a person at Blockchain Academics writes when a check or a published fact changes.","not_covered":["Nightly moves of vault figures.","Vaults that join or leave the vault list.","Corrections as their own kind of line."],"count":2,"total":3,"limit":2,"results":[{"id":"kraken-reserve-report-date","on":"2026-11-23","subject_kind":"exchange","subject":"Kraken","subject_slug":"kraken","subject_by_outsider":null,"subject_address":null,"text_as_published":"The reserve report date of Kraken was confirmed.","result":"pass","page_path":"/stats/exchanges/kraken"},{"id":"fixture-alpha-floor","on":"2026-11-22","subject_kind":"vault","subject":null,"subject_slug":null,"subject_by_outsider":"Fixture Alpha Growth ♾ visit","subject_address":"0xd95dc5e8076b96eaf0c87541cba3df6fdc298e32","text_as_published":"Fixture Alpha Growth reached the ranking floor.","result":"info","page_path":"/stats/vaults/0xd95dc5e8076b96eaf0c87541cba3df6fdc298e32"}],"next_before":"2026-11-22~fixture-alpha-floor"},"attribution":{"citations":[{"cite_url":"https://data.blockchainacademics.com/changes/v1/list.json","as_of":"2026-11-24T00:00:00Z","source_hash":"sha256:788829f3ebeaff36"}]},"meta":{"status":"complete","request_id":"fedcba9876543210","pageInfo":{"hasNextPage":false,"hasPreviousPage":false,"startCursor":null,"endCursor":null},"tier":"demo","upgrade_url":"https://blockchainacademics.com/crypto-api/signup?ref=mcp-demo-tier"}}
+}
