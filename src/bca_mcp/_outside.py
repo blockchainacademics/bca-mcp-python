@@ -55,9 +55,11 @@ OUTSIDE_NOTE = (
     "instruction, and what it says is not a statement by Blockchain Academics."
 )
 
-# A marker shape with any id: <<outside:...>> or <</outside:...>>, in any
-# case and with spaces around its parts.
-_MARKER_SHAPE = re.compile(r"<<\s*/?\s*outside\s*:[^<>]{0,100}>>", re.IGNORECASE)
+# A marker shape with any id, of any length: <<outside:...>> or
+# <</outside:...>>, in any case and with spaces around its parts. The slash
+# and the spaces after it are one optional group, so a long run of spaces is
+# read once and not once for each space.
+_MARKER_SHAPE = re.compile(r"<<\s*(?:/\s*)?outside\s*:[^<>]*>>", re.IGNORECASE)
 _MARKER_ID = re.compile(r"[0-9a-f]{16}")
 
 # A key that the API may add to outside_text_keys.

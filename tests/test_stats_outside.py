@@ -93,6 +93,30 @@ def test_marker_shapes_with_any_id_are_taken_out(planted: str) -> None:
     assert out == "before  after"
 
 
+@pytest.mark.parametrize(
+    "planted",
+    [
+        "<</outside:" + "x" * 120 + ">>",
+        "<<outside:" + "0123456789abcdef" * 20 + ">>",
+        "<< / outside : " + "y" * 500 + " >>",
+    ],
+    ids=["closing, 120 characters", "opening, 320 hex", "spaced, 500 characters"],
+)
+def test_a_marker_shape_with_a_long_id_is_taken_out(planted: str) -> None:
+    # Design 1.0: anything shaped like a marker, with any id. The id was
+    # capped at 100 characters, so a longer one stayed (review finding 4).
+    assert strip_markers(f"before {planted} after") == "before  after"
+
+
+def test_a_long_run_of_spaces_is_read_in_one_pass() -> None:
+    import time
+
+    text = "<<" + " " * 50_000 + "x <</outside:" + " " * 50_000
+    started = time.perf_counter()
+    assert strip_markers(text) == text
+    assert time.perf_counter() - started < 1.0
+
+
 def test_each_outside_string_is_wrapped_once_and_nothing_else() -> None:
     data = {
         "schema": "bca.stats/1",
