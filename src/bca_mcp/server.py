@@ -491,9 +491,16 @@ def _fence_envelope_data(envelope: Any, fence_id: Optional[str] = None) -> Any:
 
 # --- Stats tools: answers and errors (design-final.md 1.0) --------------------
 
-# The API's fixed 4xx sentences. A Stats tool passes one on word for word when
-# the API's `detail` is the whole sentence; any other 4xx text is replaced
-# with STATS_REFUSED. The TypeScript package holds the same list.
+# The answer to an API 404, the same for an id that is hidden and one that is
+# unknown.
+STATS_NOT_FOUND = (
+    "No published Stats record for that id. Not every vault on the venue has a record: "
+    "the venue's own vaults and vaults with no details on file have none."
+)
+# The API's fixed 4xx sentences (the `detail` texts of design-final.md 1.0). A
+# Stats tool passes one on word for word when the API's `detail` is the whole
+# sentence; any other 4xx text is replaced with STATS_REFUSED. A 401 or 403
+# reads as for every other tool. The TypeScript package holds the same list.
 STATS_API_SENTENCES: tuple[str, ...] = (
     "Unknown parameter.",
     "That measure does not belong to that tab.",
@@ -503,12 +510,8 @@ STATS_API_SENTENCES: tuple[str, ...] = (
     "Between 2 and 5 ids, with no repeats.",
     "That value was not given by an earlier answer.",
     "The data changed since that page. Start again at offset 0.",
-)
-# The answer to an API 404, the same for an id that is hidden and one that is
-# unknown.
-STATS_NOT_FOUND = (
-    "No published Stats record for that id. Not every vault on the venue has a record: "
-    "the venue's own vaults and vaults with no details on file have none."
+    "Forbidden",
+    STATS_NOT_FOUND,
 )
 STATS_REFUSED = "The API refused this Stats request. Request id: {id}."
 STATS_FAILED = "The Stats API call failed. Request id: {id}."

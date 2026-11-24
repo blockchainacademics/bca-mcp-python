@@ -696,6 +696,8 @@ def test_the_api_fixed_sentences_are_the_design_list() -> None:
         "Between 2 and 5 ids, with no repeats.",
         "That value was not given by an earlier answer.",
         "The data changed since that page. Start again at offset 0.",
+        "Forbidden",
+        NOT_FOUND,
     )
     assert server.STATS_NOT_FOUND == NOT_FOUND
 
