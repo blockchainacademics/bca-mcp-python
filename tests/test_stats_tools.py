@@ -765,6 +765,24 @@ async def test_a_page_cut_to_no_record_points_next_offset_at_the_record_left_out
 
 @WALLET
 @pytest.mark.asyncio
+async def test_after_the_cut_the_status_meanings_cover_the_records_left_on_the_page(httpx_mock, fixed_ids) -> None:
+    # Review finding 10: the meanings were made for the page before the cut.
+    case = copy.deepcopy(_shard_case("lookup_leader"))
+    address = case["arguments"]["address"]
+    shard = case["body"]["data"]
+    last = shard["wallets"][address][-1]
+    assert last["status"] != shard["wallets"][address][0]["status"]
+    shard["vaults"][last["vault"]]["name_by_leader"] = "Fixture " + "w" * 70_000
+    out = _output(await _call(httpx_mock, "lookup_stats_wallet", {"address": address}, case["body"]))
+    data = out["data"]
+    assert data["count"] == 1 and data["next_offset"] == 1
+    assert set(data["status_meanings"]) == {r["status"] for r in data["records"]}
+    assert last["status"] not in data["status_meanings"]
+    assert data["summary"]["by_status"][last["status"]] == 1  # the summary still covers every record
+
+
+@WALLET
+@pytest.mark.asyncio
 async def test_a_shard_with_no_data_is_passed_on_as_it_is(httpx_mock, fixed_ids) -> None:
     body = {"data": None, "attribution": {"citations": []},
             "meta": {"status": "partial", "request_id": "r-1",

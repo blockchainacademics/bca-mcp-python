@@ -998,6 +998,12 @@ def trim_wallet_answer(envelope: dict[str, Any]) -> bool:
     # left on this one (design 1.0: next_offset names the row the next page
     # starts at).
     data["next_offset"] = data["offset"] + data["count"]
+    # The meanings cover the statuses still on the page (design 1.6).
+    meanings = data.get("status_meanings")
+    if isinstance(meanings, dict):
+        data["status_meanings"] = {
+            k: v for k, v in meanings.items() if any(r["status"] == k for r in data["records"])
+        }
     meta = envelope.get("meta")
     if isinstance(meta, dict):
         meta["pageInfo"] = _wallet_page_info(data)
