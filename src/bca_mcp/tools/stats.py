@@ -236,9 +236,19 @@ _HIDDEN = re.compile(
     "[\u0000-\u001f\u007f-\u009f\u00ad\u061c\u115f\u1160\u17b4\u17b5\u180b-\u180f"
     "\u200b-\u200f\u2028-\u202e\u2060-\u206f\u3164\ufe00-\ufe0f\ufeff\uffa0\ufff0-\ufffb]"
 )
-# A full address in a text: 40 hex characters in a row that are not part of a
-# longer run of hex. The x of 0x ends a run, so it is found with or without 0x.
-_ADDRESS_IN_TEXT = re.compile(r"(?<![0-9a-f])[0-9a-f]{40}(?![0-9a-f])", re.IGNORECASE)
+# The 32 look-alike Cyrillic and Greek letters of the design's fold, turned
+# into Latin ones (appendix C, CONFUSABLE in the reference script). Written as
+# escapes, as the TypeScript package writes them.
+_CONFUSABLE = str.maketrans({
+    "\u0430": "a", "\u0432": "b", "\u0435": "e", "\u043a": "k", "\u043c": "m", "\u043d": "h",
+    "\u043e": "o", "\u0440": "p", "\u0441": "c", "\u0442": "t", "\u0443": "y", "\u0445": "x",
+    "\u0456": "i", "\u0458": "j", "\u0455": "s", "\u0501": "d", "\u051b": "q", "\u051d": "w",
+    "\u04cf": "l", "\u03b1": "a", "\u03b2": "b", "\u03b5": "e", "\u03b7": "n", "\u03b9": "i",
+    "\u03ba": "k", "\u03bd": "v", "\u03bf": "o", "\u03c1": "p", "\u03c4": "t", "\u03c5": "u",
+    "\u03c7": "x", "\u03c9": "w",
+})
+# A full address once a text is folded: 40 hex characters in a row.
+_FORTY_HEX = re.compile(r"[0-9a-f]{40}")
 
 # The measures the package knows, with their tab, their kinds and whether
 # rank_stats takes them (appendix F). A known measure asked for another tab,
@@ -285,12 +295,23 @@ def exchange_id(text: str) -> Optional[str]:
     return folded if _SLUG.fullmatch(folded) else None
 
 
+def fold_text(text: str) -> str:
+    """A text folded as the API folds a search query before it matches it (the
+    design's fold, appendix C): marks split off and dropped, case folded,
+    look-alike Cyrillic and Greek letters made Latin, and every character that
+    is not a letter or a digit taken out."""
+    plain = "".join(ch for ch in unicodedata.normalize("NFKD", text) if unicodedata.category(ch) != "Mn")
+    return "".join(ch for ch in plain.casefold().translate(_CONFUSABLE) if ch.isalnum())
+
+
 def holds_address(text: str) -> bool:
-    """True when the text holds a full address, once NFKC has run and the
-    hidden characters are out: 40 hex characters in a row, with or without
-    0x, alone or inside other words. So wide letters, a zero width space or
-    an upper case 0X do not hide one. The whole text is read, not a cut part."""
-    return bool(_ADDRESS_IN_TEXT.search(_HIDDEN.sub("", unicodedata.normalize("NFKC", text))))
+    """True when the text holds a full address in any spelling: 40 hex
+    characters in a row once it is folded. So 0X and 40 hex, an address inside
+    other words or split by spaces, one written with wide letters, hidden
+    characters or a Cyrillic x, and 40 hex characters with no 0x all count:
+    the API's fold would join each of them back into the address. The whole
+    text is read, not a cut part. The TypeScript package holds the same rule."""
+    return bool(_FORTY_HEX.search(fold_text(text)))
 
 
 class _Args(BaseModel):
@@ -464,9 +485,13 @@ class CompareStatsRecordsInput(_Args):
             parts = self.ids.split(",")
         else:
             parts = list(self.ids)
+        # Outside the vaults tab an address in any spelling is refused. The ids
+        # are read together, as the query joins them with commas, so an
+        # address split over two ids is found too.
+        if self.tab != "vaults" and holds_address(",".join(parts)):
+            raise ValueError(ADDRESS_NOT_AN_EXCHANGE_ID)
         if not 2 <= len(parts) <= 5:
             raise ValueError(IDS_RULE)
-        # _record_id refuses an address outside the vaults tab.
         folded = [_record_id(self.tab, part) for part in parts]
         if len(set(folded)) != len(folded):
             raise ValueError(IDS_RULE)

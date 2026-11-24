@@ -326,6 +326,14 @@ async def test_a_new_tab_needs_no_package_release(httpx_mock) -> None:
         "ab" * 20,
         "find 0X" + "AB" * 20 + " please",
         "vault:" + "ab" * 20,
+        # Spellings the API's fold joins back into the address: split by
+        # spaces or hyphens, a Cyrillic x or a, a longer run of hex.
+        "0x " + " ".join(["abab"] * 10),
+        "0x-" + "-".join(["abab"] * 10),
+        "0\u0445" + "ab" * 20,
+        "0x" + "\u0430b" * 20,
+        "0x" + "ab" * 20 + "c",
+        "Fixture " + "a" * 56,
     ],
 )
 async def test_search_refuses_a_full_address_before_any_request(httpx_mock, query) -> None:
@@ -337,16 +345,16 @@ async def test_search_refuses_a_full_address_before_any_request(httpx_mock, quer
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("query", ["Fixture " + "ab" * 19 + "a", "Fixture " + "ab" * 20 + "a", "Fixture " + "a" * 56])
-async def test_search_sends_a_run_of_hex_that_is_not_an_address(httpx_mock, query) -> None:
-    # 39 or 41 hex characters in a row are not an address, so the name is searched.
+@pytest.mark.parametrize("query", ["Fixture vault " + "ab" * 19 + "a", "Fixture Deadbeef Cafe 0x12", "growi"])
+async def test_search_sends_a_name_with_fewer_than_40_hex_in_a_row(httpx_mock, query) -> None:
+    # 39 hex characters in a row, once the name is folded, are not an address.
     _output(await _call(httpx_mock, "search_stats", {"query": query}, _case("search_nothing")["body"]))
     assert dict(httpx_mock.get_request().url.params)["q"] == query
 
 
 @pytest.mark.asyncio
 async def test_search_takes_its_own_markers_out_of_the_query(httpx_mock) -> None:
-    name = "Fixture " + "a" * 56
+    name = "Fixture " + "ghijklmn" * 7
     query = f"<<outside:{MARK}>>{name}<</outside:{MARK}>>"
     assert len(name) == 64 and len(query) == 121
     _output(await _call(httpx_mock, "search_stats", {"query": query, "tab": "vaults"}, _case("search_vaults")["body"]))
@@ -425,7 +433,11 @@ def test_the_query_and_the_record_id_advertise_no_control_character(tool, field)
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("tab", ["exchanges", "wallets", "wallet", "lookup"])
-@pytest.mark.parametrize("typed", ["0x" + "ab" * 20, "ab" * 20, " 0X" + "AB" * 20, "wallet 0x" + "ab" * 20])
+@pytest.mark.parametrize(
+    "typed",
+    ["0x" + "ab" * 20, "ab" * 20, " 0X" + "AB" * 20, "wallet 0x" + "ab" * 20, "0x " + " ".join(["abab"] * 10),
+     "0\u0445" + "ab" * 20],
+)
 async def test_an_address_outside_the_vaults_tab_is_refused_before_any_request(httpx_mock, tab, typed) -> None:
     # Outside the vaults tab the id goes into the path as a slug, so a wallet
     # address would reach the API and its logs (review finding 1).
@@ -486,6 +498,9 @@ async def test_compare_refuses_bad_ids_before_any_request(httpx_mock, ids) -> No
         # A part longer than 64 characters: its whole text is read, so the
         # address is found even past the cut an exchange id gets.
         "kraken," + "x" * 30 + "0x" + "ab" * 20,
+        # An address split over two ids: the query joins them with commas.
+        ["ab" * 10, "ab" * 10],
+        "abababababababababab,abababababababababab",
     ],
 )
 async def test_compare_refuses_an_address_outside_the_vaults_tab(httpx_mock, ids) -> None:
