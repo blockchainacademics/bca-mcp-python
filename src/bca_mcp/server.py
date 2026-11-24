@@ -476,7 +476,7 @@ def _fence_envelope_data(envelope: Any, fence_id: Optional[str] = None) -> Any:
     if not isinstance(envelope, dict) or "data" not in envelope:
         return envelope
     fence_id = new_fence_id() if fence_id is None else fence_id
-    # Clean every string of the payload first, then neutralize any literal
+    # Clean every string of the payload, then neutralize any literal
     # fence tag embedded in it (json.dumps does NOT escape "<", ">" or "/")
     # so a `</untrusted_content>` hiding inside a string value cannot close
     # the fence early, nor can one built from look-alike characters. See
