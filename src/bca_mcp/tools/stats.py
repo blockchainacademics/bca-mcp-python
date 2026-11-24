@@ -214,11 +214,11 @@ _ADDRESS = re.compile(r"0x[0-9a-fA-F]{40}")
 _SLUG = re.compile(r"[a-z0-9]+(-[a-z0-9]+)*")
 _SEPARATORS = re.compile(r"[\s._]+")
 _CONTROL = re.compile(r"[\x00-\x1f\x7f-\x9f]")
-# Hidden characters, as the API's cleaners take them out (appendix C). Used to
-# spot a full address written with hidden characters or wide letters.
+# Hidden characters, as the API's cleaners take them out (appendix C). Written
+# as escapes, so the file holds no invisible or direction character itself.
 _HIDDEN = re.compile(
-    "[\u0000-\u001f\u007f-\u009f­؜ᅟᅠ឴឵᠋-᠏"
-    "​-‏ -‮⁠-⁯ㅤ︀-️﻿ﾠ￰-￻]"
+    "[\u0000-\u001f\u007f-\u009f\u00ad\u061c\u115f\u1160\u17b4\u17b5\u180b-\u180f"
+    "\u200b-\u200f\u2028-\u202e\u2060-\u206f\u3164\ufe00-\ufe0f\ufeff\uffa0\ufff0-\ufffb]"
 )
 
 # The measures the package knows, with their tab, their kinds and whether

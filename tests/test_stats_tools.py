@@ -302,7 +302,7 @@ async def test_a_new_tab_needs_no_package_release(httpx_mock) -> None:
         "0x" + "ab" * 20,
         "  0x" + "AB" * 20 + "  ",
         "0X" + "ab" * 20,
-        "0x" + "ab" * 10 + "​" + "ab" * 10,
+        "0x" + "ab" * 10 + "\u200b" + "ab" * 10,
         "０x" + "ab" * 20,
         f"<<outside:{MARK}>>0x" + "ab" * 20 + f"<</outside:{MARK}>>",
     ],
