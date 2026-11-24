@@ -39,10 +39,14 @@ from bca_mcp.client import get_client
 # parity fixtures must come from a TypeScript build with the same switch.
 
 # Decision 1: the built-in demo key opens the Stats tools, on the API's own
-# Stats allowance (60 calls a day for each network, 3,000 a day in all, set in
-# the API). False when a free key is required: the eight descriptions then drop
-# their last sentence, and the demo banner counts 17 tools again.
+# Stats allowance. False when a free key is required: the eight descriptions
+# then drop their last sentence, and the demo banner counts 17 tools again.
 DEMO_KEY_OPENS_STATS = True
+# The numbers of that allowance, as the copy gives them. The API holds the
+# allowance itself (app/api/demo_key.py). tests/test_copy.py checks the README
+# line against these, so other numbers in the owner's answer to line 1 change
+# here, and the test names the line to follow.
+STATS_DEMO_ALLOWANCE = {"all_per_day": 3_000, "per_network_per_day": 60, "per_second": 10}
 
 # Decision 2: the wallet lookup tool ships. False leaves it out of the tool
 # list: 112 tools, 24 without a key and 59 on a free key.

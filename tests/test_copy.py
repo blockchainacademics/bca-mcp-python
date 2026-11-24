@@ -255,3 +255,32 @@ def test_cli_error_text_escapes_markup_and_shows_detail() -> None:
 
     text = _error_text(BcaBadRequestError("BCA API rejected request: HTTP 404", detail="[bold]x[/bold]"))
     assert text == "BCA API rejected request: HTTP 404: \\[bold]x\\[/bold]"
+
+
+def test_the_readme_gives_the_stats_demo_allowance_of_the_constant() -> None:
+    # Owner line 1: the API holds the allowance; the README repeats its
+    # numbers, which tools/stats.py keeps in STATS_DEMO_ALLOWANCE.
+    readme = (ROOT / "README.md").read_text("utf-8")
+    said = re.findall(
+        r"The Stats tools have an allowance of their own on the demo key: ([\d,]+) calls a day across all demo "
+        r"users, (\d+) a day for each network, (\d+) per second\.",
+        readme,
+    )
+    allowance = stats.STATS_DEMO_ALLOWANCE
+    if stats.DEMO_KEY_OPENS_STATS:
+        assert said == [(f"{allowance['all_per_day']:,}", str(allowance["per_network_per_day"]),
+                         str(allowance["per_second"]))]
+    else:
+        assert said == []
+
+
+def test_the_copy_says_which_stats_errors_keep_the_api_text() -> None:
+    # Design 1.0: no key, a locked plan and a rate limit keep the API's own
+    # sentence, as today. Every other Stats error is a fixed sentence.
+    readme = (ROOT / "README.md").read_text("utf-8")
+    changelog = (ROOT / "CHANGELOG.md").read_text("utf-8").split("## [0.6.4]", 1)[0]
+    for where, text in (("README.md", readme), ("CHANGELOG.md", changelog)):
+        said = "a missing or wrong key, a locked plan and a rate limit keep the API's own message"
+        assert said.lower() in text.lower(), where
+        assert "answer every error with a fixed sentence" not in text, where
+        assert "A Stats error is one fixed sentence" not in text, where
