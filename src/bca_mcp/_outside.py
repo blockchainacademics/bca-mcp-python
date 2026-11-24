@@ -20,7 +20,9 @@ prefixes of ``bca_mcp._stats_constants``, and each ``meta`` field is checked
 for its type and its length. A field that fails is dropped.
 
 The TypeScript package keeps the same rules in ``src/outside.ts`` (design
-3.4); the parity tests compare the two on recorded answers.
+3.4); the parity tests compare the two on recorded answers. Where the two
+differed on an edge, each field now has one rule, the stricter one
+(tests/fixtures/stats_edge_cases.json holds the cases for both packages).
 """
 
 from __future__ import annotations
@@ -64,19 +66,26 @@ _KEY_SHAPE = re.compile(r"[a-z][a-z0-9_]{0,63}")
 # The characters RFC 3986 allows in a link. No space, no quote, no bracket.
 _LINK_CHARS = re.compile(r"[A-Za-z0-9\-._~:/?#\[\]@!$&'()*+,;=%]+")
 _LINK_MAX = 500
-_CITE_AS_OF = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{1,6})?)?(Z|[+-][0-9]{2}:[0-9]{2})?)?")
+# A citation's time: the UTC time the API writes, <day>T<hh:mm:ss>Z.
+_CITE_AS_OF = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,6})?Z")
+# meta.diagnostic.as_of: a day, or a day and a time.
+_DAY_OR_TIME = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{1,6})?)?(Z|[+-][0-9]{2}:[0-9]{2})?)?")
 _SOURCE_HASH = re.compile(r"sha256:[0-9a-f]{16,64}")
 _REQUEST_ID = re.compile(r"[A-Za-z0-9._:-]{1,64}")
-_CITATIONS_MAX = 10
+# A page cursor is a token, never free text: it sits outside the markers.
+_CURSOR = re.compile(r"[A-Za-z0-9_.:=-]{1,200}")
+_CONTROL = re.compile(r"[\x00-\x1f\x7f-\x9f]")
+_CITATIONS_MAX = 4
 
 # meta.diagnostic keeps these keys, each checked for its type and length.
-_REASON_MAX = 400
+_REASON_MAX = 300
 _ETA_MAX = 200
 _MISSING_MAX_ITEMS = 100
-_MISSING_ITEM_MAX = 120
+_MISSING_ITEM_MAX = 200
 _DIAGNOSTIC_AS_OF_MAX = 40
-_CURSOR_MAX = 200
-_TIERS = frozenset({"demo", "anonymous", "free", "starter", "pro", "team", "enterprise"})
+# The plans a key can be on (the API's APITier). "anonymous" is the keyless
+# article tier, and a Stats call always sends a key.
+_TIERS = frozenset({"demo", "free", "starter", "pro", "team", "enterprise"})
 STATUSES = ("complete", "unseeded", "partial", "stale")
 
 
@@ -163,12 +172,13 @@ def link_ok(url: Any, prefixes: tuple[str, ...] = (DATA_PREFIX, SITE_PREFIX)) ->
 
 
 def clean_citations(attribution: Any) -> dict[str, Any]:
-    """``attribution`` with each citation's link kept when it starts with one
-    of the two prefixes, else null. ``as_of`` and ``source_hash`` keep their
-    shape or become null. Any other key of a citation is dropped."""
+    """``attribution`` with its first four citations, each link kept when it
+    starts with one of the two prefixes, else null. An entry that is not an
+    object is left out. ``as_of`` and ``source_hash`` keep their shape or
+    become null. Any other key of a citation is dropped."""
     citations: list[dict[str, Any]] = []
     raw = attribution.get("citations") if isinstance(attribution, dict) else None
-    for cite in raw if isinstance(raw, list) else []:
+    for cite in (raw if isinstance(raw, list) else [])[:_CITATIONS_MAX]:
         if not isinstance(cite, dict):
             continue
         as_of = cite.get("as_of")
@@ -184,13 +194,12 @@ def clean_citations(attribution: Any) -> dict[str, Any]:
                 ),
             }
         )
-        if len(citations) == _CITATIONS_MAX:
-            break
     return {"citations": citations}
 
 
 def _short_text(value: Any, cap: int) -> bool:
-    return isinstance(value, str) and 0 < len(value) <= cap
+    """A text of 1 to ``cap`` characters with no control character."""
+    return isinstance(value, str) and 0 < len(value) <= cap and not _CONTROL.search(value)
 
 
 def _whole(value: Any) -> bool:
@@ -212,8 +221,9 @@ def clean_page_info(page_info: Any) -> dict[str, Any]:
         if isinstance(page_info.get(key), bool):
             info[key] = page_info[key]
     for key in ("startCursor", "endCursor"):
-        if _short_text(page_info.get(key), _CURSOR_MAX):
-            info[key] = page_info[key]
+        cursor = page_info.get(key)
+        if isinstance(cursor, str) and _CURSOR.fullmatch(cursor):
+            info[key] = cursor
     return info
 
 
@@ -229,13 +239,11 @@ def clean_diagnostic(diagnostic: Any) -> Optional[dict[str, Any]]:
     if _short_text(diagnostic.get("eta"), _ETA_MAX):
         out["eta"] = diagnostic["eta"]
     missing = diagnostic.get("missing")
-    if (
-        isinstance(missing, list)
-        and len(missing) <= _MISSING_MAX_ITEMS
-        and all(_short_text(m, _MISSING_ITEM_MAX) for m in missing)
-    ):
-        out["missing"] = list(missing)
-    if _short_text(diagnostic.get("as_of"), _DIAGNOSTIC_AS_OF_MAX) and _CITE_AS_OF.fullmatch(
+    if isinstance(missing, list):
+        # The items that pass, at most 100 of them: one bad item does not take
+        # the others with it.
+        out["missing"] = [m for m in missing if _short_text(m, _MISSING_ITEM_MAX)][:_MISSING_MAX_ITEMS]
+    if _short_text(diagnostic.get("as_of"), _DIAGNOSTIC_AS_OF_MAX) and _DAY_OR_TIME.fullmatch(
         diagnostic["as_of"]
     ):
         out["as_of"] = diagnostic["as_of"]
