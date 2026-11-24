@@ -250,20 +250,26 @@ def _real_day(value: Optional[str]) -> Optional[str]:
     return value
 
 
+def _clean_signed(text: str, max_len: int) -> str:
+    """The light cleaner of appendix C, as the API runs it: NFKC, the hidden
+    characters out, one space between words, trimmed and cut to max_len."""
+    plain = _HIDDEN.sub("", unicodedata.normalize("NFKC", text[: max(max_len, 1) * 4]))
+    return re.sub(r"\s+", " ", plain).strip()[:max_len].strip()
+
+
 def exchange_id(text: str) -> Optional[str]:
     """An exchange id as a person or a model may type it, in the shape of a
-    slug: trimmed, lower case, and spaces, dots and underscores turned into
-    hyphens. "Crypto.com" and "crypto com" both become "crypto-com". None
-    when nothing slug shaped is left."""
-    folded = _SEPARATORS.sub("-", text.strip().lower()).strip("-")
+    slug (appendix C): the light cleaner, casefold, and spaces, dots and
+    underscores turned into hyphens. "Crypto.com" and "crypto com" both
+    become "crypto-com". None when nothing slug shaped is left."""
+    folded = _SEPARATORS.sub("-", _clean_signed(text, 64).casefold()).strip("-")
     return folded if _SLUG.fullmatch(folded) else None
 
 
 def _is_full_address(text: str) -> bool:
-    """True for 0x and 40 hex characters, also when written with hidden
-    characters or wide letters in it."""
-    plain = _HIDDEN.sub("", unicodedata.normalize("NFKC", text)).strip()
-    return bool(re.fullmatch(r"0x[0-9a-f]{40}", plain, re.IGNORECASE))
+    """True for 0x and 40 hex characters once the light cleaner has run, so
+    also when written with hidden characters or wide letters in it."""
+    return bool(re.fullmatch(r"0x[0-9a-f]{40}", _clean_signed(text, 64), re.IGNORECASE))
 
 
 class _Args(BaseModel):
@@ -424,10 +430,11 @@ class CompareStatsRecordsInput(_Args):
             raise ValueError(IDS_RULE)
         folded: list[str] = []
         for part in parts:
-            if self.tab != "vaults" and _ADDRESS.fullmatch(part.strip()):
+            one = _record_id(self.tab, part)
+            if self.tab != "vaults" and _ADDRESS.fullmatch(one):
                 # A vault address in the exchanges tab: ids from two tabs.
                 raise ValueError(IDS_RULE)
-            folded.append(_record_id(self.tab, part))
+            folded.append(one)
         if len(set(folded)) != len(folded):
             raise ValueError(IDS_RULE)
         self.ids = folded

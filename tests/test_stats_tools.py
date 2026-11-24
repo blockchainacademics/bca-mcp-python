@@ -345,6 +345,10 @@ async def test_search_nothing_matches_is_unseeded_with_what_was_searched(httpx_m
         ("cryptocom", "cryptocom"),
         ("  Kraken ", "kraken"),
         ("test_exchange.A", "test-exchange-a"),
+        ("\uff2b\uff52\uff41\uff4b\uff45\uff4e", "kraken"),
+        ("Kra\u200bken", "kraken"),
+        ("kra\nken", "kraken"),
+        ("Stra\u00dfe", "strasse"),
     ],
 )
 async def test_an_exchange_id_is_trimmed_lowered_and_folded(httpx_mock, typed, sent) -> None:
@@ -412,6 +416,7 @@ async def test_compare_a_list_and_a_comma_text_send_the_same_request(httpx_mock)
         "crypto.com,Crypto com",
         "kraken,,coinbase",
         ["kraken", "0x" + "a" * 40],
+        ["kraken", "\uff10x" + "a" * 40],
         "kraken,\u0007coinbase",
     ],
 )
