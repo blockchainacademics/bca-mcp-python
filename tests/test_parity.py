@@ -1,12 +1,13 @@
 """Parity with the TypeScript sibling, @blockchainacademics/mcp 0.7.0.
 
-The fixture (tests/fixtures/ts_tools_0_7_0.json) holds the 113 tool names of
-the TS tools/list and, per tool, the JSON Schema constraints of its zod
-schema (type, integer vs number, enum, minimum, maximum, default) and its
-description. Both packages must advertise the same names and the same
-constraints, and the descriptions rewritten for the directory review in 0.6.4
-and the 8 Stats descriptions of 0.7.0 must read the same in both. Its source
-field says how it was made.
+The fixture (tests/fixtures/ts_tools_0_7_0.json) is a dump of the tools/list
+of the TS 0.7.0 build: the 113 tool names and, per tool, the JSON Schema
+constraints of its zod schema (type, integer vs number, enum, minimum,
+maximum, default) and its description, and the whole inputSchema of the 8
+Stats tools. Both packages must advertise the same names and the same
+constraints, the 8 Stats tools the same whole schema, and the descriptions
+rewritten for the directory review in 0.6.4 and the 8 Stats descriptions of
+0.7.0 must read the same in both. Its source field says how it was made.
 """
 
 from __future__ import annotations
@@ -108,6 +109,25 @@ def test_schema_constraints_match_ts(name: str) -> None:
     assert sorted(schema.get("required", [])) == expected["required"]
     for prop, want in expected["properties"].items():
         assert _pick(schema["properties"][prop]) == want, f"{name}.{prop}"
+
+
+@pytest.mark.parametrize("name", sorted(FIXTURE["stats_input_schemas"]))
+def test_stats_input_schemas_equal_the_ts_build(name: str) -> None:
+    # Pattern, minLength and maxLength included, which the constraints above
+    # leave out (review finding 11). Key order aside, the same schema.
+    if name not in {t.name for t in TOOLS}:
+        pytest.skip("owner switch 2 leaves lookup_stats_wallet out")
+    tool = next(t for t in TOOLS if t.name == name)
+    ours = json.loads(json.dumps(tool.input_schema, sort_keys=True))
+    theirs = json.loads(json.dumps(FIXTURE["stats_input_schemas"][name], sort_keys=True))
+    assert ours == theirs
+
+
+def test_the_stats_schemas_in_the_fixture_are_the_stats_tools() -> None:
+    assert sorted(FIXTURE["stats_input_schemas"]) == sorted(
+        n for n in TS_NAMES if n.endswith("_stats") or "_stats_" in n
+    )
+    assert len(FIXTURE["stats_input_schemas"]) == (8 if "lookup_stats_wallet" in TS_NAMES else 7)
 
 
 def test_every_schema_has_properties() -> None:
