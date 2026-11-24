@@ -9,6 +9,7 @@ real closing tag appears once, after the planted text.
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
 
@@ -56,9 +57,31 @@ def test_the_cleaner_takes_hidden_characters_out_and_keeps_lines() -> None:
     assert clean_fence_text(text) == "abcdefg\tline\none\r\nA"
 
 
-def test_the_cleaner_walks_values_and_keeps_keys() -> None:
-    value = {"t\u200bitle": ["x\u200by", {"n": "１"}], "n": 3, "ok": True, "none": None}
-    assert clean_fence_value(value) == {"t\u200bitle": ["xy", {"n": "1"}], "n": 3, "ok": True, "none": None}
+def test_the_cleaner_walks_values_and_keys() -> None:
+    # A key is part of the fenced text too, so it is cleaned as a string is,
+    # as in the TS sibling since its commit 73fbd06.
+    value = {"t\u200bitle": ["x\u200by", {"\uff4e": "１"}], "n": 3, "ok": True, "none": None}
+    assert clean_fence_value(value) == {"title": ["xy", {"n": "1"}], "n": 3, "ok": True, "none": None}
+    # Two keys that clean to the same text: the place of the earlier one, the
+    # value of the later one.
+    assert list(clean_fence_value({"a\u200bb": 1, "z": 2, "ab": 3}).items()) == [("ab", 3), ("z", 2)]
+
+
+SHARED = json.loads((Path(__file__).parent / "fixtures" / "fence_parity.json").read_text("utf-8"))
+
+
+def test_the_shared_fence_cases_are_there() -> None:
+    # tests/fixtures/fence_parity.json is the TS sibling's
+    # test/fixtures/fence_parity.json (commit dea9b62), copied unchanged: the
+    # text was built apart from either package, from the rule as written.
+    assert SHARED["id"] == FENCE_ID
+    assert len(SHARED["cases"]) >= 7
+    assert any("line 1\\nline 2\\tcell\\r\\nend" in c["fenced"] for c in SHARED["cases"])
+
+
+@pytest.mark.parametrize("case", SHARED["cases"], ids=[c["name"] for c in SHARED["cases"]])
+def test_the_fenced_text_equals_the_shared_one_byte_for_byte(case) -> None:
+    assert _fence_envelope_data({"data": case["data"]}, SHARED["id"])["data"] == case["fenced"]
 
 
 def test_the_fences_around_single_fields_stay_as_they_are() -> None:

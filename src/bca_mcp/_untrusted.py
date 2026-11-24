@@ -27,7 +27,8 @@ neutralize to the same ``&lt;…&gt;`` bytes so the two servers emit identical
 output for the same payload.
 
 0.7.0 (AGENTS-08 fixes 1, 2 and 7): before the whole-data fence neutralizes
-tags, every string of the payload is cleaned with ``clean_fence_value``:
+tags, every string of the payload, the keys of its objects included, is
+cleaned with ``clean_fence_value``:
 NFKC, so fullwidth brackets become plain ones, then the hidden characters
 out, so a zero width space or a soft hyphen cannot split a tag name. A
 look-alike tag then becomes a plain tag, which ``neutralize_fence_tokens``
@@ -84,14 +85,19 @@ def clean_fence_text(text: str) -> str:
 
 
 def clean_fence_value(value: Any) -> Any:
-    """A copy of a payload with every string in it cleaned. Keys and every
-    other value stay as they are."""
+    """A copy of a payload with every string in it cleaned, the keys of its
+    objects included: a key is part of the fenced text too. Every other value
+    stays as it is. Two keys that clean to the same text keep the place of
+    the earlier one and the value of the later one, as in the TS sibling."""
     if isinstance(value, str):
         return clean_fence_text(value)
     if isinstance(value, list):
         return [clean_fence_value(v) for v in value]
     if isinstance(value, dict):
-        return {k: clean_fence_value(v) for k, v in value.items()}
+        return {
+            (clean_fence_text(k) if isinstance(k, str) else k): clean_fence_value(v)
+            for k, v in value.items()
+        }
     return value
 
 

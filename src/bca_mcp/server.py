@@ -481,7 +481,9 @@ def _fence_envelope_data(envelope: Any, fence_id: Optional[str] = None) -> Any:
     # so a `</untrusted_content>` hiding inside a string value cannot close
     # the fence early, nor can one built from look-alike characters. See
     # bca_mcp._untrusted for the rationale.
-    rendered = _json.dumps(clean_fence_value(envelope["data"]), indent=2, default=str)
+    # Letters outside ASCII are written as they are, as JSON.stringify does
+    # in the TS sibling, so the fenced text is the same in both packages.
+    rendered = _json.dumps(clean_fence_value(envelope["data"]), indent=2, default=str, ensure_ascii=False)
     rendered = neutralize_fence_tokens(rendered)
     fenced = f"{_fence_open(fence_id)}{rendered}{_fence_close(fence_id)}"
     out = dict(envelope)

@@ -233,7 +233,7 @@ Every response is the same envelope, with a structured `attribution` block:
 
 **When your agent surfaces BCA content to a user, link `citations[0].cite_url`.** `as_of` and `source_hash` let downstream systems spot stale or changed data. Fields are preserved as `null` (not dropped) when upstream omits them, so agents can detect missing provenance explicitly.
 
-The MCP server returns `data` inside an `<untrusted_content source="bca-api" id="...">` fence, closed by `</untrusted_content id="...">`, with an id made new for each answer, so the host model reads upstream text as data, not instructions. Its text is cleaned (NFKC, hidden characters out) before any tag in it is neutralized, so a closing tag built from look-alike characters is neutralized like a plain one, and none can carry the id. `attribution` and `meta` stay structured. The Stats tools mark each outside string on its own instead (see Stats tools above).
+The MCP server returns `data` inside an `<untrusted_content source="bca-api" id="...">` fence, closed by `</untrusted_content id="...">`, with an id made new for each answer, so the host model reads upstream text as data, not instructions. Its text, keys included, is cleaned (NFKC, hidden characters out) before any tag in it is neutralized, so a closing tag built from look-alike characters is neutralized like a plain one, and none can carry the id. `attribution` and `meta` stay structured. The Stats tools mark each outside string on its own instead (see Stats tools above).
 
 ## Reading `meta.status`
 
