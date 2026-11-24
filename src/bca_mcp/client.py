@@ -682,7 +682,7 @@ class BcaClient:
                     or "This tool requires a paid tier. Upgrade at https://blockchainacademics.com/crypto-api/signup",
                     res.status_code,
                 )
-            raise BcaAuthError(upstream_msg or "Invalid or missing BCA_API_KEY")
+            raise BcaAuthError(upstream_msg or "Invalid or missing BCA_API_KEY", res.status_code)
         if res.status_code == 402:
             # A valid key on a plan below the tool's. Same code as the no-key
             # 403 above. The API's upgrade sentence (it carries the pricing

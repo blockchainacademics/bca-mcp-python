@@ -1223,3 +1223,17 @@ async def test_the_client_keeps_its_old_shape_handling_by_default(httpx_mock) ->
     upgraded = await get_client().request("/v1/x")
     assert upgraded["attribution"]["citations"][0]["cite_url"] == "https://x.test/c"
     assert await get_client().request("/v1/x", canonicalize=False) == flat
+
+
+@pytest.mark.asyncio
+async def test_a_403_with_the_api_fixed_forbidden_is_a_bad_request(httpx_mock) -> None:
+    # Design 1.0: a 403 "Forbidden" (an Origin the API does not know) is one of
+    # the API's fixed sentences, so it comes back word for word as a bad
+    # request, not as a key problem. The TypeScript package does the same.
+    err = _error(await _call(httpx_mock, "list_stats_measures", {}, {"detail": "Forbidden"}, status=403))
+    assert err == {"code": "BCA_BAD_REQUEST", "message": "Forbidden"}
+    # Any other 403 reads as today.
+    other = _error(await _call(httpx_mock, "list_stats_measures", {}, {"detail": "Invalid API key."}, status=403))
+    assert other["code"] == "BCA_AUTH"
+    unauthorized = _error(await _call(httpx_mock, "list_stats_measures", {}, {"detail": "Forbidden"}, status=401))
+    assert unauthorized["code"] == "BCA_AUTH"

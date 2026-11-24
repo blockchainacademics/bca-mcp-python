@@ -52,8 +52,10 @@ class BcaError(Exception):
 
 
 class BcaAuthError(BcaError):
-    def __init__(self, message: str = "Invalid or missing BCA_API_KEY") -> None:
-        super().__init__("BCA_AUTH", message, 401)
+    """``status`` is the HTTP status the API sent: 401, or 403."""
+
+    def __init__(self, message: str = "Invalid or missing BCA_API_KEY", status: int = 401) -> None:
+        super().__init__("BCA_AUTH", message, status)
 
 
 class BcaRateLimitError(BcaError):

@@ -81,6 +81,7 @@ from bca_mcp._untrusted import (
 )
 from bca_mcp.annotations import tool_annotations
 from bca_mcp.errors import (
+    BcaAuthError,
     BcaBadRequestError,
     BcaError,
     BcaNetworkError,
@@ -571,6 +572,12 @@ def _stats_error(tool: ToolEntry, err: Exception, call_id: str) -> CallToolResul
         if err.detail in STATS_API_SENTENCES:
             return _error_result("BCA_BAD_REQUEST", err.detail)
         return _error_result("BCA_BAD_REQUEST", STATS_REFUSED.format(id=call_id))
+    if isinstance(err, BcaAuthError) and err.status == 403 and str(err) in STATS_API_SENTENCES:
+        # A 403 whose detail is one of the API's fixed sentences ("Forbidden",
+        # for an Origin the API does not know) is a refused request, not a key
+        # problem: that sentence, as for any other 4xx (design 1.0). The TS
+        # sibling does the same since its commit 2ec397a.
+        return _error_result("BCA_BAD_REQUEST", str(err))
     if isinstance(err, BcaNetworkError):
         return _error_result("BCA_NETWORK", STATS_NETWORK.format(id=call_id))
     if isinstance(err, BcaUpstreamError):
