@@ -48,7 +48,10 @@ from typing import Any
 # closing slash; the leading/trailing ``\s*`` and the ``\s*`` around the slash
 # tolerate obfuscation whitespace; ``[^>]*`` swallows any attributes on the
 # opening form up to the terminating ``>``.
-_FENCE_TAG_RE = re.compile(r"<\s*/?\s*untrusted_content\b[^>]*>", re.IGNORECASE)
+# `(?:/\s*)?` in place of `/?\s*`: the same matches, in linear time (two runs of
+# spaces next to each other made the old form backtrack with the square of
+# their length). The TypeScript package holds the same pattern.
+_FENCE_TAG_RE = re.compile(r"<\s*(?:/\s*)?untrusted_content\b[^>]*>", re.IGNORECASE)
 
 
 def _escape_tag(match: "re.Match[str]") -> str:
@@ -74,7 +77,7 @@ def neutralize_fence_tokens(text: str) -> str:
 _FENCE_HIDDEN_RE = re.compile(
     "[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f\u00ad\u061c\u115f\u1160"
     "\u17b4\u17b5\u180b-\u180f\u200b-\u200f\u2028-\u202e\u2060-\u206f\u3164"
-    "\ufe00-\ufe0f\ufeff\uffa0\ufff0-\ufffb]"
+    "\ufe00-\ufe0f\ufeff\uffa0\ufff0-\ufffb\U000e0000-\U000e007f]"
 )
 
 

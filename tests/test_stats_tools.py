@@ -280,7 +280,6 @@ async def test_measure_must_match_the_strict_pattern(httpx_mock, measure) -> Non
         ({"tab": "exchanges", "measure": "money_put_in"}, stats.MEASURE_OTHER_TAB),
         ({"tab": "vaults", "measure": "checks_passed"}, stats.MEASURE_OTHER_TAB),
         ({"tab": "vaults", "measure": "yield_delivered"}, stats.MEASURE_OTHER_TAB),
-        ({"tab": "yields", "measure": "yield_delivered"}, stats.MEASURE_OTHER_TAB),
         ({"tab": "exchanges", "measure": "real_cost_buy_1000", "kind": "swap"}, stats.KIND_NOT_FOR_MEASURE),
         ({"tab": "vaults", "measure": "money_put_in", "kind": "centralised"}, stats.KIND_NOT_FOR_MEASURE),
     ],
@@ -288,6 +287,36 @@ async def test_measure_must_match_the_strict_pattern(httpx_mock, measure) -> Non
 async def test_a_known_measure_of_the_other_tab_is_refused(httpx_mock, args, sentence) -> None:
     err = await _refused(httpx_mock, "rank_stats", args)
     assert err["message"] == f"Invalid arguments for rank_stats: {sentence}"
+
+
+@pytest.mark.asyncio
+async def test_yield_delivered_in_its_own_tab_is_sent(httpx_mock) -> None:
+    """The API answers that it is not open yet; the package needs no release
+    the day the Yields tab opens (design section 7)."""
+    err = _error(await _call(httpx_mock, "rank_stats", {"tab": "yields", "measure": "yield_delivered"},
+                             {"detail": "That measure does not belong to that tab."}, status=400))
+    assert err == {"code": "BCA_BAD_REQUEST", "message": "That measure does not belong to that tab."}
+    assert dict(httpx_mock.get_request().url.params)["measure"] == "yield_delivered"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "tool,args",
+    [
+        ("search_stats", {"query": "growi"}),
+        ("list_stats_measures", {}),
+        ("rank_stats", {"tab": "vaults", "measure": "money_put_in"}),
+        ("get_stats_method", {"topic": "vaults"}),
+        ("list_stats_changes", {}),
+        ("lookup_stats_wallet", {"address": "0x" + "ab" * 20}),
+    ],
+)
+async def test_a_404_to_a_tool_that_asks_for_no_record_is_a_failed_call(httpx_mock, tool, args) -> None:
+    if tool == "lookup_stats_wallet" and not stats.WALLET_LOOKUP_TOOL:
+        pytest.skip("the wallet lookup is switched off")
+    err = _error(await _call(httpx_mock, tool, args, {"detail": "Not Found"}, status=404))
+    assert err["code"] == "BCA_UPSTREAM"
+    assert err["message"].startswith("The Stats API call failed. Request id: ")
 
 
 @pytest.mark.asyncio

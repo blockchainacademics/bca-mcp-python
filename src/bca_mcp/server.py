@@ -494,8 +494,11 @@ def _fence_envelope_data(envelope: Any, fence_id: Optional[str] = None) -> Any:
 
 # --- Stats tools: answers and errors (design-final.md 1.0) --------------------
 
-# The answer to an API 404, the same for an id that is hidden and one that is
-# unknown.
+# The answer to an API 404 from a tool that asks for a record by its id, the
+# same for an id that is hidden and one that is unknown. For the other Stats
+# tools a 404 means the route is not there (an API rolled back, a wrong base
+# address): a failed call, never an answer about the data.
+STATS_RECORD_TOOLS = frozenset({"get_stats_record", "compare_stats_records"})
 STATS_NOT_FOUND = (
     "No published Stats record for that id. Not every vault on the venue has a record: "
     "the venue's own vaults and vaults with no details on file have none."
@@ -568,7 +571,9 @@ def _stats_error(tool: ToolEntry, err: Exception, call_id: str) -> CallToolResul
         return _error_result("BCA_UPSTREAM", STATS_TOO_LARGE)
     if isinstance(err, BcaBadRequestError) and err.status is not None and 400 <= err.status < 500:
         if err.status == 404:
-            return _error_result("BCA_BAD_REQUEST", STATS_NOT_FOUND)
+            if tool.name in STATS_RECORD_TOOLS:
+                return _error_result("BCA_BAD_REQUEST", STATS_NOT_FOUND)
+            return _error_result("BCA_UPSTREAM", STATS_FAILED.format(id=call_id))
         if err.detail in STATS_API_SENTENCES:
             return _error_result("BCA_BAD_REQUEST", err.detail)
         return _error_result("BCA_BAD_REQUEST", STATS_REFUSED.format(id=call_id))

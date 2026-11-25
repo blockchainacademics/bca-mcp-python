@@ -238,7 +238,8 @@ _CONTROL = re.compile(r"[\x00-\x1f\x7f-\x9f]")
 # as escapes, so the file holds no invisible or direction character itself.
 _HIDDEN = re.compile(
     "[\u0000-\u001f\u007f-\u009f\u00ad\u061c\u115f\u1160\u17b4\u17b5\u180b-\u180f"
-    "\u200b-\u200f\u2028-\u202e\u2060-\u206f\u3164\ufe00-\ufe0f\ufeff\uffa0\ufff0-\ufffb]"
+    "\u200b-\u200f\u2028-\u202e\u2060-\u206f\u3164\ufe00-\ufe0f\ufeff\uffa0\ufff0-\ufffb"
+    "\U000e0000-\U000e007f]"
 )
 # The 32 look-alike Cyrillic and Greek letters of the design's fold, turned
 # into Latin ones (appendix C, CONFUSABLE in the reference script). Written as
@@ -256,8 +257,10 @@ _FORTY_HEX = re.compile(r"[0-9a-f]{40}")
 
 # The measures the package knows, with their tab, their kinds and whether
 # rank_stats takes them (appendix F). A known measure asked for another tab,
-# one that is not open (yield_delivered), or one with a kind it does not take,
-# is refused before any request. A measure the package does not know, but the
+# one that is not open, or one with a kind it does not take, is refused before
+# any request. yield_delivered is open here: in its own tab it is sent and the
+# API answers that it is not open yet, so the day the Yields tab opens needs no
+# release of this package (design section 7). A measure the package does not know, but the
 # pattern allows, is sent: the API answers.
 KNOWN_MEASURES: dict[str, tuple[str, tuple[str, ...], bool]] = {
     "checks_passed": ("exchanges", ("centralised", "swap", "leveraged"), True),
@@ -267,7 +270,7 @@ KNOWN_MEASURES: dict[str, tuple[str, tuple[str, ...], bool]] = {
     "real_cost_position_1000": ("exchanges", ("leveraged",), True),
     "money_put_in": ("vaults", (), True),
     "left_took_home": ("vaults", (), True),
-    "yield_delivered": ("yields", (), False),
+    "yield_delivered": ("yields", (), True),
 }
 
 Kind = Literal["centralised", "swap", "leveraged"]
