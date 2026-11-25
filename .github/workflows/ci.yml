@@ -53,7 +53,7 @@ jobs:
           cd /tmp
           /tmp/clean/bin/python -c "import bca_mcp; print('import OK', bca_mcp.__version__)"
           /tmp/clean/bin/python -c "from bca_mcp.client import BcaClient, get_client; print('client OK')"
-          /tmp/clean/bin/python -c "from bca_mcp.server import TOOLS; assert len(TOOLS) == 105"
+          /tmp/clean/bin/python -c "from bca_mcp.server import TOOLS; assert len(TOOLS) == 113"
           /tmp/clean/bin/bca --help >/dev/null
           # The stdio server exits 0 at the end of its input.
           /tmp/clean/bin/bca-mcp < /dev/null

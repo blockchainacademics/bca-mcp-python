@@ -9,19 +9,28 @@ from pathlib import Path
 
 from bca_mcp._demo_banner import DEMO_BANNER
 from bca_mcp.server import TOOLS
+from bca_mcp.tools import stats
 
 ROOT = Path(__file__).resolve().parent.parent
 EM_DASH = "—"
 
 # The API's demo allowlist (blockchainacademics-api app/api/v1/_demo_allowlist.py;
-# 2026-11-02: the 16 of 2026-10-31 plus get_article).
-DEMO_TOOLS = (
+# 2026-11-02: the 16 of 2026-10-31 plus get_article), and the Stats tools of
+# 0.7.0 while owner decision 1 opens them to the demo key
+# (DEMO_KEY_OPENS_STATS in tools/stats.py): 25 in all with the recommended
+# answers. The Stats tools are the ones the owner's switches leave in, so a
+# flipped switch fails only the copy checks that must change with it.
+BASE_DEMO_TOOLS = (
     "get_price", "get_trending", "get_fear_greed", "get_market_overview",
     "search_news", "get_article", "get_sentiment", "get_entity",
     "get_explainer", "get_recent_stories", "get_topic", "search_grants",
     "get_grant", "list_jobs", "get_job", "search_academy",
     "get_as_of_snapshot",
 )
+STATS_TOOLS = tuple(t.name for t in TOOLS if t.output == "stats")
+DEMO_TOOLS = BASE_DEMO_TOOLS + (STATS_TOOLS if stats.DEMO_KEY_OPENS_STATS else ())
+# The free tier: the 52 older tools that name no paid tier, and the Stats tools.
+FREE_KEY_TOOLS = 52 + len(STATS_TOOLS)
 
 # The API's topic taxonomy (topic_taxonomy, scripts/seed_canonical_slugs.py).
 TAXONOMY = {
@@ -36,16 +45,41 @@ def _tool(name: str):
 
 def test_demo_banner_exact_bytes() -> None:
     assert DEMO_BANNER == (
-        "[bca-mcp] Running in DEMO mode: 17 tools work without a key, under a shared daily cap.\n"
-        "[bca-mcp] A free key opens 52 tools and paid plans open the rest: https://blockchainacademics.com/crypto-api/signup?ref=mcp-first-run\n"
+        f"[bca-mcp] Running in DEMO mode: {len(DEMO_TOOLS)} tools work without a key, under a shared daily cap.\n"
+        f"[bca-mcp] A free key opens {FREE_KEY_TOOLS} tools and paid plans open the rest: https://blockchainacademics.com/crypto-api/signup?ref=mcp-first-run\n"
         "[bca-mcp] Set: export BCA_API_KEY=bca_...   (or add to your client config)\n"
     )
     assert DEMO_BANNER.isascii()
 
 
+def test_the_banner_counts_follow_the_owner_switches(monkeypatch) -> None:
+    import importlib
+
+    from bca_mcp import _demo_banner
+
+    seen = {}
+    try:
+        for opens in (True, False):
+            for wallet in (True, False):
+                monkeypatch.setattr(stats, "DEMO_KEY_OPENS_STATS", opens)
+                monkeypatch.setattr(stats, "WALLET_LOOKUP_TOOL", wallet)
+                banner = importlib.reload(_demo_banner).DEMO_BANNER
+                seen[(opens, wallet)] = (
+                    int(banner.split("DEMO mode: ", 1)[1].split(" ", 1)[0]),
+                    int(banner.split("A free key opens ", 1)[1].split(" ", 1)[0]),
+                )
+    finally:
+        monkeypatch.undo()
+        importlib.reload(_demo_banner)
+    assert _demo_banner.DEMO_BANNER == DEMO_BANNER
+    # Design section 0, "If the owner picks the other option".
+    assert seen == {(True, True): (25, 60), (True, False): (24, 59), (False, True): (17, 60), (False, False): (17, 59)}
+
+
 def test_demo_tools_exist() -> None:
     names = {t.name for t in TOOLS}
-    assert len(DEMO_TOOLS) == 17 and set(DEMO_TOOLS) <= names
+    assert set(DEMO_TOOLS) <= names and len(set(DEMO_TOOLS)) == len(DEMO_TOOLS)
+    assert len(STATS_TOOLS) == (8 if stats.WALLET_LOOKUP_TOOL else 7)
     assert f"{len(DEMO_TOOLS)} tools work without a key" in DEMO_BANNER
 
 
@@ -71,10 +105,11 @@ def test_no_copy_still_counts_16_demo_tools() -> None:
 
 def test_free_key_reach_matches_the_tool_descriptions() -> None:
     # A tool on a paid plan names its tier in its description; the others are
-    # the free tier (52 of the 105 on 2026-11-01).
+    # the free tier (60 of the 113 in 0.7.0: the 52 of 2026-11-01 and the 8
+    # Stats tools).
     paid = [t for t in TOOLS if re.search(r"\b(Starter|Pro|Team) tier\b", t.description)]
     free = len(TOOLS) - len(paid)
-    assert free == 52
+    assert free == FREE_KEY_TOOLS
     assert f"A free key opens {free} tools and paid plans open the rest" in DEMO_BANNER
     readme = (ROOT / "README.md").read_text("utf-8")
     assert f"A free key opens {free} tools." in readme
@@ -91,17 +126,21 @@ def test_free_key_reach_matches_the_tool_descriptions() -> None:
         assert not stale.search(text), f"{where} says a free key opens every tool"
 
 
-def test_readme_lists_the_17_demo_tools_and_current_counts() -> None:
+def test_readme_lists_the_demo_tools_and_current_counts() -> None:
     readme = (ROOT / "README.md").read_text("utf-8")
     section = readme.split("## Zero-config first run", 1)[1].split("\n## ", 1)[0]
     listed = re.findall(r"`([a-z_]+)`", section)
     assert [t for t in listed if t in {x.name for x in TOOLS}] == list(DEMO_TOOLS)
-    assert "17 tools" in section
+    assert f"{len(DEMO_TOOLS)} tools" in section
     assert "upgrade message" in section
     for stale in ("10 marquee", "first 8 tools", "8 tools", "1,000 calls", "99-tool",
-                  "91 of the 105", "89 of the 105", "16 tools", "43 academy", "102 tools"):
+                  "91 of the 105", "89 of the 105", "88 of the 105", "16 tools", "43 academy",
+                  "102 tools", "105-tool", "all 105", "same 105"):
         assert stale not in readme, stale
-    assert "88 of the 105" in readme
+    if stats.DEMO_KEY_OPENS_STATS:
+        assert "17 tools" not in readme
+    assert f"{len(TOOLS) - len(DEMO_TOOLS)} of the {len(TOOLS)}" in readme
+    assert f"all {len(TOOLS)} at" in readme
     assert "38 academy lessons" in readme
 
 
@@ -216,3 +255,32 @@ def test_cli_error_text_escapes_markup_and_shows_detail() -> None:
 
     text = _error_text(BcaBadRequestError("BCA API rejected request: HTTP 404", detail="[bold]x[/bold]"))
     assert text == "BCA API rejected request: HTTP 404: \\[bold]x\\[/bold]"
+
+
+def test_the_readme_gives_the_stats_demo_allowance_of_the_constant() -> None:
+    # Owner line 1: the API holds the allowance; the README repeats its
+    # numbers, which tools/stats.py keeps in STATS_DEMO_ALLOWANCE.
+    readme = (ROOT / "README.md").read_text("utf-8")
+    said = re.findall(
+        r"The Stats tools have an allowance of their own on the demo key: ([\d,]+) calls a day across all demo "
+        r"users, (\d+) a day for each network, (\d+) per second\.",
+        readme,
+    )
+    allowance = stats.STATS_DEMO_ALLOWANCE
+    if stats.DEMO_KEY_OPENS_STATS:
+        assert said == [(f"{allowance['all_per_day']:,}", str(allowance["per_network_per_day"]),
+                         str(allowance["per_second"]))]
+    else:
+        assert said == []
+
+
+def test_the_copy_says_which_stats_errors_keep_the_api_text() -> None:
+    # Design 1.0: no key, a locked plan and a rate limit keep the API's own
+    # sentence, as today. Every other Stats error is a fixed sentence.
+    readme = (ROOT / "README.md").read_text("utf-8")
+    changelog = (ROOT / "CHANGELOG.md").read_text("utf-8").split("## [0.6.4]", 1)[0]
+    for where, text in (("README.md", readme), ("CHANGELOG.md", changelog)):
+        said = "a missing or wrong key, a locked plan and a rate limit keep the API's own message"
+        assert said.lower() in text.lower(), where
+        assert "answer every error with a fixed sentence" not in text, where
+        assert "A Stats error is one fixed sentence" not in text, where

@@ -1,11 +1,13 @@
-"""Parity with the TypeScript sibling, @blockchainacademics/mcp 0.6.4.
+"""Parity with the TypeScript sibling, @blockchainacademics/mcp 0.7.0.
 
-The fixture (tests/fixtures/ts_tools_0_6_4.json) holds the 105 tool names of
-the TS tools/list and, per tool, the JSON Schema constraints of its zod
-schema (type, integer vs number, enum, minimum, maximum, default) and its
-description. Both packages must advertise the same names and the same
-constraints, and the descriptions rewritten for the directory review in 0.6.4
-must read the same in both.
+The fixture (tests/fixtures/ts_tools_0_7_0.json) is a dump of the tools/list
+of the TS 0.7.0 build: the 113 tool names and, per tool, the JSON Schema
+constraints of its zod schema (type, integer vs number, enum, minimum,
+maximum, default) and its description, and the whole inputSchema of the 8
+Stats tools. Both packages must advertise the same names and the same
+constraints, the 8 Stats tools the same whole schema, and the descriptions
+rewritten for the directory review in 0.6.4 and the 8 Stats descriptions of
+0.7.0 must read the same in both. Its source field says how it was made.
 """
 
 from __future__ import annotations
@@ -20,9 +22,10 @@ from mcp.types import ListToolsRequest
 
 from bca_mcp.annotations import WRITE_TOOLS, tool_annotations, tool_title
 from bca_mcp.server import TOOLS, build_server, tool_definitions
+from bca_mcp.tools import stats
 
 FIXTURE = json.loads(
-    (Path(__file__).parent / "fixtures" / "ts_tools_0_6_4.json").read_text("utf-8")
+    (Path(__file__).parent / "fixtures" / "ts_tools_0_7_0.json").read_text("utf-8")
 )
 TS_NAMES: list[str] = FIXTURE["names"]
 TS_CONSTRAINTS: dict[str, Any] = FIXTURE["constraints"]
@@ -40,6 +43,9 @@ SHARED_DESCRIPTIONS = (
     "summarize_whitepaper", "translate_contract", "book_kol_campaign",
     "request_custom_research", "submit_listing", "search_academy",
     "get_history_correlation",
+    # 0.7.0: the 8 Stats tools (design-final.md appendix D, word for word),
+    # the ones the owner's switch 2 leaves in.
+    *(t.name for t in TOOLS if t.output == "stats"),
 )
 # The two indicators share everything before each package's own meta.status
 # sentence (_STATUS_NOTE here, STATUS_NOTE in the TS sibling).
@@ -60,9 +66,11 @@ def _pick(prop: dict[str, Any]) -> dict[str, Any]:
 
 
 def test_tool_names_equal_the_ts_tools_list() -> None:
+    # 113 with the owner's recommended answers; the TS dump must come from a
+    # build with the same switches (tools/stats.py).
     names = [t.name for t in TOOLS]
-    assert len(TS_NAMES) == 105
-    assert len(names) == 105, f"expected 105 tools, got {len(names)}"
+    assert len(names) == (113 if stats.WALLET_LOOKUP_TOOL else 112), f"got {len(names)} tools"
+    assert len(TS_NAMES) == len(names), f"the TS tools/list has {len(TS_NAMES)} tools, this package {len(names)}"
     assert len(set(names)) == len(names), "duplicate tool name"
     missing = sorted(set(TS_NAMES) - set(names))
     extra = sorted(set(names) - set(TS_NAMES))
@@ -103,6 +111,25 @@ def test_schema_constraints_match_ts(name: str) -> None:
         assert _pick(schema["properties"][prop]) == want, f"{name}.{prop}"
 
 
+@pytest.mark.parametrize("name", sorted(FIXTURE["stats_input_schemas"]))
+def test_stats_input_schemas_equal_the_ts_build(name: str) -> None:
+    # Pattern, minLength and maxLength included, which the constraints above
+    # leave out (review finding 11). Key order aside, the same schema.
+    if name not in {t.name for t in TOOLS}:
+        pytest.skip("owner switch 2 leaves lookup_stats_wallet out")
+    tool = next(t for t in TOOLS if t.name == name)
+    ours = json.loads(json.dumps(tool.input_schema, sort_keys=True))
+    theirs = json.loads(json.dumps(FIXTURE["stats_input_schemas"][name], sort_keys=True))
+    assert ours == theirs
+
+
+def test_the_stats_schemas_in_the_fixture_are_the_stats_tools() -> None:
+    assert sorted(FIXTURE["stats_input_schemas"]) == sorted(
+        n for n in TS_NAMES if n.endswith("_stats") or "_stats_" in n
+    )
+    assert len(FIXTURE["stats_input_schemas"]) == (8 if "lookup_stats_wallet" in TS_NAMES else 7)
+
+
 def test_every_schema_has_properties() -> None:
     for t in TOOLS:
         assert isinstance(t.input_schema.get("properties"), dict), t.name
@@ -120,10 +147,29 @@ def test_one_of_tools_advertise_their_inputs(name: str) -> None:
         assert p["type"] == "string" and p["description"]
 
 
+# The one union on purpose: compare_stats_records takes its ids as a list or
+# as one text with commas, with this schema in both packages (design 1.5).
+STATS_IDS_SCHEMA = {
+    "anyOf": [
+        {"type": "array", "minItems": 2, "maxItems": 5,
+         "items": {"type": "string", "minLength": 1, "maxLength": 64}},
+        {"type": "string", "minLength": 3, "maxLength": 400},
+    ]
+}
+
+
+def test_compare_stats_records_ids_is_the_designed_union() -> None:
+    prop = dict(next(t for t in TOOLS if t.name == "compare_stats_records").input_schema["properties"]["ids"])
+    assert prop.pop("description")
+    assert prop == STATS_IDS_SCHEMA
+
+
 def test_optional_fields_have_no_null_branch_or_titles() -> None:
     for t in TOOLS:
         assert "title" not in t.input_schema, t.name
         for name, prop in t.input_schema["properties"].items():
+            if (t.name, name) == ("compare_stats_records", "ids"):
+                continue  # checked against STATS_IDS_SCHEMA above
             assert "anyOf" not in prop, f"{t.name}.{name}"
             assert "title" not in prop, f"{t.name}.{name}"
             assert prop.get("default", "unset") is not None, f"{t.name}.{name}"
@@ -185,7 +231,12 @@ async def test_tools_list_wire_payload_carries_annotations(monkeypatch) -> None:
     )
     wire = result.model_dump(by_alias=True, mode="json", exclude_none=True)
     tools = {t["name"]: t for t in wire["tools"]}
-    assert len(tools) == 105
+    assert len(tools) == len(TOOLS)
+    assert tools["rank_stats"]["annotations"] == {
+        "title": "Rank stats",
+        "readOnlyHint": True,
+        "openWorldHint": True,
+    }
     assert tools["get_price"]["annotations"] == {
         "title": "Get price",
         "readOnlyHint": True,

@@ -1,0 +1,19 @@
+{
+ "call": "paused_vaults",
+ "tool": "rank_stats",
+ "args": {
+  "tab": "vaults",
+  "measure": "money_put_in"
+ },
+ "request": {
+  "path": "/v1/stats/rank",
+  "query": {
+   "tab": "vaults",
+   "measure": "money_put_in",
+   "order": "top",
+   "limit": "20",
+   "offset": "0"
+  }
+ },
+ "envelope": {"data":null,"attribution":{"citations":[{"cite_url":"https://blockchainacademics.com/crypto-api/docs/reference/tools?src=other&utm_medium=mcp#rank_stats","as_of":"2026-11-24T12:00:00Z","source_hash":"sha256:6f9522e39f308707"}]},"meta":{"status":"unseeded","request_id":"statsdump0025","pageInfo":{"hasNextPage":false,"hasPreviousPage":false,"startCursor":null,"endCursor":null},"diagnostic":{"reason":"Stats tools are paused","eta":"not scheduled"},"tier":"demo","upgrade_url":"https://blockchainacademics.com/crypto-api/signup?ref=mcp-demo-tier"}}
+}

@@ -1,0 +1,313 @@
+{
+ "tool": "rank_stats",
+ "arguments": {
+  "tab": "exchanges",
+  "measure": "real_cost_buy_1000"
+ },
+ "request": {
+  "path": "/v1/stats/rank",
+  "query": {
+   "tab": "exchanges",
+   "measure": "real_cost_buy_1000",
+   "order": "top",
+   "limit": "20",
+   "offset": "0"
+  }
+ },
+ "status_code": 200,
+ "body": {
+  "data": {
+   "schema": "bca.stats/1",
+   "as_of": "2026-11-24",
+   "uploaded_at": "2026-11-24T02:47:20Z",
+   "method_version": null,
+   "variant": "combined",
+   "sources": [
+    {
+     "file": "https://data.blockchainacademics.com/exchanges/v1/list.json",
+     "as_of": "2026-11-24",
+     "sha256": "b71908c557ed8ceda71c89a9808375719c08f55d9052c207cf3c581f3f204c4e"
+    },
+    {
+     "file": "https://data.blockchainacademics.com/exchanges/v1/records/test-exchange-a.json",
+     "as_of": "2026-11-24",
+     "sha256": "12e370eab4bde871334ee9a76e33ab1fdd71bea35287118975a08dcfdada3f71"
+    },
+    {
+     "file": "https://data.blockchainacademics.com/exchanges/v1/records/test-exchange-b.json",
+     "as_of": "2026-11-24",
+     "sha256": "3e7ab114ad76d44addfe0ac76c7b58cfc31a9e188c0eac110a4bdce3d0723998"
+    },
+    {
+     "file": "https://data.blockchainacademics.com/exchanges/v1/records/test-exchange-c.json",
+     "as_of": "2026-11-24",
+     "sha256": "18c0dc1b837ea0bed84b11b34d688fd0851a53e550c1529a4e8f00ce377987b7"
+    }
+   ],
+   "outside_text_keys": [
+    "name_by_leader",
+    "subject_by_outsider",
+    "text_as_published",
+    "value_from_source",
+    "link_from_source",
+    "quote_from_source",
+    "source_url",
+    "source_name",
+    "reason_as_published"
+   ],
+   "rows_dropped": 0,
+   "notes": [
+    "Being checked: a person has not confirmed its checks against the source yet. No fact is published.",
+    "paid_sponsor is true when the exchange pays for a spot. Paying changes no check and no rank."
+   ],
+   "tab": "exchanges",
+   "kind": "centralised",
+   "measure": {
+    "id": "real_cost_buy_1000",
+    "label": "Lowest real cost to buy 1,000 dollars of bitcoin",
+    "definition": "Fee plus price gap on our own test purchase at a centralised exchange, in percent of the purchase. Opens once the test purchases are done.",
+    "state": "not_measured_yet",
+    "direction": "lowest_at_top",
+    "unit": "percent of the purchase"
+   },
+   "order": "top",
+   "order_rule": "No order yet: this measure is not measured. Rows are listed A to Z with no rank.",
+   "floor_rule": null,
+   "sample_size": 0,
+   "counts": {
+    "ranked": 0,
+    "not_ranked": 3,
+    "being_checked": 1
+   },
+   "count": 3,
+   "total": 3,
+   "limit": 20,
+   "offset": 0,
+   "results": [
+    {
+     "rank": 1,
+     "rank_state": "not_measured_yet",
+     "value": null,
+     "slug": "test-exchange-a",
+     "exchange": "Test Exchange A",
+     "kind": "centralised",
+     "state": "ranked",
+     "passed": 5,
+     "of": 6,
+     "waiting": 0,
+     "reserve_detail": {
+      "passed": 4,
+      "of": 5
+     },
+     "paid_sponsor": false,
+     "stated_fees": [
+      {
+       "id": "simple_buy_fee",
+       "check_state": "confirmed",
+       "status": "found",
+       "value": null,
+       "value_from_source": "1.49% plus a spread shown before you buy",
+       "link_from_source": null,
+       "value_cut": false,
+       "value_left_out": false,
+       "source_domain": "test-exchange-a.example",
+       "date_read": "2026-11-20",
+       "checked_on": "2026-11-21"
+      },
+      {
+       "id": "spot_taker_fee",
+       "check_state": "confirmed",
+       "status": "found",
+       "value": null,
+       "value_from_source": "0.10% for a taker order",
+       "link_from_source": null,
+       "value_cut": false,
+       "value_left_out": false,
+       "source_domain": "test-exchange-a.example",
+       "date_read": "2026-11-20",
+       "checked_on": "2026-11-21"
+      },
+      {
+       "id": "btc_withdrawal_fee",
+       "check_state": "confirmed",
+       "status": "found",
+       "value": null,
+       "value_from_source": "0.0002 BTC for each withdrawal",
+       "link_from_source": null,
+       "value_cut": false,
+       "value_left_out": false,
+       "source_domain": "test-exchange-a.example",
+       "date_read": "2026-11-20",
+       "checked_on": "2026-11-21"
+      }
+     ],
+     "record_file": "https://data.blockchainacademics.com/exchanges/v1/records/test-exchange-a.json"
+    },
+    {
+     "rank": 2,
+     "rank_state": "not_measured_yet",
+     "value": null,
+     "slug": "test-exchange-b",
+     "exchange": "Test Exchange B",
+     "kind": "centralised",
+     "state": "ranked",
+     "passed": 3,
+     "of": 6,
+     "waiting": 0,
+     "reserve_detail": {
+      "passed": 5,
+      "of": 5
+     },
+     "paid_sponsor": true,
+     "stated_fees": [
+      {
+       "id": "simple_buy_fee",
+       "check_state": "being_checked",
+       "status": "being_checked",
+       "value": null,
+       "value_from_source": null,
+       "link_from_source": null,
+       "value_cut": false,
+       "value_left_out": false,
+       "source_domain": null,
+       "date_read": null,
+       "checked_on": null
+      },
+      {
+       "id": "spot_taker_fee",
+       "check_state": "being_checked",
+       "status": "being_checked",
+       "value": null,
+       "value_from_source": null,
+       "link_from_source": null,
+       "value_cut": false,
+       "value_left_out": false,
+       "source_domain": null,
+       "date_read": null,
+       "checked_on": null
+      },
+      {
+       "id": "btc_withdrawal_fee",
+       "check_state": "being_checked",
+       "status": "being_checked",
+       "value": null,
+       "value_from_source": null,
+       "link_from_source": null,
+       "value_cut": false,
+       "value_left_out": false,
+       "source_domain": null,
+       "date_read": null,
+       "checked_on": null
+      }
+     ],
+     "record_file": "https://data.blockchainacademics.com/exchanges/v1/records/test-exchange-b.json"
+    },
+    {
+     "rank": null,
+     "rank_state": "not_measured_yet",
+     "value": null,
+     "slug": "test-exchange-c",
+     "exchange": "Test.Exchange C",
+     "kind": "centralised",
+     "state": "being_checked",
+     "passed": null,
+     "of": 6,
+     "waiting": 6,
+     "reserve_detail": {
+      "passed": null,
+      "of": 5
+     },
+     "paid_sponsor": false,
+     "stated_fees": [
+      {
+       "id": "simple_buy_fee",
+       "check_state": "being_checked",
+       "status": "being_checked",
+       "value": null,
+       "value_from_source": null,
+       "link_from_source": null,
+       "value_cut": false,
+       "value_left_out": false,
+       "source_domain": null,
+       "date_read": null,
+       "checked_on": null
+      },
+      {
+       "id": "spot_taker_fee",
+       "check_state": "being_checked",
+       "status": "being_checked",
+       "value": null,
+       "value_from_source": null,
+       "link_from_source": null,
+       "value_cut": false,
+       "value_left_out": false,
+       "source_domain": null,
+       "date_read": null,
+       "checked_on": null
+      },
+      {
+       "id": "btc_withdrawal_fee",
+       "check_state": "being_checked",
+       "status": "being_checked",
+       "value": null,
+       "value_from_source": null,
+       "link_from_source": null,
+       "value_cut": false,
+       "value_left_out": false,
+       "source_domain": null,
+       "date_read": null,
+       "checked_on": null
+      }
+     ],
+     "record_file": "https://data.blockchainacademics.com/exchanges/v1/records/test-exchange-c.json"
+    }
+   ],
+   "what_is_missing": [
+    "Our test purchases are not published yet.",
+    "6 of the 9 stated fee facts of these exchanges are being checked by a person. No fee is published for them.",
+    "1 of 3 exchanges in this table are being checked by a person."
+   ],
+   "fact_words": {
+    "simple_buy_fee": "the fee stated for the simple buy screen",
+    "spot_taker_fee": "the spot taker fee stated",
+    "btc_withdrawal_fee": "the fee stated for a bitcoin withdrawal"
+   },
+   "fact_status_words": {
+    "found": "the source states it",
+    "not_published": "not published",
+    "could_not_open": "the source could not be opened",
+    "unclear": "the source is not clear",
+    "being_checked": "a person has not confirmed it yet",
+    "needs_primary_source": "it waits for a source from the exchange or a regulator",
+    "unknown": "a status these tools do not know"
+   },
+   "trimmed": false,
+   "next_offset": null
+  },
+  "attribution": {
+   "citations": [
+    {
+     "cite_url": "https://data.blockchainacademics.com/exchanges/v1/list.json",
+     "as_of": "2026-11-24T00:00:00Z",
+     "source_hash": "sha256:b71908c557ed8ced"
+    }
+   ]
+  },
+  "meta": {
+   "status": "unseeded",
+   "request_id": "fixture000000005",
+   "pageInfo": {
+    "hasNextPage": false,
+    "hasPreviousPage": false,
+    "startCursor": null,
+    "endCursor": null
+   },
+   "diagnostic": {
+    "reason": "this measure is not measured yet and no value is published",
+    "eta": "when our tests are published"
+   },
+   "tier": "demo",
+   "upgrade_url": "https://blockchainacademics.com/crypto-api/signup?ref=mcp-demo-tier"
+  }
+ }
+}

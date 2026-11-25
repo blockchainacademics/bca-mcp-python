@@ -1,4 +1,4 @@
-"""BCA MCP tool modules: the 105 tools, the same names as the TS sibling.
+"""BCA MCP tool modules: the 113 tools, the same names as the TS sibling.
 
 Category map (server.py registers them in this order):
 
@@ -21,6 +21,9 @@ Category map (server.py registers them in this order):
     extended     directories, chains, compute, memes, microstructure,
                  narrative, regulatory, security, services, history,
                  corpus meta, memos and theses, currencies
+    stats        search_stats, list_stats_measures, rank_stats,
+                 get_stats_record, compare_stats_records, lookup_stats_wallet,
+                 get_stats_method, list_stats_changes
 
 Each input model mirrors the API route it calls (mcp-fix/integration,
 2026-11-01): the same parameter bounds, mapped to the API's query names

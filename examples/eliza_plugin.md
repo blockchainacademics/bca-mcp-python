@@ -23,7 +23,7 @@ pip install bca-mcp
 
 ## Get an API key
 
-Sign up at **https://blockchainacademics.com/crypto-api/pricing**. The free tier (2,000 calls/month) is enough to test and ship most agents. Without a key the server still starts in demo mode, with 17 tools open.
+Sign up at **https://blockchainacademics.com/crypto-api/pricing**. The free tier (2,000 calls/month) is enough to test and ship most agents. Without a key the server still starts in demo mode, with 25 tools open.
 
 ## Wire into Eliza's character config
 
@@ -62,7 +62,7 @@ If `bca-mcp` isn't on Eliza's PATH (pipx sometimes installs to `~/.local/bin` wh
 
 ## What Eliza sees
 
-Once wired, all 105 tools appear in the agent's tool pool exactly as they appear in Claude Desktop, among them:
+Once wired, all 113 tools appear in the agent's tool pool exactly as they appear in Claude Desktop, among them:
 
 - `search_news`
 - `get_article`
@@ -81,7 +81,7 @@ Eliza agents that surface BCA content to users **must** preserve the source link
 
 ## Troubleshooting
 
-**Only 17 tools answer; the rest return `BCA_TIER_LOCKED`.** The server did not get your key, so it runs in demo mode. Make sure the key is in the `env` block of the MCP server config (Eliza does NOT inherit the character's general env, only what you declare per-server).
+**25 tools answer and the rest return `BCA_TIER_LOCKED`.** The server did not get your key, so it runs in demo mode. Make sure the key is in the `env` block of the MCP server config (Eliza does NOT inherit the character's general env, only what you declare per-server).
 
 **Timeouts.** Default is 20s. The BCA API is typically <500ms for corpus reads, longer for market-data aggregation. If you see `BCA_NETWORK` timeouts frequently, check your host's outbound network policy, since Eliza agents sometimes run in restrictive network namespaces.
 
@@ -89,4 +89,4 @@ Eliza agents that surface BCA content to users **must** preserve the source link
 
 ## TypeScript sibling
 
-The TS sibling (`@blockchainacademics/mcp`) exposes the same 105 tools, including on-chain analytics, sentiment indicators, and agent-backed research generation, for Node-only stacks. Track the Python build at https://github.com/blockchainacademics/bca-mcp-python.
+The TS sibling (`@blockchainacademics/mcp`) exposes the same 113 tools, including on-chain analytics, sentiment indicators, and agent-backed research generation, for Node-only stacks. Track the Python build at https://github.com/blockchainacademics/bca-mcp-python.

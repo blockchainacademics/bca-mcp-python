@@ -1,0 +1,12 @@
+{
+ "call": "lookup_ab_last",
+ "tool": "lookup_stats_wallet",
+ "args": {
+  "address": "0xab9fdc229f92b85ec846c777ef18e14c5fb19266"
+ },
+ "request": {
+  "path": "/v1/stats/wallets/shard/ab",
+  "query": {}
+ },
+ "envelope_file": "shards/ab.json"
+}

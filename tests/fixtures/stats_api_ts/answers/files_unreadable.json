@@ -1,0 +1,14 @@
+{
+ "call": "files_unreadable",
+ "tool": "get_stats_method",
+ "args": {
+  "topic": "vaults"
+ },
+ "request": {
+  "path": "/v1/stats/method",
+  "query": {
+   "topic": "vaults"
+  }
+ },
+ "envelope": {"data":null,"attribution":{"citations":[]},"meta":{"status":"partial","request_id":"fedcba9876543210","pageInfo":{"hasNextPage":false,"hasPreviousPage":false,"startCursor":null,"endCursor":null},"diagnostic":{"reason":"the Stats files could not be read","vendor":"bca-stats-files","upstream_status":503},"tier":"demo","upgrade_url":"https://blockchainacademics.com/crypto-api/signup?ref=mcp-demo-tier"}}
+}

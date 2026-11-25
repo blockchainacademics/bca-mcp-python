@@ -86,7 +86,7 @@ async def test_success_is_not_an_error(httpx_mock) -> None:
     result = await call_tool("list_topics", {})
     assert result.isError is False
     body = json.loads(result.content[0].text)
-    assert body["data"].startswith('<untrusted_content source="bca-api">')
+    assert body["data"].startswith('<untrusted_content source="bca-api" id="')
 
 
 @pytest.mark.asyncio

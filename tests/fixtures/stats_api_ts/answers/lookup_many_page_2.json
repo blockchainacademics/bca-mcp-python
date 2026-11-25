@@ -1,0 +1,16 @@
+{
+ "call": "lookup_many_page_2",
+ "tool": "lookup_stats_wallet",
+ "args": {
+  "address": "0x3bacca26720887df842976576f339cb7e9835de0",
+  "offset": 50,
+  "as_of": "2026-11-24"
+ },
+ "request": {
+  "path": "/v1/stats/wallets/shard/3b",
+  "query": {
+   "as_of": "2026-11-24"
+  }
+ },
+ "envelope_file": "shards/3b.json"
+}

@@ -24,10 +24,8 @@ from mcp.server import Server
 
 from bca_mcp import __version__
 from bca_mcp._demo_banner import DEMO_BANNER
-
-FIXTURE = json.loads(
-    (Path(__file__).parent / "fixtures" / "ts_tools_0_6_4.json").read_text("utf-8")
-)
+from bca_mcp.server import TOOLS
+from bca_mcp.tools import stats
 
 # Features of the installed mcp SDK (pyproject allows any 1.x release).
 HAS_ANNOTATIONS = hasattr(mcp_types, "ToolAnnotations")
@@ -49,7 +47,9 @@ async def _session_run(errlog) -> dict:
             listed = await session.list_tools()
             bad = await session.call_tool("get_entity", {"slug": "a", "ticker": "B"})
             unknown = await session.call_tool("nope", {})
-    return {"init": init, "tools": listed.tools, "bad": bad, "unknown": unknown}
+            # A Stats tool refuses a full address before any request.
+            address = await session.call_tool("search_stats", {"query": "0x" + "ab" * 20})
+    return {"init": init, "tools": listed.tools, "bad": bad, "unknown": unknown, "address": address}
 
 
 @pytest.mark.asyncio
@@ -64,7 +64,9 @@ async def test_stdio_server_without_key() -> None:
         assert out["init"].serverInfo.version == __version__
 
     tools = {t.name: t for t in out["tools"]}
-    assert set(tools) == set(FIXTURE["names"]) and len(out["tools"]) == 105
+    # The tools the owner's switches leave in (tools/stats.py); tests/test_parity.py
+    # checks the same names against the TS tools/list.
+    assert set(tools) == {t.name for t in TOOLS} and len(out["tools"]) == len(TOOLS)
 
     entity = tools["get_entity"].inputSchema["properties"]
     explainer = tools["get_explainer"].inputSchema["properties"]
@@ -79,11 +81,14 @@ async def test_stdio_server_without_key() -> None:
         assert tools["submit_listing"].annotations.readOnlyHint is False
         assert tools["submit_listing"].annotations.destructiveHint is False
 
-    for key in ("bad", "unknown"):
+    for key in ("bad", "unknown", "address"):
         result = out[key]
         assert result.isError is True, key
         body = json.loads(result.content[0].text)
         assert body["error"]["code"] == "BCA_BAD_REQUEST", key
+    assert json.loads(out["address"].content[0].text)["error"]["message"].startswith("search_stats takes a name.")
+    if HAS_ANNOTATIONS and stats.WALLET_LOOKUP_TOOL:
+        assert tools["lookup_stats_wallet"].annotations.readOnlyHint is True
 
     if HAS_ERRLOG:
         assert DEMO_BANNER in stderr

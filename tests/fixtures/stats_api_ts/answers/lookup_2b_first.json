@@ -1,0 +1,12 @@
+{
+ "call": "lookup_2b_first",
+ "tool": "lookup_stats_wallet",
+ "args": {
+  "address": "0x2b24c1ae5b40613a607de6e25065d25a391680d0"
+ },
+ "request": {
+  "path": "/v1/stats/wallets/shard/2b",
+  "query": {}
+ },
+ "envelope_file": "shards/2b.json"
+}
