@@ -9,17 +9,17 @@
    {
     "file": "https://data.blockchainacademics.com/exchanges/v1/list.json",
     "as_of": "2026-11-24",
-    "sha256": "8508ce9c9901a958f6577b9af80fe5e700158f2656729e8a586f3aafc2bf9da4"
+    "sha256": "aad1693d42fba5bdcd5ad9e5cc176da6061b19adea6df6f213fb736eaba76cc5"
    },
    {
     "file": "https://data.blockchainacademics.com/exchanges/v1/records/kraken.json",
     "as_of": "2026-11-24",
-    "sha256": "82e13ca529e6ed591ee319038f3a57ac0277e41149160deb4a30070d4f87907b"
+    "sha256": "fe0a09472de5cd568eef980eb4c3bb111b9d83e0613a88dbb40272404add2d59"
    },
    {
     "file": "https://data.blockchainacademics.com/exchanges/v1/records/coinbase.json",
     "as_of": "2026-11-24",
-    "sha256": "fa4fc80ec9f9e853258d07cc3b641f7670f2c228d3e78a337ee5aacbff8bd087"
+    "sha256": "419189ca0b30a5b90f0a18bbb3704b737b6a7ec07a213f5c775d9284a6eed9f2"
    }
   ],
   "outside_text_keys": [
@@ -583,13 +583,13 @@
    {
     "cite_url": "https://data.blockchainacademics.com/exchanges/v1/list.json",
     "as_of": "2026-11-24T00:00:00Z",
-    "source_hash": "sha256:8508ce9c9901a958"
+    "source_hash": "sha256:aad1693d42fba5bd"
    }
   ]
  },
  "meta": {
   "status": "unseeded",
-  "request_id": "fedcba9876543210",
+  "request_id": "statsdump0017",
   "pageInfo": {
    "hasNextPage": false,
    "hasPreviousPage": false,

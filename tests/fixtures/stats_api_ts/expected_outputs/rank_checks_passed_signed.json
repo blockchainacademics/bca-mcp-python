@@ -9,7 +9,7 @@
    {
     "file": "https://data.blockchainacademics.com/exchanges/v1/list.json",
     "as_of": "2026-11-24",
-    "sha256": "85e9bea4461e1cc39968a7684bad49e9a63ef0632aa623dac84681239cb3bc20"
+    "sha256": "cb7facc0b8a937a2672724cebb2ed169ce8734a6eba7558fa4c3d1edeca7de23"
    }
   ],
   "outside_text_keys": [
@@ -41,19 +41,36 @@
   "order": "top",
   "order_rule": "Ordered by checks passed (out of six). A tie is broken by the reserve report detail (out of five). A tie after that is broken A to Z. Paying changes nothing.",
   "floor_rule": null,
-  "sample_size": 1,
+  "sample_size": 2,
   "counts": {
-   "ranked": 1,
+   "ranked": 2,
    "not_ranked": 1,
    "being_checked": 1
   },
-  "count": 2,
-  "total": 2,
+  "count": 3,
+  "total": 3,
   "limit": 20,
   "offset": 0,
   "results": [
    {
     "rank": 1,
+    "rank_state": "ranked",
+    "value": 6,
+    "slug": "test-exchange-b",
+    "exchange": "Test Exchange B",
+    "kind": "centralised",
+    "state": "ranked",
+    "passed": 6,
+    "of": 6,
+    "waiting": 0,
+    "reserve_detail": {
+     "passed": 5,
+     "of": 5
+    },
+    "paid_sponsor": false
+   },
+   {
+    "rank": 2,
     "rank_state": "ranked",
     "value": 5,
     "slug": "test-exchange-a",
@@ -64,7 +81,7 @@
     "of": 6,
     "waiting": 0,
     "reserve_detail": {
-     "passed": 4,
+     "passed": 5,
      "of": 5
     },
     "paid_sponsor": true
@@ -73,22 +90,22 @@
     "rank": null,
     "rank_state": "being_checked",
     "value": null,
-    "slug": "test-exchange-b",
-    "exchange": "Test Exchange B",
+    "slug": "test-exchange-c",
+    "exchange": "Test Exchange C",
     "kind": "centralised",
     "state": "being_checked",
     "passed": null,
     "of": 6,
-    "waiting": 6,
+    "waiting": 1,
     "reserve_detail": {
-     "passed": null,
+     "passed": 5,
      "of": 5
     },
     "paid_sponsor": false
    }
   ],
   "what_is_missing": [
-   "1 of 2 exchanges in this table are being checked by a person."
+   "1 of 3 exchanges in this table are being checked by a person."
   ],
   "fact_words": null,
   "fact_status_words": null,
@@ -100,13 +117,13 @@
    {
     "cite_url": "https://data.blockchainacademics.com/exchanges/v1/list.json",
     "as_of": "2026-11-24T00:00:00Z",
-    "source_hash": "sha256:85e9bea4461e1cc3"
+    "source_hash": "sha256:cb7facc0b8a937a2"
    }
   ]
  },
  "meta": {
   "status": "partial",
-  "request_id": "fedcba9876543210",
+  "request_id": "statsdump0007",
   "pageInfo": {
    "hasNextPage": false,
    "hasPreviousPage": false,
@@ -116,7 +133,7 @@
   "diagnostic": {
    "reason": "some exchanges in this table are being checked by a person",
    "missing": [
-    "test-exchange-b"
+    "test-exchange-c"
    ]
   },
   "tier": "demo",

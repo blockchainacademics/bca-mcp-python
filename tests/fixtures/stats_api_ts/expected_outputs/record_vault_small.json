@@ -9,7 +9,7 @@
    {
     "file": "https://data.blockchainacademics.com/vaults/v1/list.json",
     "as_of": "2026-11-24",
-    "sha256": "b4cd6a9b11f961f3d35a7adec693e9e83fa740d6292a8242578250fc5b62fd30"
+    "sha256": "cded6c570bbb234979b13c020729117b65c36ed9b1bf867f887d185a4ae80868"
    }
   ],
   "outside_text_keys": [
@@ -30,27 +30,27 @@
   ],
   "tab": "vaults",
   "record": {
-   "address": "0x505640fb8c0a635f74ff21218c95eb27df4a00a9",
+   "address": "0x89c733aa8374b9839f86200b17a3fd5fef7c30b3",
    "name_by_leader": "",
    "name_state": "small_vault_no_public_name",
-   "leader": "0x3f79f792a382d987c94c8c15395fff79d64f32bf",
+   "leader": "0x2ee99e0dac6ef503d00f33544356fa5141f82124",
    "venue": "Hyperliquid",
    "status": "open",
    "small": true,
-   "opened_on": "2026-10-01",
+   "opened_on": "2026-01-10",
    "closed_on": null,
-   "days_open": 54,
+   "days_open": 318,
    "deposits_usd": 5000,
-   "withdrawn_usd": 4000,
-   "inside_usd": 4000,
-   "inside_cost_usd": 3600,
-   "left_took_home_usd": 100,
-   "left_took_home_pct": 2.5,
-   "venue_rate_pct": 12.5,
-   "our_yearly_rate_pct": 8.25,
-   "wallets_ahead": 12,
-   "wallets_behind": 7,
-   "wallets_even": 3,
+   "withdrawn_usd": 0,
+   "inside_usd": 4800,
+   "inside_cost_usd": 5000,
+   "left_took_home_usd": 0,
+   "left_took_home_pct": null,
+   "venue_rate_pct": 0.0,
+   "our_yearly_rate_pct": null,
+   "wallets_ahead": 0,
+   "wallets_behind": 0,
+   "wallets_even": 0,
    "lockup_days": 1,
    "leader_cut_pct": 10.0,
    "books": {
@@ -62,13 +62,13 @@
     "meets": false,
     "days_counted": 0,
     "days_needed": 180,
-    "outside_depositors_with_money": 0,
+    "outside_depositors_with_money": 2,
     "depositors_needed": 10,
     "depositors_count_is_a_minimum": false
    },
    "value_30_days": {
-    "start_usd": 3200,
-    "end_usd": 4000
+    "start_usd": 4320,
+    "end_usd": 4800
    },
    "other_vaults_with_name": 0,
    "name_also_used_by_older_vault": false,
@@ -97,13 +97,13 @@
    {
     "cite_url": "https://data.blockchainacademics.com/vaults/v1/list.json",
     "as_of": "2026-11-24T00:00:00Z",
-    "source_hash": "sha256:b4cd6a9b11f961f3"
+    "source_hash": "sha256:cded6c570bbb2349"
    }
   ]
  },
  "meta": {
   "status": "complete",
-  "request_id": "fedcba9876543210",
+  "request_id": "statsdump0014",
   "pageInfo": {
    "hasNextPage": false,
    "hasPreviousPage": false,

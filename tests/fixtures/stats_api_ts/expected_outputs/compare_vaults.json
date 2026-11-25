@@ -9,7 +9,7 @@
    {
     "file": "https://data.blockchainacademics.com/vaults/v1/list.json",
     "as_of": "2026-11-24",
-    "sha256": "b4cd6a9b11f961f3d35a7adec693e9e83fa740d6292a8242578250fc5b62fd30"
+    "sha256": "cded6c570bbb234979b13c020729117b65c36ed9b1bf867f887d185a4ae80868"
    }
   ],
   "outside_text_keys": [
@@ -41,26 +41,26 @@
   "records": [
    {
     "address": "0xd95dc5e8076b96eaf0c87541cba3df6fdc298e32",
-    "name_by_leader": "<<outside:0123456789abcdef>>Fixture Alpha Growth ♾<</outside:0123456789abcdef>>",
+    "name_by_leader": "<<outside:0123456789abcdef>>Fixture Alpha Strategy<</outside:0123456789abcdef>>",
     "name_state": "shown",
-    "leader": "0x863a64e0dfa1f3e3ea9f9c2a1a791d7cfe810da6",
+    "leader": "0xab8ca1f9cf257653ca18ce811f6255524e76504f",
     "venue": "Hyperliquid",
     "status": "open",
     "small": false,
-    "opened_on": "2025-08-29",
+    "opened_on": "2025-06-01",
     "closed_on": null,
-    "days_open": 452,
-    "deposits_usd": 4200000,
-    "withdrawn_usd": 3900000,
-    "inside_usd": 750000,
-    "inside_cost_usd": 610000,
-    "left_took_home_usd": 310000,
-    "left_took_home_pct": 8.1,
-    "venue_rate_pct": 22.5,
-    "our_yearly_rate_pct": 14.2,
-    "wallets_ahead": 12,
-    "wallets_behind": 7,
-    "wallets_even": 3,
+    "days_open": 541,
+    "deposits_usd": 9000000,
+    "withdrawn_usd": 8000000,
+    "inside_usd": 2100000,
+    "inside_cost_usd": 1500000,
+    "left_took_home_usd": 500000,
+    "left_took_home_pct": 6.7,
+    "venue_rate_pct": 55.5,
+    "our_yearly_rate_pct": 40.2,
+    "wallets_ahead": 3,
+    "wallets_behind": 1,
+    "wallets_even": 1,
     "lockup_days": 1,
     "leader_cut_pct": 10.0,
     "books": {
@@ -70,15 +70,15 @@
     "results_held_back": false,
     "floor": {
      "meets": true,
-     "days_counted": 400,
+     "days_counted": 540,
      "days_needed": 180,
-     "outside_depositors_with_money": 64,
+     "outside_depositors_with_money": 99,
      "depositors_needed": 10,
-     "depositors_count_is_a_minimum": false
+     "depositors_count_is_a_minimum": true
     },
     "value_30_days": {
-     "start_usd": 600000,
-     "end_usd": 750000
+     "start_usd": 1900000,
+     "end_usd": 2100000
     },
     "other_vaults_with_name": 0,
     "name_also_used_by_older_vault": false,
@@ -86,26 +86,26 @@
    },
    {
     "address": "0xe365b033446f53fed35171e4b3ea218b026b2d05",
-    "name_by_leader": "<<outside:0123456789abcdef>>Fixture Beta Yield<</outside:0123456789abcdef>>",
+    "name_by_leader": "<<outside:0123456789abcdef>>Fixture Beta Capital<</outside:0123456789abcdef>>",
     "name_state": "shown",
     "leader": "0xd0e552eebcd72a3afc95117003e55d4c92727a5d",
     "venue": "Hyperliquid",
     "status": "open",
     "small": false,
-    "opened_on": "2025-03-02",
+    "opened_on": "2025-03-15",
     "closed_on": null,
-    "days_open": 632,
-    "deposits_usd": 3100000,
-    "withdrawn_usd": 2480000,
-    "inside_usd": 420000,
-    "inside_cost_usd": 378000,
-    "left_took_home_usd": -150000,
-    "left_took_home_pct": -6.2,
-    "venue_rate_pct": 7.5,
-    "our_yearly_rate_pct": -3.1,
-    "wallets_ahead": 12,
-    "wallets_behind": 7,
-    "wallets_even": 3,
+    "days_open": 619,
+    "deposits_usd": 8000000,
+    "withdrawn_usd": 6000000,
+    "inside_usd": 2500000,
+    "inside_cost_usd": 2200000,
+    "left_took_home_usd": 200000,
+    "left_took_home_pct": 3.4,
+    "venue_rate_pct": 30.1,
+    "our_yearly_rate_pct": 22.4,
+    "wallets_ahead": 3,
+    "wallets_behind": 1,
+    "wallets_even": 1,
     "lockup_days": 1,
     "leader_cut_pct": 10.0,
     "books": {
@@ -115,15 +115,15 @@
     "results_held_back": false,
     "floor": {
      "meets": true,
-     "days_counted": 500,
+     "days_counted": 600,
      "days_needed": 180,
-     "outside_depositors_with_money": 31,
+     "outside_depositors_with_money": 60,
      "depositors_needed": 10,
      "depositors_count_is_a_minimum": false
     },
     "value_30_days": {
-     "start_usd": 336000,
-     "end_usd": 420000
+     "start_usd": 2250000,
+     "end_usd": 2500000
     },
     "other_vaults_with_name": 0,
     "name_also_used_by_older_vault": false,
@@ -139,13 +139,13 @@
    {
     "cite_url": "https://data.blockchainacademics.com/vaults/v1/list.json",
     "as_of": "2026-11-24T00:00:00Z",
-    "source_hash": "sha256:b4cd6a9b11f961f3"
+    "source_hash": "sha256:cded6c570bbb2349"
    }
   ]
  },
  "meta": {
   "status": "complete",
-  "request_id": "fedcba9876543210",
+  "request_id": "statsdump0018",
   "pageInfo": {
    "hasNextPage": false,
    "hasPreviousPage": false,

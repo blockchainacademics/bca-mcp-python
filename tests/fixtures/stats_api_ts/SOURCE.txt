@@ -1,14 +1,14 @@
 The TypeScript package's recorded Stats answers, for the parity test of this
 package (tests/test_stats_ts_answers.py).
 
-These files are bca-mcp-ts test/fixtures/stats_api as of its commit ef30a7a
-(unchanged at 94db344), copied unchanged: answers/, expected_outputs/,
-shards/, SHA256SUMS and README.md. Their README says how they were made: a
-made-up night folder run through the design's reference script, and expected
-outputs written from the reference rules, not from either package's code.
-Every address is 0x plus the leading 40 hex characters of SHA-256 of
-bca-fixture-<n>, and no address or vault name is from the real files.
+These files are bca-mcp-ts test/fixtures/stats_api as of its commit 3b44014,
+copied unchanged: answers/, expected_outputs/, shards/, SHA256SUMS and
+README.md. 25 of the 38 calls come from the API's dump
+(scripts/dump_stats_answers.py at API commit b1bbcbe, on the API's made-up
+fixtures); the others are stand-ins made before the dump existed. Their
+README says which is which and how the expected outputs were made: from the
+design's reference rules, not from either package's code. Every address is
+made up (0x plus SHA-256 of a bca-fixture string), and no address, vault
+name or figure is from the real files.
 
-This package's own set stays in tests/fixtures/stats_api. When the API's
-dump (task A1, scripts/dump_stats_answers.py) is copied into both packages,
-it replaces both sets.
+This package's own set stays in tests/fixtures/stats_api.

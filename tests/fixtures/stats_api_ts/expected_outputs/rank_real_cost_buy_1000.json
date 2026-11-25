@@ -9,47 +9,47 @@
    {
     "file": "https://data.blockchainacademics.com/exchanges/v1/list.json",
     "as_of": "2026-11-24",
-    "sha256": "8508ce9c9901a958f6577b9af80fe5e700158f2656729e8a586f3aafc2bf9da4"
+    "sha256": "aad1693d42fba5bdcd5ad9e5cc176da6061b19adea6df6f213fb736eaba76cc5"
    },
    {
     "file": "https://data.blockchainacademics.com/exchanges/v1/records/binance.json",
     "as_of": "2026-11-24",
-    "sha256": "4904170c08e4af2b3958a3586973f84806076ea716034437f4f7b3bacc891ef7"
+    "sha256": "6234c2e31b904b6f059c08fac635c5580ae12bf773540de29b249759e72a82ed"
    },
    {
     "file": "https://data.blockchainacademics.com/exchanges/v1/records/bitget.json",
     "as_of": "2026-11-24",
-    "sha256": "13119f0e6768e9908c74267627f7823ab56efcd9dfe609a87a6cc6e9895186d4"
+    "sha256": "ced543ad134698fb9229ddd988aa83adb5beb207c21d2d36e719efcd669d5694"
    },
    {
     "file": "https://data.blockchainacademics.com/exchanges/v1/records/bybit.json",
     "as_of": "2026-11-24",
-    "sha256": "73c87498ecb5bffec8c657db5c018a0430367e55bad0fe740c6ac13d32386d21"
+    "sha256": "20b57b1d2c0ca5e0cd85f00a1d2a77638edb2022a5e498e7e61bd4b14aa53c45"
    },
    {
     "file": "https://data.blockchainacademics.com/exchanges/v1/records/coinbase.json",
     "as_of": "2026-11-24",
-    "sha256": "fa4fc80ec9f9e853258d07cc3b641f7670f2c228d3e78a337ee5aacbff8bd087"
+    "sha256": "419189ca0b30a5b90f0a18bbb3704b737b6a7ec07a213f5c775d9284a6eed9f2"
    },
    {
     "file": "https://data.blockchainacademics.com/exchanges/v1/records/crypto-com.json",
     "as_of": "2026-11-24",
-    "sha256": "4b11ec652cf4bd941f9a3f62a0694ed00a90680bb4ec52774ccf323878001d81"
+    "sha256": "b90851f8cbb0a81541f8a6e693e37bcf30629d026f12bbd291ee942305092d34"
    },
    {
     "file": "https://data.blockchainacademics.com/exchanges/v1/records/kraken.json",
     "as_of": "2026-11-24",
-    "sha256": "82e13ca529e6ed591ee319038f3a57ac0277e41149160deb4a30070d4f87907b"
+    "sha256": "fe0a09472de5cd568eef980eb4c3bb111b9d83e0613a88dbb40272404add2d59"
    },
    {
     "file": "https://data.blockchainacademics.com/exchanges/v1/records/kucoin.json",
     "as_of": "2026-11-24",
-    "sha256": "a89be2338e4be410de10fbb3eeaf8f94810d7d52db9a885fe639681e7ece7d46"
+    "sha256": "78add4f8380aaa6237918afba5bf0e5a98db032384956892aa60b9ac1935358e"
    },
    {
     "file": "https://data.blockchainacademics.com/exchanges/v1/records/okx.json",
     "as_of": "2026-11-24",
-    "sha256": "c40b998a65524d41a335c453f101845114e5fb7980465ddf159d57a5e14207fa"
+    "sha256": "ac96b684753f22075f1435e2a9bb20b70993e494c89b7600cdb65ce212689e03"
    }
   ],
   "outside_text_keys": [
@@ -592,13 +592,13 @@
    {
     "cite_url": "https://data.blockchainacademics.com/exchanges/v1/list.json",
     "as_of": "2026-11-24T00:00:00Z",
-    "source_hash": "sha256:8508ce9c9901a958"
+    "source_hash": "sha256:aad1693d42fba5bd"
    }
   ]
  },
  "meta": {
   "status": "unseeded",
-  "request_id": "fedcba9876543210",
+  "request_id": "statsdump0005",
   "pageInfo": {
    "hasNextPage": false,
    "hasPreviousPage": false,

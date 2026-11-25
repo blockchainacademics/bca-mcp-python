@@ -9,12 +9,12 @@
    {
     "file": "https://data.blockchainacademics.com/exchanges/v1/records/kraken.json",
     "as_of": "2026-11-24",
-    "sha256": "82e13ca529e6ed591ee319038f3a57ac0277e41149160deb4a30070d4f87907b"
+    "sha256": "fe0a09472de5cd568eef980eb4c3bb111b9d83e0613a88dbb40272404add2d59"
    },
    {
     "file": "https://data.blockchainacademics.com/exchanges/v1/list.json",
     "as_of": "2026-11-24",
-    "sha256": "8508ce9c9901a958f6577b9af80fe5e700158f2656729e8a586f3aafc2bf9da4"
+    "sha256": "aad1693d42fba5bdcd5ad9e5cc176da6061b19adea6df6f213fb736eaba76cc5"
    }
   ],
   "outside_text_keys": [
@@ -63,40 +63,44 @@
       "id": "reserve_compares",
       "outcome": "being_checked",
       "passes_when": "It compares holdings with what customers are owed.",
-      "reason": "waiting for a person to confirm: reserve_compares_liabilities",
+      "reason": "waiting for a person to confirm: reserve_report_date, reserve_compares_liabilities",
       "reason_as_published": null,
       "uses": [
-       "reserve_compares_liabilities"
+       "reserve_compares_liabilities",
+       "reserve_report_date"
       ]
      },
      {
       "id": "reserve_self_check",
       "outcome": "being_checked",
       "passes_when": "A customer can check that their own balance is included.",
-      "reason": "waiting for a person to confirm: reserve_self_check",
+      "reason": "waiting for a person to confirm: reserve_report_date, reserve_self_check",
       "reason_as_published": null,
       "uses": [
-       "reserve_self_check"
+       "reserve_self_check",
+       "reserve_report_date"
       ]
      },
      {
       "id": "reserve_outside_firm",
       "outcome": "being_checked",
       "passes_when": "It names an outside firm.",
-      "reason": "waiting for a person to confirm: reserve_outside_firm",
+      "reason": "waiting for a person to confirm: reserve_report_date, reserve_outside_firm",
       "reason_as_published": null,
       "uses": [
-       "reserve_outside_firm"
+       "reserve_outside_firm",
+       "reserve_report_date"
       ]
      },
      {
       "id": "reserve_wallet_list",
       "outcome": "being_checked",
       "passes_when": "A wallet list is published.",
-      "reason": "waiting for a person to confirm: reserve_wallet_list",
+      "reason": "waiting for a person to confirm: reserve_report_date, reserve_wallet_list",
       "reason_as_published": null,
       "uses": [
-       "reserve_wallet_list"
+       "reserve_wallet_list",
+       "reserve_report_date"
       ]
      }
     ]
@@ -121,9 +125,9 @@
      "reason": "waiting for a person to confirm: reserve_report_date, reserve_outside_firm, reserve_compares_liabilities",
      "reason_as_published": null,
      "uses": [
-      "reserve_report_date",
       "reserve_outside_firm",
-      "reserve_compares_liabilities"
+      "reserve_compares_liabilities",
+      "reserve_report_date"
      ]
     },
     {
@@ -133,9 +137,9 @@
      "reason": "waiting for a person to confirm: reserve_report_date, reserve_self_check, reserve_wallet_list",
      "reason_as_published": null,
      "uses": [
-      "reserve_report_date",
       "reserve_self_check",
-      "reserve_wallet_list"
+      "reserve_wallet_list",
+      "reserve_report_date"
      ]
     },
     {
@@ -145,7 +149,8 @@
      "reason": "waiting for a person to confirm what the register search found",
      "reason_as_published": null,
      "uses": [
-      "eu_entity_name"
+      "entity_names",
+      "register_checked"
      ]
     },
     {
@@ -154,7 +159,10 @@
      "passes_when": "Every customer loss in the last 5 years is marked repaid in full.",
      "reason": "waiting for a person to confirm that the incident list is complete",
      "reason_as_published": null,
-     "uses": []
+     "uses": [
+      "incidents",
+      "incidents_checked"
+     ]
     },
     {
      "id": "audited_accounts",
@@ -191,7 +199,10 @@
       "reserve_report_fresh",
       "firm_and_compares",
       "self_check_or_wallet_list",
-      "reserve_report_fresh"
+      "reserve_compares",
+      "reserve_self_check",
+      "reserve_outside_firm",
+      "reserve_wallet_list"
      ]
     },
     {
@@ -372,9 +383,7 @@
      "date_read": null,
      "checked_by": null,
      "checked_on": null,
-     "used_by_checks": [
-      "register_row_and_not_warned"
-     ]
+     "used_by_checks": []
     },
     {
      "id": "eu_authorisation_claim",
@@ -551,13 +560,13 @@
    {
     "cite_url": "https://data.blockchainacademics.com/exchanges/v1/records/kraken.json",
     "as_of": "2026-11-24T00:00:00Z",
-    "source_hash": "sha256:82e13ca529e6ed59"
+    "source_hash": "sha256:fe0a09472de5cd56"
    }
   ]
  },
  "meta": {
   "status": "unseeded",
-  "request_id": "fedcba9876543210",
+  "request_id": "statsdump0011",
   "pageInfo": {
    "hasNextPage": false,
    "hasPreviousPage": false,

@@ -9,7 +9,7 @@
    {
     "file": "https://data.blockchainacademics.com/exchanges/v1/list.json",
     "as_of": "2026-11-24",
-    "sha256": "8508ce9c9901a958f6577b9af80fe5e700158f2656729e8a586f3aafc2bf9da4"
+    "sha256": "aad1693d42fba5bdcd5ad9e5cc176da6061b19adea6df6f213fb736eaba76cc5"
    }
   ],
   "outside_text_keys": [
@@ -198,9 +198,15 @@
     "files": [
      {
       "list": "register",
-      "name": "fixture_register.csv",
-      "rows": 12,
-      "sha256": "6776099359d6fa0dc3f84e750f76dbd8b4d90af4a8b89a177a7d3224a21fa55e"
+      "name": "chk_CASPS.csv",
+      "rows": 407,
+      "sha256": "e0a73cab442a1bedf84a9fbfe756f7a2779bf48050c4d147c4971788d4279be3"
+     },
+     {
+      "list": "warning",
+      "name": "chk_NCASP.csv",
+      "rows": 216,
+      "sha256": "7ef652213f2982e34b8b7e5a194c5dd2ee9edf01ebe1d610db863536d1f5729c"
      }
     ]
    },
@@ -212,13 +218,13 @@
    {
     "cite_url": "https://data.blockchainacademics.com/exchanges/v1/list.json",
     "as_of": "2026-11-24T00:00:00Z",
-    "source_hash": "sha256:8508ce9c9901a958"
+    "source_hash": "sha256:aad1693d42fba5bd"
    }
   ]
  },
  "meta": {
   "status": "complete",
-  "request_id": "fedcba9876543210",
+  "request_id": "statsdump0021",
   "pageInfo": {
    "hasNextPage": false,
    "hasPreviousPage": false,

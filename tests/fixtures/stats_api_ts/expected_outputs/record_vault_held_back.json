@@ -7,14 +7,14 @@
   "variant": null,
   "sources": [
    {
-    "file": "https://data.blockchainacademics.com/vaults/v1/records/0x7a76b3fe6bcf9fe3b66c569b2798ce96f4ae1581.json",
+    "file": "https://data.blockchainacademics.com/vaults/v1/records/0xda209daa1cf71f5743031f3b57ef187a84b83a26.json",
     "as_of": "2026-11-24",
-    "sha256": "099ddbbbcf1288e0decbdc0a8f0b49f53d741bfa392b007a65d9a6b5e170367c"
+    "sha256": "d8decb3a05cd0868c52d49d754f45ad3dd0f1b3b02a0a306ff3f42765ad2b79c"
    },
    {
     "file": "https://data.blockchainacademics.com/vaults/v1/list.json",
     "as_of": "2026-11-24",
-    "sha256": "b4cd6a9b11f961f3d35a7adec693e9e83fa740d6292a8242578250fc5b62fd30"
+    "sha256": "cded6c570bbb234979b13c020729117b65c36ed9b1bf867f887d185a4ae80868"
    }
   ],
   "outside_text_keys": [
@@ -36,27 +36,27 @@
   ],
   "tab": "vaults",
   "record": {
-   "address": "0x7a76b3fe6bcf9fe3b66c569b2798ce96f4ae1581",
+   "address": "0xda209daa1cf71f5743031f3b57ef187a84b83a26",
    "name_by_leader": "<<outside:0123456789abcdef>>Fixture Held Back<</outside:0123456789abcdef>>",
    "name_state": "shown",
-   "leader": "0x9b4e7658353f464ed839ecec308b46f6c66cbac0",
+   "leader": "0x033e64a86a52bf0ce5cd259e080eb6d7686806f7",
    "venue": "Hyperliquid",
    "status": "closed",
    "small": false,
-   "opened_on": "2024-01-05",
-   "closed_on": "2025-01-05",
-   "days_open": 366,
-   "deposits_usd": 300000,
-   "withdrawn_usd": 240000,
+   "opened_on": "2025-03-01",
+   "closed_on": "2025-09-01",
+   "days_open": 184,
+   "deposits_usd": 200000,
+   "withdrawn_usd": 180000,
    "inside_usd": 0,
    "inside_cost_usd": null,
    "left_took_home_usd": null,
    "left_took_home_pct": null,
    "venue_rate_pct": null,
    "our_yearly_rate_pct": null,
-   "wallets_ahead": 12,
-   "wallets_behind": 7,
-   "wallets_even": 3,
+   "wallets_ahead": null,
+   "wallets_behind": null,
+   "wallets_even": null,
    "lockup_days": 1,
    "leader_cut_pct": 10.0,
    "books": {
@@ -75,7 +75,7 @@
    "cuts_paid_usd": null,
    "leader_own_usd": null,
    "leader_own_pct": null,
-   "depositors_on_venue_list": 6,
+   "depositors_on_venue_list": 8,
    "scored_checks": {
     "state": "not_written_yet"
    }
@@ -91,15 +91,15 @@
  "attribution": {
   "citations": [
    {
-    "cite_url": "https://data.blockchainacademics.com/vaults/v1/records/0x7a76b3fe6bcf9fe3b66c569b2798ce96f4ae1581.json",
+    "cite_url": "https://data.blockchainacademics.com/vaults/v1/records/0xda209daa1cf71f5743031f3b57ef187a84b83a26.json",
     "as_of": "2026-11-24T00:00:00Z",
-    "source_hash": "sha256:099ddbbbcf1288e0"
+    "source_hash": "sha256:d8decb3a05cd0868"
    }
   ]
  },
  "meta": {
   "status": "partial",
-  "request_id": "fedcba9876543210",
+  "request_id": "statsdump0015",
   "pageInfo": {
    "hasNextPage": false,
    "hasPreviousPage": false,

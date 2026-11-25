@@ -9,17 +9,17 @@
    {
     "file": "https://data.blockchainacademics.com/exchanges/v1/list.json",
     "as_of": "2026-11-24",
-    "sha256": "8508ce9c9901a958f6577b9af80fe5e700158f2656729e8a586f3aafc2bf9da4"
+    "sha256": "aad1693d42fba5bdcd5ad9e5cc176da6061b19adea6df6f213fb736eaba76cc5"
    },
    {
     "file": "https://data.blockchainacademics.com/vaults/v1/list.json",
     "as_of": "2026-11-24",
-    "sha256": "b4cd6a9b11f961f3d35a7adec693e9e83fa740d6292a8242578250fc5b62fd30"
+    "sha256": "cded6c570bbb234979b13c020729117b65c36ed9b1bf867f887d185a4ae80868"
    },
    {
     "file": "https://data.blockchainacademics.com/vaults/v1/totals.json",
     "as_of": "2026-11-24",
-    "sha256": "6e4f7e3c8728a1789e4d80dd33a8eb4d328a07ba074cdaac254349c569cb8c25"
+    "sha256": "b7e9ed3ce254f3249b4f3305aaf1f3beb29542e47d69bb9c4bdabb42f0adedcc"
    }
   ],
   "outside_text_keys": [
@@ -178,12 +178,12 @@
     "venues": [
      "Hyperliquid"
     ],
-    "rows": 22,
-    "open": 15,
-    "open_small": 1,
-    "closed": 6,
-    "ranked": 8,
-    "open_on_venue_list_with_no_row_here": 24
+    "rows": 60,
+    "open": 24,
+    "open_small": 3,
+    "closed": 33,
+    "ranked": 10,
+    "open_on_venue_list_with_no_row_here": 3014
    }
   ]
  },
@@ -192,13 +192,13 @@
    {
     "cite_url": "https://data.blockchainacademics.com/exchanges/v1/list.json",
     "as_of": "2026-11-24T00:00:00Z",
-    "source_hash": "sha256:8508ce9c9901a958"
+    "source_hash": "sha256:aad1693d42fba5bd"
    }
   ]
  },
  "meta": {
   "status": "complete",
-  "request_id": "fedcba9876543210",
+  "request_id": "statsdump0004",
   "pageInfo": {
    "hasNextPage": false,
    "hasPreviousPage": false,

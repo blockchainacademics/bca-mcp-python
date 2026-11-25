@@ -9,12 +9,12 @@
    {
     "file": "https://data.blockchainacademics.com/exchanges/v1/list.json",
     "as_of": "2026-11-24",
-    "sha256": "8508ce9c9901a958f6577b9af80fe5e700158f2656729e8a586f3aafc2bf9da4"
+    "sha256": "aad1693d42fba5bdcd5ad9e5cc176da6061b19adea6df6f213fb736eaba76cc5"
    },
    {
     "file": "https://data.blockchainacademics.com/vaults/v1/list.json",
     "as_of": "2026-11-24",
-    "sha256": "b4cd6a9b11f961f3d35a7adec693e9e83fa740d6292a8242578250fc5b62fd30"
+    "sha256": "cded6c570bbb234979b13c020729117b65c36ed9b1bf867f887d185a4ae80868"
    }
   ],
   "outside_text_keys": [
@@ -55,7 +55,7 @@
   },
   "searched": {
    "exchanges": 8,
-   "vaults_with_a_name": 19
+   "vaults_with_a_name": 55
   },
   "order": "Exchanges come before vaults, A to Z. Vaults are ordered by money inside, largest at the top, then the older vault. A closer text match never moves a row up.",
   "more": null
@@ -65,13 +65,13 @@
    {
     "cite_url": "https://data.blockchainacademics.com/exchanges/v1/list.json",
     "as_of": "2026-11-24T00:00:00Z",
-    "source_hash": "sha256:8508ce9c9901a958"
+    "source_hash": "sha256:aad1693d42fba5bd"
    }
   ]
  },
  "meta": {
   "status": "complete",
-  "request_id": "fedcba9876543210",
+  "request_id": "statsdump0002",
   "pageInfo": {
    "hasNextPage": false,
    "hasPreviousPage": false,

@@ -79,9 +79,18 @@
    "sum_of_figures_the_file_uses_usd adds one figure for each vault, the one the file names under uses. It is the total the Stats lookup page shows, and it mixes the two kinds."
   ],
   "counts": {
-   "wallets": 5,
-   "records": 67,
-   "vaults": 80,
+   "wallets": 9,
+   "records": 190,
+   "vaults": {
+    "a_wallet_off_the_list_may_hold_money": 1,
+    "covered": 40,
+    "covered_closed": 25,
+    "covered_open": 15,
+    "left_out_books_do_not_add_up": 1,
+    "left_out_not_checked": 2,
+    "list_stops_at_100_names": 1,
+    "open_without_details": 3
+   },
    "wallets_left_out_on_request": 0
   }
  },
@@ -90,13 +99,13 @@
    {
     "cite_url": "https://data.blockchainacademics.com/vaults/v1/lookup/current.json",
     "as_of": "2026-11-24T00:00:00Z",
-    "source_hash": "sha256:b5a7e3c102d62578"
+    "source_hash": "sha256:c2e566e5f238fe72"
    }
   ]
  },
  "meta": {
   "status": "complete",
-  "request_id": "fedcba9876543210",
+  "request_id": "statsdump0023",
   "pageInfo": {
    "hasNextPage": false,
    "hasPreviousPage": false,

@@ -9,12 +9,12 @@
    {
     "file": "https://data.blockchainacademics.com/vaults/v1/records/0xd95dc5e8076b96eaf0c87541cba3df6fdc298e32.json",
     "as_of": "2026-11-24",
-    "sha256": "3bffdf4f8ce1990e5a0b816ce424ade9b383d15860f18ed943347b7c04601fb4"
+    "sha256": "903c0ed7fb4328815ea8b82c861c945001ebdfbac559ee2efb368951ce845f7c"
    },
    {
     "file": "https://data.blockchainacademics.com/vaults/v1/list.json",
     "as_of": "2026-11-24",
-    "sha256": "b4cd6a9b11f961f3d35a7adec693e9e83fa740d6292a8242578250fc5b62fd30"
+    "sha256": "cded6c570bbb234979b13c020729117b65c36ed9b1bf867f887d185a4ae80868"
    }
   ],
   "outside_text_keys": [
@@ -36,26 +36,26 @@
   "tab": "vaults",
   "record": {
    "address": "0xd95dc5e8076b96eaf0c87541cba3df6fdc298e32",
-   "name_by_leader": "<<outside:0123456789abcdef>>Fixture Alpha Growth ♾<</outside:0123456789abcdef>>",
+   "name_by_leader": "<<outside:0123456789abcdef>>Fixture Alpha Strategy<</outside:0123456789abcdef>>",
    "name_state": "shown",
-   "leader": "0x863a64e0dfa1f3e3ea9f9c2a1a791d7cfe810da6",
+   "leader": "0xab8ca1f9cf257653ca18ce811f6255524e76504f",
    "venue": "Hyperliquid",
    "status": "open",
    "small": false,
-   "opened_on": "2025-08-29",
+   "opened_on": "2025-06-01",
    "closed_on": null,
-   "days_open": 452,
-   "deposits_usd": 4200000,
-   "withdrawn_usd": 3900000,
-   "inside_usd": 750000,
-   "inside_cost_usd": 610000,
-   "left_took_home_usd": 310000,
-   "left_took_home_pct": 8.1,
-   "venue_rate_pct": 22.5,
-   "our_yearly_rate_pct": 14.2,
-   "wallets_ahead": 12,
-   "wallets_behind": 7,
-   "wallets_even": 3,
+   "days_open": 541,
+   "deposits_usd": 9000000,
+   "withdrawn_usd": 8000000,
+   "inside_usd": 2100000,
+   "inside_cost_usd": 1500000,
+   "left_took_home_usd": 500000,
+   "left_took_home_pct": 6.7,
+   "venue_rate_pct": 55.5,
+   "our_yearly_rate_pct": 40.2,
+   "wallets_ahead": 3,
+   "wallets_behind": 1,
+   "wallets_even": 1,
    "lockup_days": 1,
    "leader_cut_pct": 10.0,
    "books": {
@@ -65,291 +65,303 @@
    "results_held_back": false,
    "floor": {
     "meets": true,
-    "days_counted": 400,
+    "days_counted": 540,
     "days_needed": 180,
-    "outside_depositors_with_money": 64,
+    "outside_depositors_with_money": 99,
     "depositors_needed": 10,
-    "depositors_count_is_a_minimum": false
+    "depositors_count_is_a_minimum": true
    },
    "value_30_days": {
-    "start_usd": 600000,
-    "end_usd": 750000
+    "start_usd": 1900000,
+    "end_usd": 2100000
    },
    "other_vaults_with_name": 0,
    "name_also_used_by_older_vault": false,
    "name_resembles_venue_own": false,
    "value_history": [
     {
-     "on": "2025-09-03",
-     "usd": 10000
+     "on": "2025-06-06",
+     "usd": 500000
     },
     {
-     "on": "2025-09-10",
-     "usd": 11500
+     "on": "2025-06-13",
+     "usd": 527119
     },
     {
-     "on": "2025-09-17",
-     "usd": 13000
+     "on": "2025-06-20",
+     "usd": 554237
     },
     {
-     "on": "2025-09-24",
-     "usd": 14500
+     "on": "2025-06-27",
+     "usd": 581356
     },
     {
-     "on": "2025-10-01",
-     "usd": 16000
+     "on": "2025-07-04",
+     "usd": 608475
     },
     {
-     "on": "2025-10-08",
-     "usd": 17500
+     "on": "2025-07-11",
+     "usd": 635593
     },
     {
-     "on": "2025-10-15",
-     "usd": 19000
+     "on": "2025-07-18",
+     "usd": 662712
     },
     {
-     "on": "2025-10-22",
-     "usd": 20500
+     "on": "2025-07-25",
+     "usd": 689831
     },
     {
-     "on": "2025-10-29",
-     "usd": 22000
+     "on": "2025-08-01",
+     "usd": 716949
     },
     {
-     "on": "2025-11-05",
-     "usd": 23500
+     "on": "2025-08-08",
+     "usd": 744068
     },
     {
-     "on": "2025-11-12",
-     "usd": 25000
+     "on": "2025-08-15",
+     "usd": 771186
     },
     {
-     "on": "2025-11-19",
-     "usd": 26500
+     "on": "2025-08-22",
+     "usd": 798305
     },
     {
-     "on": "2025-11-26",
-     "usd": 28000
+     "on": "2025-08-29",
+     "usd": 825424
     },
     {
-     "on": "2025-12-03",
-     "usd": 29500
+     "on": "2025-09-05",
+     "usd": 852542
     },
     {
-     "on": "2025-12-10",
-     "usd": 31000
+     "on": "2025-09-12",
+     "usd": 879661
     },
     {
-     "on": "2025-12-17",
-     "usd": 32500
+     "on": "2025-09-19",
+     "usd": 906780
     },
     {
-     "on": "2025-12-24",
-     "usd": 34000
+     "on": "2025-09-26",
+     "usd": 933898
     },
     {
-     "on": "2025-12-31",
-     "usd": 35500
+     "on": "2025-10-03",
+     "usd": 961017
     },
     {
-     "on": "2026-01-07",
-     "usd": 37000
+     "on": "2025-10-10",
+     "usd": 988136
     },
     {
-     "on": "2026-01-14",
-     "usd": 38500
+     "on": "2025-10-17",
+     "usd": 1015254
     },
     {
-     "on": "2026-01-21",
-     "usd": 40000
+     "on": "2025-10-24",
+     "usd": 1042373
     },
     {
-     "on": "2026-01-28",
-     "usd": 41500
+     "on": "2025-10-31",
+     "usd": 1069492
     },
     {
-     "on": "2026-02-04",
-     "usd": 43000
+     "on": "2025-11-07",
+     "usd": 1096610
     },
     {
-     "on": "2026-02-11",
-     "usd": 44500
+     "on": "2025-11-14",
+     "usd": 1123729
     },
     {
-     "on": "2026-02-18",
-     "usd": 46000
+     "on": "2025-11-21",
+     "usd": 1150847
     },
     {
-     "on": "2026-02-25",
-     "usd": 47500
+     "on": "2025-11-28",
+     "usd": 1177966
     },
     {
-     "on": "2026-03-04",
-     "usd": 49000
+     "on": "2025-12-05",
+     "usd": 1205085
     },
     {
-     "on": "2026-03-11",
-     "usd": 50500
+     "on": "2025-12-12",
+     "usd": 1232203
     },
     {
-     "on": "2026-03-18",
-     "usd": 52000
+     "on": "2025-12-19",
+     "usd": 1259322
     },
     {
-     "on": "2026-03-25",
-     "usd": 53500
+     "on": "2025-12-26",
+     "usd": 1286441
     },
     {
-     "on": "2026-04-01",
-     "usd": 55000
+     "on": "2026-01-02",
+     "usd": 1313559
     },
     {
-     "on": "2026-04-08",
-     "usd": 56500
+     "on": "2026-01-09",
+     "usd": 1340678
     },
     {
-     "on": "2026-04-15",
-     "usd": 58000
+     "on": "2026-01-16",
+     "usd": 1367797
     },
     {
-     "on": "2026-04-22",
-     "usd": 59500
+     "on": "2026-01-23",
+     "usd": 1394915
     },
     {
-     "on": "2026-04-29",
-     "usd": 61000
+     "on": "2026-01-30",
+     "usd": 1422034
     },
     {
-     "on": "2026-05-06",
-     "usd": 62500
+     "on": "2026-02-06",
+     "usd": 1449153
     },
     {
-     "on": "2026-05-13",
-     "usd": 64000
+     "on": "2026-02-13",
+     "usd": 1476271
     },
     {
-     "on": "2026-05-20",
-     "usd": 65500
+     "on": "2026-02-20",
+     "usd": 1503390
     },
     {
-     "on": "2026-05-27",
-     "usd": 67000
+     "on": "2026-02-27",
+     "usd": 1530508
     },
     {
-     "on": "2026-06-03",
-     "usd": 68500
+     "on": "2026-03-06",
+     "usd": 1557627
     },
     {
-     "on": "2026-06-10",
-     "usd": 70000
+     "on": "2026-03-13",
+     "usd": 1584746
     },
     {
-     "on": "2026-06-17",
-     "usd": 71500
+     "on": "2026-03-20",
+     "usd": 1611864
     },
     {
-     "on": "2026-06-24",
-     "usd": 73000
+     "on": "2026-03-27",
+     "usd": 1638983
     },
     {
-     "on": "2026-07-01",
-     "usd": 74500
+     "on": "2026-04-03",
+     "usd": 1666102
     },
     {
-     "on": "2026-07-08",
-     "usd": 76000
+     "on": "2026-04-10",
+     "usd": 1693220
     },
     {
-     "on": "2026-07-15",
-     "usd": 77500
+     "on": "2026-04-17",
+     "usd": 1720339
     },
     {
-     "on": "2026-07-22",
-     "usd": 79000
+     "on": "2026-04-24",
+     "usd": 1747458
     },
     {
-     "on": "2026-07-29",
-     "usd": 80500
+     "on": "2026-05-01",
+     "usd": 1774576
     },
     {
-     "on": "2026-08-05",
-     "usd": 82000
+     "on": "2026-05-08",
+     "usd": 1801695
     },
     {
-     "on": "2026-08-12",
-     "usd": 83500
+     "on": "2026-05-15",
+     "usd": 1828814
     },
     {
-     "on": "2026-08-19",
-     "usd": 85000
+     "on": "2026-05-22",
+     "usd": 1855932
     },
     {
-     "on": "2026-08-26",
-     "usd": 86500
+     "on": "2026-05-29",
+     "usd": 1883051
     },
     {
-     "on": "2026-09-02",
-     "usd": 88000
+     "on": "2026-06-05",
+     "usd": 1910169
     },
     {
-     "on": "2026-09-09",
-     "usd": 89500
+     "on": "2026-06-12",
+     "usd": 1937288
     },
     {
-     "on": "2026-09-16",
-     "usd": 91000
+     "on": "2026-06-19",
+     "usd": 1964407
     },
     {
-     "on": "2026-09-23",
-     "usd": 92500
+     "on": "2026-06-26",
+     "usd": 1991525
     },
     {
-     "on": "2026-09-30",
-     "usd": 94000
+     "on": "2026-07-03",
+     "usd": 2018644
     },
     {
-     "on": "2026-10-07",
-     "usd": 95500
+     "on": "2026-07-10",
+     "usd": 2045763
     },
     {
-     "on": "2026-10-14",
-     "usd": 97000
+     "on": "2026-07-17",
+     "usd": 2072881
     },
     {
-     "on": "2026-10-21",
-     "usd": 98500
+     "on": "2026-07-24",
+     "usd": 2100000
     },
     {
-     "on": "2026-10-28",
-     "usd": 100000
+     "on": "2026-11-16",
+     "usd": 2100000
     },
     {
-     "on": "2026-11-04",
-     "usd": 101500
-    },
-    {
-     "on": "2026-11-11",
-     "usd": 103000
+     "on": "2026-11-17",
+     "usd": 2100000
     },
     {
      "on": "2026-11-18",
-     "usd": 104500
+     "usd": 2100000
     },
     {
-     "on": "2026-11-25",
-     "usd": 106000
+     "on": "2026-11-19",
+     "usd": 2100000
     },
     {
-     "on": "2026-12-02",
-     "usd": 107500
+     "on": "2026-11-20",
+     "usd": 2100000
+    },
+    {
+     "on": "2026-11-21",
+     "usd": 2100000
+    },
+    {
+     "on": "2026-11-22",
+     "usd": 2100000
+    },
+    {
+     "on": "2026-11-23",
+     "usd": 2100000
+    },
+    {
+     "on": "2026-11-24",
+     "usd": 2100000
     }
    ],
-   "history_points_total": 66,
+   "history_points_total": 69,
    "daily_from": "2026-11-16",
-   "cuts_paid_usd": 64000,
-   "leader_own_usd": 90000,
-   "leader_own_pct": 12.0,
-   "depositors_on_venue_list": 64,
+   "cuts_paid_usd": 66000,
+   "leader_own_usd": 250000,
+   "leader_own_pct": 11.9,
+   "depositors_on_venue_list": 99,
    "scored_checks": {
     "state": "not_written_yet"
    }
@@ -367,13 +379,13 @@
    {
     "cite_url": "https://data.blockchainacademics.com/vaults/v1/records/0xd95dc5e8076b96eaf0c87541cba3df6fdc298e32.json",
     "as_of": "2026-11-24T00:00:00Z",
-    "source_hash": "sha256:3bffdf4f8ce1990e"
+    "source_hash": "sha256:903c0ed7fb432881"
    }
   ]
  },
  "meta": {
   "status": "complete",
-  "request_id": "fedcba9876543210",
+  "request_id": "statsdump0013",
   "pageInfo": {
    "hasNextPage": false,
    "hasPreviousPage": false,
