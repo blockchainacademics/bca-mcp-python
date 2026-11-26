@@ -17,6 +17,7 @@ The Stats tools follow the site's changes of 2026-11-26, in lockstep with @block
 ### Changed
 
 - `rank_stats` takes `measure` as optional. With none, the API ranks by the tab's own order: checks passed for exchanges, `rate_paid` for vaults, `yield_rate_paid` for yield products.
+- A bad row of the Yields file is dropped by the API and the good rows stay, as on the site, whatever share is bad; `rows_dropped` counts it and the answer reads `partial`. The packages pass that on as they do for every file, so they need no rule of their own (API commit `77945e7`). The other list files keep the 2% rule.
 - `yield_delivered` is gone; as a measure the package does not know, it is sent and the API answers.
 - Seven of the eight descriptions and eight argument texts name the Yields tab and the rate paid, word for word as in the TypeScript package (design review log, 0.8.0); `lookup_stats_wallet` is unchanged. Each stays at 1,200 characters or under. The error for an address outside the vaults tab reads "An address is not an exchange or yield product id."
 - Version 0.8.0 in pyproject, `__version__` and the User-Agent. The parity fixtures are `tests/fixtures/ts_tools_0_8_0.json` (the tools/list of the TypeScript 0.8.0 build at commit `bd112c3`) and `tests/fixtures/ts_demo_banner_0_8_0.ts` (unchanged since 0.7.0). `tests/fixtures/stats_api_ts` holds the TypeScript package's 47 recorded answers, 34 of them the API's dump at commit `41b64a2`.
