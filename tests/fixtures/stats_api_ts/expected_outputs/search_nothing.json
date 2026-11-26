@@ -15,6 +15,11 @@
     "file": "https://data.blockchainacademics.com/vaults/v1/list.json",
     "as_of": "2026-11-24",
     "sha256": "cded6c570bbb234979b13c020729117b65c36ed9b1bf867f887d185a4ae80868"
+   },
+   {
+    "file": "https://data.blockchainacademics.com/yields/v1/list.json",
+    "as_of": "2026-11-24",
+    "sha256": "0d60eaed3611f5938a5315cb2ddab177e4bd29285ee155178e9b42ad317ed5b9"
    }
   ],
   "outside_text_keys": [
@@ -41,9 +46,10 @@
   },
   "searched": {
    "exchanges": 8,
+   "yield_products": 21,
    "vaults_with_a_name": 55
   },
-  "order": "Exchanges come before vaults, A to Z. Vaults are ordered by money inside, largest at the top, then the older vault. A closer text match never moves a row up.",
+  "order": "Exchanges come before yield products, and both come before vaults, each A to Z. Vaults are ordered by money inside, largest at the top, then the older vault. A closer text match never moves a row up.",
   "more": null
  },
  "attribution": {

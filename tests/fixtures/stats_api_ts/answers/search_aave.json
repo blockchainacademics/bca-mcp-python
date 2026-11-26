@@ -1,0 +1,17 @@
+{
+ "call": "search_aave",
+ "tool": "search_stats",
+ "args": {
+  "query": "aave",
+  "tab": "yields"
+ },
+ "request": {
+  "path": "/v1/stats/search",
+  "query": {
+   "q": "aave",
+   "tab": "yields",
+   "limit": "10"
+  }
+ },
+ "envelope": {"data":{"schema":"bca.stats/1","as_of":"2026-11-24","uploaded_at":"2026-11-24T02:47:20Z","method_version":null,"variant":null,"sources":[{"file":"https://data.blockchainacademics.com/yields/v1/list.json","as_of":"2026-11-24","sha256":"0d60eaed3611f5938a5315cb2ddab177e4bd29285ee155178e9b42ad317ed5b9"}],"outside_text_keys":["name_by_leader","subject_by_outsider","text_as_published","value_from_source","link_from_source","quote_from_source","source_url","source_name","reason_as_published"],"rows_dropped":0,"notes":["A rate paid is read on chain over a past window. Past rates do not promise future rates."],"tab":"yields","matched_as":"name","count":2,"matches_total":2,"limit":10,"results":[{"record_type":"yield","id":"aave-v3-usdc","name":"Aave v3 USDC","issuer":"Aave","kind":"dollar","asset":"USDC","chain":"Ethereum","rate_paid_30_days_pct":4.18},{"record_type":"yield","id":"aave-v3-usdt","name":"Aave v3 USDT","issuer":"Aave","kind":"dollar","asset":"USDT","chain":"Ethereum","rate_paid_30_days_pct":4.09}],"left_out":{"young_vaults":0},"searched":{"exchanges":0,"yield_products":21,"vaults_with_a_name":0},"order":"Exchanges come before yield products, and both come before vaults, each A to Z. Vaults are ordered by money inside, largest at the top, then the older vault. A closer text match never moves a row up.","more":null},"attribution":{"citations":[{"cite_url":"https://data.blockchainacademics.com/yields/v1/list.json","as_of":"2026-11-24T00:00:00Z","source_hash":"sha256:0d60eaed3611f593"}]},"meta":{"status":"complete","request_id":"statsdump0033","pageInfo":{"hasNextPage":false,"hasPreviousPage":false,"startCursor":null,"endCursor":null},"tier":"demo","upgrade_url":"https://blockchainacademics.com/crypto-api/signup?ref=mcp-demo-tier"}}
+}

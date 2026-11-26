@@ -164,20 +164,20 @@ All eight work with a free API key. "Without a key" marks the ones open in demo 
 
 ### Stats tools
 
-The 8 Stats tools read the Blockchain Academics Stats files (the 8 centralised exchanges it lists and the Hyperliquid vaults), through the same API. Each works without a key.
+The 8 Stats tools read the Blockchain Academics Stats files (the 8 centralised exchanges it lists, the Hyperliquid vaults, and the dollar savings and ETH staking products of its Yields tab), through the same API. Vaults are ranked by the rate paid over 12 months, and yield products by the rate paid over 30 days, read on chain, unless `rank_stats` names another measure. Each works without a key.
 
 | Tool | Endpoint |
 |---|---|
 | `search_stats` | `GET /v1/stats/search` |
 | `list_stats_measures` | `GET /v1/stats/measures` |
 | `rank_stats` | `GET /v1/stats/rank` |
-| `get_stats_record` | `GET /v1/stats/exchanges/{id}`, `GET /v1/stats/vaults/{address}` |
+| `get_stats_record` | `GET /v1/stats/exchanges/{id}`, `GET /v1/stats/vaults/{address}`, `GET /v1/stats/yields/{id}` |
 | `compare_stats_records` | `GET /v1/stats/compare` |
 | `lookup_stats_wallet` | `GET /v1/stats/wallets/shard/{two characters}` |
 | `get_stats_method` | `GET /v1/stats/method` |
 | `list_stats_changes` | `GET /v1/stats/changes` |
 
-Every Stats answer carries the data day and the address of each open file it read. Text that someone outside Blockchain Academics chose, such as a vault name or a quote from a source, comes back between `<<outside:ID>>` and `<</outside:ID>>` markers, with an ID made new for each answer, and the same object comes back as structured content. An exchange that a person has not confirmed yet is marked as being checked and has no value.
+Every Stats answer carries the data day and the address of each open file it read. Text that someone outside Blockchain Academics chose, such as a vault name or a quote from a source, comes back between `<<outside:ID>>` and `<</outside:ID>>` markers, with an ID made new for each answer, and the same object comes back as structured content. An exchange that a person has not confirmed yet is marked as being checked and has no value. A yield product's fact shows its answer and its sources once a person has checked it, and none before.
 
 ### Tool details
 

@@ -86,7 +86,7 @@
   },
   "read_me": [
    "venue_rate_pct is the venue's own trailing figure. It is not a promise and not our measure.",
-   "our_yearly_rate_pct is our estimate from weekly points. A young vault can show an extreme figure.",
+   "our_yearly_rate_pct is the rate paid, the measure the vault ranking orders by: our money-weighted estimate over 12 months, from weekly points. A young vault can show an extreme figure.",
    "left_took_home counts every withdrawal, partial ones and the leader's own included.",
    "value_history and value_30_days show what the vault held. Deposits and withdrawals move them, so a rise is not a profit.",
    "A percent is a percent number: 9.5 means 9.5%. A null is held back or cannot be worked out. It is never zero."

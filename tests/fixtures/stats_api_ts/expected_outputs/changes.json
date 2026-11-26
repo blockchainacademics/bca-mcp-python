@@ -32,7 +32,8 @@
   "not_covered": [
    "Nightly moves of vault figures.",
    "Vaults that join or leave the vault list.",
-   "Corrections as their own kind of line."
+   "Corrections as their own kind of line.",
+   "Nightly moves of yield rates, and yield products that join or leave the Yields file."
   ],
   "count": 0,
   "total": 0,

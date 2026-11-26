@@ -90,9 +90,10 @@
   },
   "searched": {
    "exchanges": 0,
+   "yield_products": 0,
    "vaults_with_a_name": 55
   },
-  "order": "Exchanges come before vaults, A to Z. Vaults are ordered by money inside, largest at the top, then the older vault. A closer text match never moves a row up.",
+  "order": "Exchanges come before yield products, and both come before vaults, each A to Z. Vaults are ordered by money inside, largest at the top, then the older vault. A closer text match never moves a row up.",
   "more": "More rows match than fit in one answer. Search has no further page: a longer query narrows the list."
  },
  "attribution": {

@@ -798,12 +798,13 @@ def test_demo_banner_text_invariants() -> None:
 def test_demo_banner_byte_identical_to_ts_sibling() -> None:
     """The TS sibling and Python sibling MUST emit the exact same banner
     bytes so MCP host log filtering / regex matching works on either side.
-    tests/fixtures/ts_demo_banner_0_7_0.ts is bca-mcp-ts src/demo_banner.ts of
-    0.7.0 (commit 6367585), copied unchanged, so the check also runs in CI."""
+    tests/fixtures/ts_demo_banner_0_8_0.ts is bca-mcp-ts src/demo_banner.ts of
+    0.8.0 (commit bd112c3; unchanged since 0.7.0, commit 6367585), copied
+    unchanged, so the check also runs in CI."""
     from bca_mcp._demo_banner import DEMO_BANNER
     from pathlib import Path
 
-    ts_file = Path(__file__).resolve().parent / "fixtures" / "ts_demo_banner_0_7_0.ts"
+    ts_file = Path(__file__).resolve().parent / "fixtures" / "ts_demo_banner_0_8_0.ts"
     ts_src = ts_file.read_text(encoding="utf-8")
     # Extract the three string literals between double quotes that start
     # with "[bca-mcp]".

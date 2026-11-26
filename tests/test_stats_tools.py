@@ -279,7 +279,13 @@ async def test_measure_must_match_the_strict_pattern(httpx_mock, measure) -> Non
     [
         ({"tab": "exchanges", "measure": "money_put_in"}, stats.MEASURE_OTHER_TAB),
         ({"tab": "vaults", "measure": "checks_passed"}, stats.MEASURE_OTHER_TAB),
-        ({"tab": "vaults", "measure": "yield_delivered"}, stats.MEASURE_OTHER_TAB),
+        ({"tab": "vaults", "measure": "yield_rate_paid"}, stats.MEASURE_OTHER_TAB),
+        ({"tab": "exchanges", "measure": "rate_paid"}, stats.MEASURE_OTHER_TAB),
+        ({"tab": "yields", "measure": "yield_rate_paid", "kind": "centralised"}, stats.KIND_NOT_FOR_MEASURE),
+        ({"tab": "yields", "kind": "swap"}, stats.KIND_NOT_FOR_MEASURE),
+        ({"tab": "exchanges", "kind": "eth"}, stats.KIND_NOT_FOR_MEASURE),
+        ({"tab": "vaults", "kind": "dollar"}, stats.KIND_NOT_FOR_MEASURE),
+        ({"tab": "vaults", "measure": "rate_paid", "kind": "eth"}, stats.KIND_NOT_FOR_MEASURE),
         ({"tab": "exchanges", "measure": "real_cost_buy_1000", "kind": "swap"}, stats.KIND_NOT_FOR_MEASURE),
         ({"tab": "vaults", "measure": "money_put_in", "kind": "centralised"}, stats.KIND_NOT_FOR_MEASURE),
     ],
@@ -290,13 +296,60 @@ async def test_a_known_measure_of_the_other_tab_is_refused(httpx_mock, args, sen
 
 
 @pytest.mark.asyncio
-async def test_yield_delivered_in_its_own_tab_is_sent(httpx_mock) -> None:
-    """The API answers that it is not open yet; the package needs no release
-    the day the Yields tab opens (design section 7)."""
+async def test_yield_delivered_is_gone_and_is_sent_like_any_new_measure(httpx_mock) -> None:
+    """0.8.0: the Yields tab is open and yield_rate_paid took the place of
+    yield_delivered, which the package no longer knows: it is sent and the
+    API answers."""
     err = _error(await _call(httpx_mock, "rank_stats", {"tab": "yields", "measure": "yield_delivered"},
                              {"detail": "That measure does not belong to that tab."}, status=400))
     assert err == {"code": "BCA_BAD_REQUEST", "message": "That measure does not belong to that tab."}
     assert dict(httpx_mock.get_request().url.params)["measure"] == "yield_delivered"
+    assert "yield_delivered" not in stats.KNOWN_MEASURES
+
+
+@pytest.mark.asyncio
+async def test_rank_with_no_measure_sends_none_and_the_api_picks_the_tab_order(httpx_mock) -> None:
+    body = json.loads((FIXTURES.parent / "stats_api_ts" / "answers" / "rank_rate_paid.json").read_text("utf-8"))
+    _output(await _call(httpx_mock, "rank_stats", {"tab": "vaults", "limit": 3}, body["envelope"]))
+    assert dict(httpx_mock.get_request().url.params) == {"tab": "vaults", "order": "top", "limit": "3", "offset": "0"}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "typed,sent",
+    [("Coinbase cbETH", "coinbase-cbeth"), (" AAVE v3 usdc ", "aave-v3-usdc"), ("lido_wsteth", "lido-wsteth")],
+)
+async def test_a_yield_product_id_is_folded_like_an_exchange_id(httpx_mock, typed, sent) -> None:
+    body = json.loads((FIXTURES.parent / "stats_api_ts" / "answers" / "record_yield_aave.json").read_text("utf-8"))
+    _output(await _call(httpx_mock, "get_stats_record", {"tab": "yields", "id": typed}, body["envelope"]))
+    assert httpx_mock.get_request().url.path == "/v1/stats/yields/" + sent
+
+
+@pytest.mark.asyncio
+async def test_an_address_in_the_yields_tab_and_an_empty_id_are_refused(httpx_mock) -> None:
+    err = await _refused(httpx_mock, "get_stats_record", {"tab": "yields", "id": "0x" + "ab" * 20})
+    assert err["message"] == f"Invalid arguments for get_stats_record: {stats.ADDRESS_NOT_AN_EXCHANGE_ID}"
+    assert "yield product" in stats.ADDRESS_NOT_AN_EXCHANGE_ID
+    err = await _refused(httpx_mock, "get_stats_record", {"tab": "yields", "id": "--"})
+    assert "yield product id" in err["message"]
+    err = await _refused(httpx_mock, "compare_stats_records", {"tab": "yields", "ids": ["lido-wsteth", "0x" + "ab" * 20]})
+    assert stats.ADDRESS_NOT_AN_EXCHANGE_ID in err["message"]
+
+
+@pytest.mark.asyncio
+async def test_a_fact_being_checked_reaches_the_model_with_no_answer_and_no_link(httpx_mock, fixed_ids) -> None:
+    body = json.loads((FIXTURES.parent / "stats_api_ts" / "answers" / "record_yield_waiting.json").read_text("utf-8"))
+    out = _output(await _call(httpx_mock, "get_stats_record", {"tab": "yields", "id": "coinbase-cbeth"},
+                              body["envelope"]))
+    facts = out["data"]["record"]["facts"]
+    waiting = [f for f in facts if f["check_state"] == "being_checked"]
+    assert len(waiting) == 1 and waiting[0]["text_as_published"] is None and waiting[0]["sources"] == []
+    for fact in facts:
+        if fact["check_state"] == "confirmed":
+            assert re.fullmatch(r"<<outside:%s>>.+<</outside:%s>>" % (MARK, MARK), fact["text_as_published"])
+            assert all(s["source_url"].startswith("<<outside:%s>>https://" % MARK) for s in fact["sources"])
+    assert "Not checked yet." not in json.dumps(out)
+    assert out["meta"]["status"] == "partial"
 
 
 @pytest.mark.asyncio
@@ -1141,32 +1194,32 @@ async def test_the_defaults_are_sent(httpx_mock) -> None:
 DESCRIPTION_STARTS = {
     "search_stats": "Search Blockchain Academics Stats by name: the 8 centralised exchanges it lists",
     "list_stats_measures": "List every measure Blockchain Academics Stats ranks by:",
-    "rank_stats": "Rank the 8 centralised exchanges or the Hyperliquid vaults of Blockchain Academics Stats",
+    "rank_stats": "Rank the 8 centralised exchanges, the Hyperliquid vaults or the yield products of Blockchain Academics Stats",
     "get_stats_record": "Get one record from Blockchain Academics Stats:",
-    "compare_stats_records": "Compare 2 to 5 of the 8 centralised exchanges, or 2 to 5 Hyperliquid vaults,",
+    "compare_stats_records": "Compare 2 to 5 of the 8 centralised exchanges, 2 to 5 Hyperliquid vaults, or 2 to 5",
     "lookup_stats_wallet": "Look up what one wallet address took out of the Hyperliquid vaults",
     "get_stats_method": "Get how Blockchain Academics Stats makes its numbers, for one topic.",
     "list_stats_changes": "List the change lines of Blockchain Academics Stats, newest at the top:",
 }
 ARGUMENTS = {
     ("search_stats", "query"): "A name, 2 to 64 characters. Not an address.",
-    ("search_stats", "tab"): "exchanges or vaults. Both when left out.",
+    ("search_stats", "tab"): "exchanges, vaults or yields. Every open tab when left out.",
     ("search_stats", "limit"): "Rows to return, 1 to 20 (default 10).",
-    ("rank_stats", "tab"): "exchanges or vaults.",
-    ("rank_stats", "measure"): "A measure id from the list of measures. It must belong to the tab.",
-    ("rank_stats", "kind"): "The kind of exchange: centralised, swap or leveraged. For the exchanges tab. The measure's own kind when left out.",
+    ("rank_stats", "tab"): "exchanges, vaults or yields.",
+    ("rank_stats", "measure"): "A measure id from the list of measures. It must belong to the tab. The tab's own order when left out.",
+    ("rank_stats", "kind"): "The kind: centralised, swap or leveraged for the exchanges tab, dollar or eth for the yields tab. The measure's own kind when left out.",
     ("rank_stats", "order"): "top reads the list from its top, bottom from its other end. The rank numbers stay the same (default top).",
     ("rank_stats", "limit"): "Rows to return, 1 to 50 (default 20).",
     ("rank_stats", "offset"): "Rows to skip, for paging: the next_offset of the page before (default 0).",
     ("rank_stats", "as_of"): "The as_of of the page before, YYYY-MM-DD. A page of another data day is refused, so two days are never mixed.",
-    ("get_stats_record", "tab"): "exchanges or vaults.",
-    ("get_stats_record", "id"): "An exchange id or name (for example kraken or Crypto.com), or a vault address (0x and 40 hex characters).",
-    ("compare_stats_records", "tab"): "exchanges or vaults.",
+    ("get_stats_record", "tab"): "exchanges, vaults or yields.",
+    ("get_stats_record", "id"): "An exchange id or name (for example kraken or Crypto.com), a vault address (0x and 40 hex characters), or a yield product id or name (for example lido-wsteth).",
+    ("compare_stats_records", "tab"): "exchanges, vaults or yields.",
     ("compare_stats_records", "ids"): "2 to 5 ids with no repeats, as a list or as one text separated by commas (for example kraken,coinbase).",
     ("lookup_stats_wallet", "address"): "One full wallet address: 0x and 40 hex characters.",
     ("lookup_stats_wallet", "offset"): "Records to skip when the wallet has more than 50: the next_offset of the page before (default 0).",
     ("lookup_stats_wallet", "as_of"): "The as_of of the page before, YYYY-MM-DD. A page of another data day is refused, so two days are never mixed.",
-    ("get_stats_method", "topic"): "exchanges, vaults or wallet_lookup.",
+    ("get_stats_method", "topic"): "exchanges, vaults, wallet_lookup or yields.",
     ("list_stats_changes", "since"): "A day, YYYY-MM-DD: lines on or after it. A day outside the allowed range is moved to the nearest allowed day, and the answer says so.",
     ("list_stats_changes", "limit"): "Lines to return, 1 to 100 (default 20).",
     ("list_stats_changes", "before"): "The next_before value of the page before, for the next page.",
@@ -1198,7 +1251,7 @@ def test_descriptions_are_the_fixed_text() -> None:
         assert text.endswith(keyless) is stats.DEMO_KEY_OPENS_STATS, name
         assert "\u2014" not in text and "  " not in text
         assert len(text) <= 1200
-    assert len(tools["rank_stats"].description) == 1187 - (0 if stats.DEMO_KEY_OPENS_STATS else len(keyless))
+    assert len(tools["rank_stats"].description) == 1194 - (0 if stats.DEMO_KEY_OPENS_STATS else len(keyless))
     marked = [n for n, t in tools.items() if "<<outside:ID>>" in t.description]
     assert sorted(marked) == sorted(n for n in ["search_stats", "rank_stats", "get_stats_record", "compare_stats_records",
                                                 "lookup_stats_wallet", "list_stats_changes"] if n in tools)

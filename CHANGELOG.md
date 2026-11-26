@@ -4,7 +4,25 @@ All notable changes to `bca-mcp` are documented here.
 
 This project follows [Semantic Versioning](https://semver.org/) and [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [0.7.0] (unreleased)
+## [0.8.0] (unreleased)
+
+The Stats tools follow the site's changes of 2026-11-26, in lockstep with @blockchainacademics/mcp 0.8.0. Same 113 tools, the same eight Stats tools.
+
+### Added
+
+- The Yields tab: dollar savings and ETH staking products, ranked by the rate paid over 30 days, read on chain. `tab` takes `yields` in `search_stats`, `rank_stats`, `get_stats_record` and `compare_stats_records`, `kind` takes `dollar` or `eth`, and `get_stats_method` takes the topic `yields`. A yield product id is folded like an exchange id (`Coinbase cbETH` reaches `coinbase-cbeth`), and an address is refused in that tab before any request.
+- `rate_paid`, the vault measure of the rate the money inside earned over the last 12 months, and `yield_rate_paid` (kinds `dollar` and `eth`) are known measures. `money_put_in` and `left_took_home` stay.
+- A fact of a yield product shows its answer under `text_as_published` and each link under `source_url`, both between the markers, once a person has checked it; a fact being checked has neither. No new outside text key, and the schema stays `bca.stats/1`.
+
+### Changed
+
+- `rank_stats` takes `measure` as optional. With none, the API ranks by the tab's own order: checks passed for exchanges, `rate_paid` for vaults, `yield_rate_paid` for yield products.
+- `yield_delivered` is gone; as a measure the package does not know, it is sent and the API answers.
+- Seven of the eight descriptions and eight argument texts name the Yields tab and the rate paid, word for word as in the TypeScript package (design review log, 0.8.0); `lookup_stats_wallet` is unchanged. Each stays at 1,200 characters or under. The error for an address outside the vaults tab reads "An address is not an exchange or yield product id."
+- Version 0.8.0 in pyproject, `__version__` and the User-Agent. The parity fixtures are `tests/fixtures/ts_tools_0_8_0.json` (the tools/list of the TypeScript 0.8.0 build at commit `bd112c3`) and `tests/fixtures/ts_demo_banner_0_8_0.ts` (unchanged since 0.7.0). `tests/fixtures/stats_api_ts` holds the TypeScript package's 47 recorded answers, 34 of them the API's dump at commit `41b64a2`.
+- The port to mcp 2.x and the removal of the unused `check_env` argument, planned for 0.8.0 in the 0.7.0 notes, move to the next release: 0.8.0 changes the Stats tools alone and still needs `mcp>=1.21.1,<2.0.0`.
+
+## [0.7.0]
 
 The Stats tools, in lockstep with @blockchainacademics/mcp 0.7.0. 105 → 113 tools.
 

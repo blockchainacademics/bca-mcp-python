@@ -42,12 +42,13 @@
    ],
    "floor_rule": "A vault is ranked once it is 180 days old, holds 10,000 dollars of outside money and has at least 10 outside depositors.",
    "order_rule": {
+    "rate_paid": "Ordered by the rate paid, highest at the top: what the money inside earned over the last 12 months, as a money-weighted yearly rate, among open vaults above the ranking floor. A tie is broken by money put in. A vault with no rate, or whose books do not add up, sits under the ranked rows.",
     "money_put_in": "Ordered by money put in, from largest to smallest, among open vaults above the ranking floor.",
     "left_took_home": "Ordered by what withdrawals took home, in dollars, from largest to smallest, among open vaults above the ranking floor."
    },
    "read_me": [
     "venue_rate_pct is the venue's own trailing figure. It is not a promise and not our measure.",
-    "our_yearly_rate_pct is our estimate from weekly points. A young vault can show an extreme figure.",
+    "our_yearly_rate_pct is the rate paid, the measure the vault ranking orders by: our money-weighted estimate over 12 months, from weekly points. A young vault can show an extreme figure.",
     "left_took_home counts every withdrawal, partial ones and the leader's own included.",
     "value_history and value_30_days show what the vault held. Deposits and withdrawals move them, so a rise is not a profit.",
     "A percent is a percent number: 9.5 means 9.5%. A null is held back or cannot be worked out. It is never zero."
@@ -119,7 +120,7 @@
     },
     {
      "field": "our_yearly_rate_pct",
-     "meaning": "Our money-weighted yearly rate over the last 12 months, estimated from the venue's weekly points, in percent. A young vault can show an extreme figure. Null when no rate can be worked out or the results are held back."
+     "meaning": "The rate paid: what the money inside earned over the last 12 months, as a money-weighted yearly rate in percent, estimated from the venue's weekly points. The rate_paid measure ranks by it. A young vault can show an extreme figure. Null when no rate can be worked out or the results are held back."
     },
     {
      "field": "wallets_ahead, wallets_behind, wallets_even",

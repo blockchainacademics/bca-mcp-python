@@ -1,13 +1,14 @@
-"""Parity with the TypeScript sibling, @blockchainacademics/mcp 0.7.0.
+"""Parity with the TypeScript sibling, @blockchainacademics/mcp 0.8.0.
 
-The fixture (tests/fixtures/ts_tools_0_7_0.json) is a dump of the tools/list
-of the TS 0.7.0 build: the 113 tool names and, per tool, the JSON Schema
+The fixture (tests/fixtures/ts_tools_0_8_0.json) is a dump of the tools/list
+of the TS 0.8.0 build: the 113 tool names and, per tool, the JSON Schema
 constraints of its zod schema (type, integer vs number, enum, minimum,
 maximum, default) and its description, and the whole inputSchema of the 8
 Stats tools. Both packages must advertise the same names and the same
 constraints, the 8 Stats tools the same whole schema, and the descriptions
 rewritten for the directory review in 0.6.4 and the 8 Stats descriptions of
-0.7.0 must read the same in both. Its source field says how it was made.
+0.7.0 (seven of them reworded in 0.8.0 for the Yields tab and the rate paid)
+must read the same in both. Its source field says how it was made.
 """
 
 from __future__ import annotations
@@ -25,7 +26,7 @@ from bca_mcp.server import TOOLS, build_server, tool_definitions
 from bca_mcp.tools import stats
 
 FIXTURE = json.loads(
-    (Path(__file__).parent / "fixtures" / "ts_tools_0_7_0.json").read_text("utf-8")
+    (Path(__file__).parent / "fixtures" / "ts_tools_0_8_0.json").read_text("utf-8")
 )
 TS_NAMES: list[str] = FIXTURE["names"]
 TS_CONSTRAINTS: dict[str, Any] = FIXTURE["constraints"]

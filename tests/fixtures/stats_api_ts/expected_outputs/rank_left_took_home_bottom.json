@@ -60,7 +60,8 @@
    "not_ranked": 15,
    "below_floor": 14,
    "results_held_back": 0,
-   "no_withdrawals_yet": 1
+   "no_withdrawals_yet": 1,
+   "rate_not_known": 0
   },
   "left_out": {
    "closed_rows": {
