@@ -243,7 +243,7 @@ async def test_an_unknown_argument_is_refused_before_any_request(httpx_mock, too
         ("lookup_stats_wallet", {"address": " " * 23 + "0x" + "a" * 40}),
         ("lookup_stats_wallet", {"address": "0x" + "g" * 40}),
         ("lookup_stats_wallet", {"address": "0x" + "a" * 40, "offset": 5_001}),
-        ("get_stats_method", {"topic": "chains"}),
+        ("get_stats_method", {"topic": "wallets"}),
         ("list_stats_changes", {"limit": 101}),
         ("list_stats_changes", {"since": "2026-13-01"}),
         ("list_stats_changes", {"before": "next page please"}),
@@ -1318,7 +1318,7 @@ DESCRIPTION_STARTS = {
     "list_stats_measures": "List every measure Blockchain Academics Stats ranks by:",
     "rank_stats": "Rank the 8 centralised exchanges, Hyperliquid vaults, yield products or chains of Blockchain Academics Stats",
     "get_stats_record": "Get one record from Blockchain Academics Stats:",
-    "compare_stats_records": "Compare 2 to 5 of the 8 centralised exchanges, 2 to 5 Hyperliquid vaults, or 2 to 5",
+    "compare_stats_records": "Compare 2 to 5 of the 8 centralised exchanges, 2 to 5 Hyperliquid vaults, 2 to 5 dollar savings",
     "lookup_stats_wallet": "Look up what one wallet address took out of the Hyperliquid vaults",
     "get_stats_method": "Get how Blockchain Academics Stats makes its numbers, for one topic.",
     "list_stats_changes": "List the change lines of Blockchain Academics Stats, newest at the top:",
@@ -1336,12 +1336,12 @@ ARGUMENTS = {
     ("rank_stats", "as_of"): "The as_of of the page before, YYYY-MM-DD. A page of another data day is refused, so two days are never mixed.",
     ("get_stats_record", "tab"): "exchanges, vaults, yields or chains.",
     ("get_stats_record", "id"): "An exchange id or name (for example kraken or Crypto.com), a vault address (0x and 40 hex characters), a yield product id or name (for example lido-wsteth), or a chain id or name (for example solana or BNB Chain).",
-    ("compare_stats_records", "tab"): "exchanges, vaults or yields.",
+    ("compare_stats_records", "tab"): "exchanges, vaults, yields or chains.",
     ("compare_stats_records", "ids"): "2 to 5 ids with no repeats, as a list or as one text separated by commas (for example kraken,coinbase).",
     ("lookup_stats_wallet", "address"): "One full wallet address: 0x and 40 hex characters.",
     ("lookup_stats_wallet", "offset"): "Records to skip when the wallet has more than 50: the next_offset of the page before (default 0).",
     ("lookup_stats_wallet", "as_of"): "The as_of of the page before, YYYY-MM-DD. A page of another data day is refused, so two days are never mixed.",
-    ("get_stats_method", "topic"): "exchanges, vaults, wallet_lookup or yields.",
+    ("get_stats_method", "topic"): "exchanges, vaults, wallet_lookup, yields or chains.",
     ("list_stats_changes", "since"): "A day, YYYY-MM-DD: lines on or after it. A day outside the allowed range is moved to the nearest allowed day, and the answer says so.",
     ("list_stats_changes", "limit"): "Lines to return, 1 to 100 (default 20).",
     ("list_stats_changes", "before"): "The next_before value of the page before, for the next page.",
@@ -1373,7 +1373,7 @@ def test_descriptions_are_the_fixed_text() -> None:
         assert text.endswith(keyless) is stats.DEMO_KEY_OPENS_STATS, name
         assert "\u2014" not in text and "  " not in text
         assert len(text) <= 1200
-    assert len(tools["rank_stats"].description) == 1196 - (0 if stats.DEMO_KEY_OPENS_STATS else len(keyless))
+    assert len(tools["rank_stats"].description) == 1199 - (0 if stats.DEMO_KEY_OPENS_STATS else len(keyless))
     marked = [n for n, t in tools.items() if "<<outside:ID>>" in t.description]
     assert sorted(marked) == sorted(n for n in ["search_stats", "rank_stats", "get_stats_record", "compare_stats_records",
                                                 "lookup_stats_wallet", "list_stats_changes"] if n in tools)
@@ -1454,3 +1454,29 @@ async def test_a_403_with_the_api_fixed_forbidden_is_a_bad_request(httpx_mock) -
     assert other["code"] == "BCA_AUTH"
     unauthorized = _error(await _call(httpx_mock, "list_stats_measures", {}, {"detail": "Forbidden"}, status=401))
     assert unauthorized["code"] == "BCA_AUTH"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("ids", [["Solana", "BNB Chain"], "solana , bnb_chain"])
+async def test_chains_are_compared_by_folded_ids(httpx_mock, ids) -> None:
+    _output(await _call(httpx_mock, "compare_stats_records", {"tab": "chains", "ids": ids},
+                        _ts_envelope("compare_chains")))
+    request = httpx_mock.get_request()
+    assert request.url.path == "/v1/stats/compare"
+    assert dict(request.url.params) == {"tab": "chains", "ids": "solana,bnb-chain"}
+
+
+@pytest.mark.asyncio
+async def test_an_address_or_a_repeat_among_chain_ids_is_refused(httpx_mock) -> None:
+    err = await _refused(httpx_mock, "compare_stats_records", {"tab": "chains", "ids": ["solana", "0x" + "ab" * 20]})
+    assert stats.ADDRESS_NOT_AN_EXCHANGE_ID in err["message"]
+    err = await _refused(httpx_mock, "compare_stats_records", {"tab": "chains", "ids": "solana,Solana"})
+    assert stats.IDS_RULE in err["message"]
+
+
+@pytest.mark.asyncio
+async def test_get_stats_method_takes_the_topic_chains(httpx_mock) -> None:
+    await _refused(httpx_mock, "get_stats_method", {"topic": "chain"})
+    out = _output(await _call(httpx_mock, "get_stats_method", {"topic": "chains"}, _ts_envelope("method_chains")))
+    assert dict(httpx_mock.get_request().url.params) == {"topic": "chains"}
+    assert out["data"]["topic"] == "chains"

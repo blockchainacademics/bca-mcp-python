@@ -6,7 +6,7 @@ Python edition of the Blockchain Academics crypto MCP server for AI agents: cite
 
 Sibling of [`@blockchainacademics/mcp`](https://www.npmjs.com/package/@blockchainacademics/mcp) (TypeScript). Same REST API. Same attribution contract. Use whichever fits your stack.
 
-**v0.7 ships the full 113-tool catalog, with the 8 Stats tools, plus the `bca` CLI.** The tool names match the TypeScript package one for one, and the CLI gives you a terminal-first way to explore the same API.
+**v0.9 ships the full 113-tool catalog, with the 8 Stats tools on exchanges, vaults, yields and chains, plus the `bca` CLI.** The tool names match the TypeScript package one for one, and the CLI gives you a terminal-first way to explore the same API.
 
 ## Why
 
@@ -179,7 +179,7 @@ The 8 Stats tools read the Blockchain Academics Stats files (the 8 centralised e
 
 Every Stats answer carries the data day and the address of each open file it read. Text that someone outside Blockchain Academics chose, such as a vault name or a quote from a source, comes back between `<<outside:ID>>` and `<</outside:ID>>` markers, with an ID made new for each answer, and the same object comes back as structured content. An exchange that a person has not confirmed yet is marked as being checked and has no value. A yield product's fact shows its answer and its sources once a person has checked it, and none before. A chain whose record is not confirmed yet reads `being_checked`, with no incident and no count.
 
-Example: `rank_stats` with `{"tab": "chains", "measure": "stops_12m"}` ranks the chains by their stops in the last 12 months, fewest at the top, ties in TVL order, with the chains still being checked listed apart. `get_stats_record` with `{"tab": "chains", "id": "solana"}` gives one chain's stops, freezes and rewinds with their sources, its TVL and the link to its page, `https://blockchainacademics.com/stats/chains/solana`. The chain measures are `tvl`, `stops_12m`, `longest_stop_min`, `funds_frozen` and `history_rewound`.
+Example: `rank_stats` with `{"tab": "chains", "measure": "stops_12m"}` ranks the chains by their stops in the last 12 months, fewest at the top, ties in TVL order, with the chains still being checked listed apart. `get_stats_record` with `{"tab": "chains", "id": "solana"}` gives one chain's stops, freezes and rewinds with their sources, its TVL and the link to its page, `https://blockchainacademics.com/stats/chains/solana`. The chain measures are `tvl`, `stops_12m`, `longest_stop_min`, `funds_frozen` and `history_rewound`. `compare_stats_records` takes 2 to 5 chain ids, and `get_stats_method` with `{"topic": "chains"}` says how an incident is sourced and how TVL is read. A chain that has not launched yet is an `upcoming_chain` row in a search and sits under `upcoming` in a ranking, never among the ranked chains.
 
 ### Tool details
 

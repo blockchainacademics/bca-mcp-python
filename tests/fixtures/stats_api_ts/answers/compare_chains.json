@@ -1,0 +1,19 @@
+{
+ "call": "compare_chains",
+ "tool": "compare_stats_records",
+ "args": {
+  "tab": "chains",
+  "ids": [
+   "Solana",
+   "BNB Chain"
+  ]
+ },
+ "request": {
+  "path": "/v1/stats/compare",
+  "query": {
+   "tab": "chains",
+   "ids": "solana,bnb-chain"
+  }
+ },
+ "envelope": {"data":{"schema":"bca.stats/1","as_of":"2026-11-24","uploaded_at":"2026-11-24T02:47:20Z","method_version":null,"variant":null,"sources":[{"file":"https://data.blockchainacademics.com/chains/v1/list.json","as_of":"2026-11-24","sha256":"c5e7d1e9d8d71177d85ef66e462e91b6032e2751db3e91f59979a9b223537853"}],"outside_text_keys":["name_by_leader","subject_by_outsider","text_as_published","value_from_source","link_from_source","quote_from_source","source_url","source_name","reason_as_published"],"rows_dropped":0,"notes":["TVL is read from DefiLlama once a night. Stops, freezes and rewinds come from each chain's own pages: its team, foundation, status page or validators."],"tab":"chains","ids_asked":2,"count":2,"records":[{"id":"solana","name":"Solana","is_new":false,"check_state":"confirmed","tvl_usd":4698633260,"tvl_rank":3,"stops_12m":0,"stops_by_month":[{"month":"2025-12","stops":0},{"month":"2026-01","stops":0},{"month":"2026-02","stops":0},{"month":"2026-03","stops":0},{"month":"2026-04","stops":0},{"month":"2026-05","stops":0},{"month":"2026-06","stops":0},{"month":"2026-07","stops":0},{"month":"2026-08","stops":0},{"month":"2026-09","stops":0},{"month":"2026-10","stops":0},{"month":"2026-11","stops":0}],"longest_stop_min":0,"funds_frozen":{"times":0,"last_year":null},"history_rewound":{"times":0,"last_year":null},"last_incident":{"on":"2024-02","text_as_published":"Stopped for 5 hours","source_name":"Solana status page","sources":[{"source_url":"https://status.solana.com/incidents/n5kcgs8dl9pj","source_domain":"status.solana.com"},{"source_url":"https://status.solana.com/history.rss","source_domain":"status.solana.com"}]},"read_on":"2026-11-24","vaults_tracked":0,"updated_on":"2026-11-24","page_url":"https://blockchainacademics.com/stats/chains/solana"},{"id":"bnb-chain","name":"BNB Chain","is_new":false,"check_state":"confirmed","tvl_usd":4359466742,"tvl_rank":5,"stops_12m":0,"stops_by_month":[{"month":"2025-12","stops":0},{"month":"2026-01","stops":0},{"month":"2026-02","stops":0},{"month":"2026-03","stops":0},{"month":"2026-04","stops":0},{"month":"2026-05","stops":0},{"month":"2026-06","stops":0},{"month":"2026-07","stops":0},{"month":"2026-08","stops":0},{"month":"2026-09","stops":0},{"month":"2026-10","stops":0},{"month":"2026-11","stops":0}],"longest_stop_min":0,"funds_frozen":{"times":1,"last_year":2022},"history_rewound":{"times":0,"last_year":null},"last_incident":{"on":"2022-10","text_as_published":"Froze funds","source_name":"BNB Chain on GitHub","sources":[{"source_url":"https://github.com/bnb-chain/bsc/releases/tag/v1.1.15","source_domain":"github.com"}]},"read_on":"2026-11-24","vaults_tracked":0,"updated_on":"2026-11-24","page_url":"https://blockchainacademics.com/stats/chains/bnb-chain"}],"not_published":[],"not_returned":[],"ranking":null,"tvl":{"source":"DefiLlama","read_on":"2026-11-24"},"check_states":{"confirmed":"the owner has accepted the chain's record, so its counts and its incidents are shown","being_checked":"the owner has not accepted the chain's record yet, so its TVL is shown and no count or incident is"}},"attribution":{"citations":[{"cite_url":"https://data.blockchainacademics.com/chains/v1/list.json","as_of":"2026-11-24T00:00:00Z","source_hash":"sha256:c5e7d1e9d8d71177"}]},"meta":{"status":"complete","request_id":"chainsstandin07","pageInfo":{"hasNextPage":false,"hasPreviousPage":false,"startCursor":null,"endCursor":null},"tier":"demo","upgrade_url":"https://blockchainacademics.com/crypto-api/signup?ref=mcp-demo-tier"}}
+}

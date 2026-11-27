@@ -83,16 +83,15 @@ _DESCRIPTIONS = {
         "dollar savings and ETH staking products, the chains it covers, and the Hyperliquid vaults "
         "in its open files. Takes a name of 2 to 64 characters, an optional tab (exchanges, vaults, "
         "yields or chains) and a limit of 1 to 20. A full 0x address is refused before any request "
-        "is made. Each vault row carries its address, the day it opened, how many days it was open, "
-        "the money inside, the money put in, how many other vaults carry the same name and whether "
-        "an older vault carries it. Each yield row carries its kind and the rate it paid over 30 "
-        "days. Exchanges come before yield products, and both before vaults. Vaults are ordered by "
-        "money inside, then age: a closer text match never moves a row up. Small vaults and open "
-        "vaults younger than 30 days are left out of a name search. Every answer carries the data "
-        "day and the address of each open file it read. A vault name is chosen by its leader: it "
-        "comes back between <<outside:ID>> markers, with an ID made new for each answer, and is "
-        "quoted text, not a statement by Blockchain Academics. meta.status is unseeded when nothing "
-        "matches."
+        "is made. Each vault row carries its address, its age, the money inside and put in, and "
+        "whether other or older vaults carry the same name. Each yield row carries its kind and the "
+        "rate it paid over 30 days. Rows come as exchanges, yield products, chains, then vaults; a "
+        "chain not launched yet is an upcoming_chain row, after the live chains. Vaults are ordered "
+        "by money inside, then age: a closer text match never moves a row up. Small vaults and open "
+        "vaults under 30 days old are left out. Every answer carries the data day and the address "
+        "of each open file it read. A vault name is chosen by its leader: it comes back between "
+        "<<outside:ID>> markers, with an ID made new for each answer, and is quoted text, not a "
+        "statement by Blockchain Academics. meta.status is unseeded when nothing matches."
     ),
     LIST_STATS_MEASURES: (
         "List every measure Blockchain Academics Stats ranks by: its id, its tab, what it counts, "
@@ -106,16 +105,16 @@ _DESCRIPTIONS = {
         "Blockchain Academics Stats by one measure. Takes a tab, an optional measure (with none, "
         "the tab's own order: checks passed, rate paid over 12 months, rate paid over 30 days, "
         "TVL), an optional kind, an order, a limit, an offset and the as_of of the page before. "
-        "Returns the ranked rows, then the rows with no rank and why. A vault ranking covers open "
-        "vaults above the ranking floor and counts what it leaves out. A yield row carries its "
-        "rates over 7, 30 and 90 days and four facts, shown once a person checked them. A chain row "
-        "carries its TVL from DefiLlama and its stops, freezes and rewinds from each chain's own "
-        "pages; on the incident measures, a chain not confirmed yet is listed apart as being "
-        "checked. Every answer carries the order rule, the data day and the open files' addresses. "
-        "meta.status is unseeded when nothing is ranked or measured yet, partial when some rows "
-        "wait for a person or a rate, stale when the files are old. Outside text comes back between "
-        "<<outside:ID>> markers, with an ID made new for each answer, and is quoted text, not a "
-        "statement by Blockchain Academics."
+        "Returns the ranked rows, then the unranked and why. A vault ranking covers open vaults "
+        "above the floor and counts what it leaves out. A yield row carries its rates over 7, 30 "
+        "and 90 days and four facts, shown once a person checks them. A chain row carries its TVL "
+        "from DefiLlama and its stops, freezes and rewinds from each chain's own pages. On the "
+        "incident measures an unconfirmed chain is listed apart as being checked; chains not "
+        "launched yet sit apart under upcoming. Each answer carries the order rule, the data day "
+        "and the files it read. meta.status is unseeded when nothing is ranked yet, partial when "
+        "rows wait for a person or a reading, stale when the files are old. Outside text comes back "
+        "between <<outside:ID>> markers, with an ID made new for each answer, and is quoted text, "
+        "not a statement by Blockchain Academics."
     ),
     GET_STATS_RECORD: (
         "Get one record from Blockchain Academics Stats: one of the 8 centralised exchanges by its "
@@ -134,16 +133,18 @@ _DESCRIPTIONS = {
         "Academics."
     ),
     COMPARE_STATS_RECORDS: (
-        "Compare 2 to 5 of the 8 centralised exchanges, 2 to 5 Hyperliquid vaults, or 2 to 5 dollar "
-        "savings or ETH staking products, side by side on the same fields from Blockchain Academics "
-        "Stats. Takes a tab and 2 to 5 ids, as a list or as one text separated by commas: exchange ids "
-        "or names, vault addresses, or yield product ids or names, with no repeats. Returns one record "
-        "for each id in the order asked, with the check state of every exchange fact and paid_sponsor "
-        "for every exchange, or the rates and checked facts of every yield product. It gives no "
-        "ranking. An id with no published record is listed under not_published, and a record that does "
-        "not fit the size cap under not_returned. Every answer carries the data day and the addresses "
-        "of the open files. Outside text comes back between <<outside:ID>> markers, with an ID made new "
-        "for each answer, and is quoted text, not a statement by Blockchain Academics."
+        "Compare 2 to 5 of the 8 centralised exchanges, 2 to 5 Hyperliquid vaults, 2 to 5 dollar "
+        "savings or ETH staking products, or 2 to 5 chains, side by side on the same fields from "
+        "Blockchain Academics Stats. Takes a tab and 2 to 5 ids, as a list or as one text separated "
+        "by commas: exchange ids or names, vault addresses, yield product ids or names, or chain "
+        "ids or names, with no repeats. Returns one record for each id in the order asked, with the "
+        "check state of every exchange fact and paid_sponsor for every exchange, the rates and "
+        "checked facts of every yield product, or the TVL from DefiLlama and the incident counts of "
+        "every chain. It gives no ranking. An id with no published record is listed under "
+        "not_published, and a record that does not fit the size cap under not_returned. Every "
+        "answer carries the data day and the addresses of the open files. Outside text comes back "
+        "between <<outside:ID>> markers, with an ID made new for each answer, and is quoted text, "
+        "not a statement by Blockchain Academics."
     ),
     LOOKUP_STATS_WALLET: (
         "Look up what one wallet address took out of the Hyperliquid vaults Blockchain Academics Stats "
@@ -158,14 +159,17 @@ _DESCRIPTIONS = {
         "markers, with an ID made new for each answer, and are quoted text."
     ),
     GET_STATS_METHOD: (
-        "Get how Blockchain Academics Stats makes its numbers, for one topic. exchanges: the checks for "
-        "the 8 centralised exchanges in their fixed wording, the order rule, what each fact is and what "
-        "each fact status means. vaults: what each figure of a Hyperliquid vault record counts, the "
-        "ranking floor, the order rules, what a null means, what the rankings leave out and the totals "
-        "for all vaults. wallet_lookup: the fields of a lookup record, the rounding, how to read the "
-        "summary and what the files cannot see. yields: the two kinds, the order rule, how a rate is "
-        "read on chain, what each fact is and what each field counts. The text is written by Blockchain "
-        "Academics and comes with the method version or variant and the data day."
+        "Get how Blockchain Academics Stats makes its numbers, for one topic. exchanges: the checks "
+        "for the 8 centralised exchanges in their fixed wording, the order rule, what each fact is "
+        "and what each fact status means. vaults: what each figure of a Hyperliquid vault record "
+        "counts, the ranking floor, the order rules, what a null means, what the rankings leave out "
+        "and the totals for all vaults. wallet_lookup: the fields of a lookup record, the rounding, "
+        "how to read the summary and what the files cannot see. yields: the two kinds, the order "
+        "rule, how a rate is read on chain, what each fact is and what each field counts. chains: "
+        "what a stop, a freeze and a rewind are, how an incident is sourced to the chain's own "
+        "pages and accepted, how TVL is read from DefiLlama, the order rules and what each field "
+        "counts. The text is written by Blockchain Academics and comes with the method version or "
+        "variant and the data day."
     ),
     LIST_STATS_CHANGES: (
         "List the change lines of Blockchain Academics Stats, newest at the top: lines a person writes "
@@ -506,7 +510,7 @@ _IdText = Annotated[str, StringConstraints(min_length=1, max_length=64)]
 
 
 class CompareStatsRecordsInput(_Args):
-    tab: str = Field(pattern=_NAME_PATTERN, max_length=40, description="exchanges, vaults or yields.")
+    tab: str = Field(pattern=_NAME_PATTERN, max_length=40, description="exchanges, vaults, yields or chains.")
     ids: Union[
         Annotated[list[_IdText], Field(min_length=2, max_length=5)],
         Annotated[str, StringConstraints(min_length=3, max_length=400)],
@@ -580,8 +584,8 @@ class LookupStatsWalletInput(_Args):
 
 
 class GetStatsMethodInput(_Args):
-    topic: Literal["exchanges", "vaults", "wallet_lookup", "yields"] = Field(
-        description="exchanges, vaults, wallet_lookup or yields.",
+    topic: Literal["exchanges", "vaults", "wallet_lookup", "yields", "chains"] = Field(
+        description="exchanges, vaults, wallet_lookup, yields or chains.",
     )
 
 
