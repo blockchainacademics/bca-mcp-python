@@ -1,19 +1,20 @@
 The TypeScript package's recorded Stats answers, for the parity test of this
 package (tests/test_stats_ts_answers.py).
 
-These files are bca-mcp-ts test/fixtures/stats_api as of its commit 2448b93
+These files are bca-mcp-ts test/fixtures/stats_api as of its commit 75e16f4
 (0.9.0), copied unchanged: answers/, expected_outputs/, shards/, SHA256SUMS
-and README.md. 34 of the 55 calls come from the API's dump
-(scripts/dump_stats_answers.py at API commit 41b64a2, on the API's
-fixtures); the others are stand-ins made before the dump existed. Their
-README says which is which and how the expected outputs were made: from the
-design's reference rules, not from either package's code. Every wallet and vault address is
-made up (0x plus SHA-256 of a bca-fixture string), and no wallet, vault
-name or vault figure is from the real files. The yield answers hold the 17
-public products of the live Yields file of 2026-11-26, moved to 2026-11-24,
-with their token addresses, and four made-up products named Fixture. The eight
-chain answers (0.9.0) are stand-ins until the API's dump holds chain calls:
-the live public Chains file of 2026-11-27, moved to 2026-11-24, whose
-incident sources are each chain's own pages.
+and README.md. 42 of the 55 calls come from the API's dump
+(scripts/dump_stats_answers.py at API commit 02e19b8, on the API's
+fixtures), the 8 chain calls among them; the others are stand-ins made
+before the dump existed. Their README says which is which and how the
+expected outputs were made: from the design's reference rules, not from
+either package's code. Every wallet and vault address is made up (0x plus
+SHA-256 of a bca-fixture string), and no wallet, vault name or vault figure
+is from the real files. The yield answers hold the 17 public products of the
+live Yields file of 2026-11-26, moved to 2026-11-24, with their token
+addresses, and four made-up products named Fixture. The chain answers hold
+the public chains of the live Chains file, whose incident sources are each
+chain's own pages, next to made-up chains whose ids start with fixture-chain
+and one made-up upcoming chain.
 
 This package's own set stays in tests/fixtures/stats_api.

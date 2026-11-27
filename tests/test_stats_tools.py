@@ -381,7 +381,7 @@ def test_the_five_chain_measures_are_known_with_no_kinds() -> None:
 @pytest.mark.asyncio
 @pytest.mark.parametrize("measure", CHAIN_MEASURES)
 async def test_each_chain_measure_is_sent_in_the_chains_tab(httpx_mock, measure) -> None:
-    body = _ts_envelope("rank_chains_tvl" if measure == "tvl" else "rank_chains_stops")
+    body = _ts_envelope("rank_chains_tvl" if measure == "tvl" else "rank_chains_stops_12m")
     args = {"tab": "chains", "measure": measure, "order": "bottom", "limit": 3, "offset": 3, "as_of": "2026-11-24"}
     _output(await _call(httpx_mock, "rank_stats", args, body))
     request = httpx_mock.get_request()
@@ -399,12 +399,12 @@ async def test_chains_with_no_measure_come_in_tvl_order(httpx_mock) -> None:
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "typed,sent",
-    [("Solana", "solana"), (" TRON ", "tron"), ("BNB Chain", "bnb-chain"), ("bnb_chain", "bnb-chain"),
+    [("Sui", "sui"), (" TRON ", "tron"), ("BNB Chain", "bnb-chain"), ("bnb_chain", "bnb-chain"),
      ("OP.Mainnet", "op-mainnet")],
 )
 async def test_a_chain_id_is_folded_like_an_exchange_id(httpx_mock, typed, sent) -> None:
     _output(await _call(httpx_mock, "get_stats_record", {"tab": "chains", "id": typed},
-                        _ts_envelope("record_chain_solana")))
+                        _ts_envelope("record_chain_sui")))
     assert httpx_mock.get_request().url.path == "/v1/stats/chains/" + sent
 
 
@@ -421,8 +421,8 @@ async def test_an_address_in_the_chains_tab_and_an_empty_id_are_refused(httpx_mo
 
 @pytest.mark.asyncio
 async def test_a_chain_s_incidents_are_quoted_and_its_tvl_source_and_page_link_are_ours(httpx_mock, fixed_ids) -> None:
-    out = _output(await _call(httpx_mock, "get_stats_record", {"tab": "chains", "id": "solana"},
-                              _ts_envelope("record_chain_solana")))
+    out = _output(await _call(httpx_mock, "get_stats_record", {"tab": "chains", "id": "sui"},
+                              _ts_envelope("record_chain_sui")))
     record = out["data"]["record"]
     assert record["check_state"] == "confirmed" and record["incidents"]
     for incident in record["incidents"]:
@@ -433,21 +433,34 @@ async def test_a_chain_s_incidents_are_quoted_and_its_tvl_source_and_page_link_a
         for source in incident["sources"]:
             assert source["source_url"].startswith("<<outside:%s>>https://" % MARK)
             assert "outside" not in source["source_domain"]
-    assert record["tvl_usd"] == 4698633260
+    assert record["tvl_usd"] == 396972902 and record["tvl_rank"] == 11
     assert out["data"]["tvl"] == {"source": "DefiLlama", "read_on": "2026-11-24"}
+    assert len(record["stops_by_month"]) == 12
+    assert all(list(m) == ["month", "stops"] for m in record["stops_by_month"])
+    assert list(record["last_incident"]) == ["on", "text_as_published", "source_name", "sources"]
+    assert record["last_incident"]["text_as_published"].startswith("<<outside:%s>>" % MARK)
     # The page link sits under the site prefix the package already allows: no new prefix is needed.
-    assert record["page_url"] == "https://blockchainacademics.com/stats/chains/solana"
+    assert record["page_url"] == "https://blockchainacademics.com/stats/chains/sui"
     assert [c["cite_url"] for c in out["attribution"]["citations"]] == [
         "https://data.blockchainacademics.com/chains/v1/list.json",
-        "https://blockchainacademics.com/stats/chains/solana",
     ]
     assert out["meta"]["status"] == "complete"
 
 
 @pytest.mark.asyncio
+async def test_a_citation_of_the_chain_page_is_kept_with_no_new_prefix(httpx_mock, fixed_ids) -> None:
+    body = _ts_envelope("record_chain_sui")
+    body["attribution"]["citations"].append(
+        {"cite_url": "https://blockchainacademics.com/stats/chains/sui", "as_of": "2026-11-24T00:00:00Z",
+         "source_hash": None})
+    out = _output(await _call(httpx_mock, "get_stats_record", {"tab": "chains", "id": "sui"}, body))
+    assert out["attribution"]["citations"][1]["cite_url"] == "https://blockchainacademics.com/stats/chains/sui"
+
+
+@pytest.mark.asyncio
 async def test_an_unconfirmed_chain_reaches_the_model_as_being_checked(httpx_mock, fixed_ids) -> None:
     out = _output(await _call(httpx_mock, "get_stats_record", {"tab": "chains", "id": "tron"},
-                              _ts_envelope("record_chain_waiting")))
+                              _ts_envelope("record_chain_being_checked")))
     record = out["data"]["record"]
     assert record["check_state"] == "being_checked" and record["incidents"] == []
     for key in ("stops_12m", "stops_by_month", "longest_stop_min", "funds_frozen", "history_rewound"):
@@ -460,7 +473,7 @@ async def test_an_unconfirmed_chain_reaches_the_model_as_being_checked(httpx_moc
 @pytest.mark.asyncio
 async def test_an_incident_measure_lists_the_unconfirmed_chains_apart(httpx_mock, fixed_ids) -> None:
     out = _output(await _call(httpx_mock, "rank_stats", {"tab": "chains", "measure": "stops_12m"},
-                              _ts_envelope("rank_chains_stops")))
+                              _ts_envelope("rank_chains_stops_12m")))
     rows = out["data"]["results"]
     ranked = [r for r in rows if r["rank_state"] == "ranked"]
     apart = [r for r in rows if r["rank_state"] == "being_checked"]
@@ -468,10 +481,48 @@ async def test_an_incident_measure_lists_the_unconfirmed_chains_apart(httpx_mock
     assert [r["rank"] for r in ranked] == list(range(1, len(ranked) + 1))
     for a, b in zip(ranked, ranked[1:]):
         assert a["value"] <= b["value"]
-        if a["value"] == b["value"]:
-            assert a["tvl_usd"] >= b["tvl_usd"]  # a tie keeps the TVL order
+        if a["value"] == b["value"]:  # a tie keeps the TVL order; no reading sits last
+            assert (a["tvl_rank"] or 10**9) <= (b["tvl_rank"] or 10**9)
     assert all(r["rank"] is None and r["value"] is None and r["last_incident"] is None for r in apart)
     assert all("outside" not in r["name"] for r in rows)  # a chain name is ours
+    assert out["data"]["tvl"] == {"source": "DefiLlama", "read_on": "2026-11-24"}
+    ids = {r["id"] for r in rows}
+    upcoming = out["data"]["upcoming"]["rows"]
+    assert upcoming and not ids & {u["id"] for u in upcoming}
+    for u in upcoming:
+        assert re.fullmatch(r"<<outside:%s>>.+<</outside:%s>>" % (MARK, MARK), u["text_as_published"])
+        assert u["expected"]["text_as_published"].startswith("<<outside:%s>>" % MARK)
+        assert all(s["source_url"].startswith("<<outside:%s>>https://" % MARK) for s in u["sources"])
+
+
+@pytest.mark.asyncio
+async def test_the_tvl_order_uses_value_usd_and_marks_a_chain_with_no_reading(httpx_mock, fixed_ids) -> None:
+    body = _ts_envelope("rank_chains_tvl")
+    out = _output(await _call(httpx_mock, "rank_stats", {"tab": "chains", "limit": 5}, body))
+    rows = out["data"]["results"]
+    assert all(r["rank_state"] == "ranked" and isinstance(r["value_usd"], int) for r in rows)
+    assert [r["value_usd"] for r in rows] == sorted((r["value_usd"] for r in rows), reverse=True)
+    tron = next(r for r in rows if r["id"] == "tron")
+    assert tron["check_state"] == "being_checked" and tron["stops_12m"] is None and isinstance(tron["rank"], int)
+    assert out["data"]["counts"]["tvl_not_known"] == 1
+    assert out["meta"]["diagnostic"]["missing"] == ["fixture-chain-no-tvl.tvl_usd"]
+    tail = copy.deepcopy(body)
+    tail["data"]["results"] = [dict(body["data"]["results"][0], rank=None, rank_state="tvl_not_known", value_usd=None,
+                                    tvl_usd=None, tvl_rank=None)]
+    out = _output(await _call(httpx_mock, "rank_stats", {"tab": "chains", "limit": 5}, tail))
+    assert out["data"]["results"][0]["rank_state"] == "tvl_not_known"
+    assert out["data"]["results"][0]["value_usd"] is None
+
+
+@pytest.mark.asyncio
+async def test_a_search_for_a_chain_not_launched_gives_upcoming_chain_rows(httpx_mock, fixed_ids) -> None:
+    out = _output(await _call(httpx_mock, "search_stats", {"query": "network", "tab": "chains"},
+                              _ts_envelope("search_chains")))
+    rows = out["data"]["results"]
+    assert rows and all(r["record_type"] == "upcoming_chain" for r in rows)
+    for r in rows:
+        assert re.fullmatch(r"<<outside:%s>>.+<</outside:%s>>" % (MARK, MARK), r["expected"]["text_as_published"])
+        assert "outside" not in r["name"]
 
 
 @pytest.mark.asyncio
@@ -1457,13 +1508,13 @@ async def test_a_403_with_the_api_fixed_forbidden_is_a_bad_request(httpx_mock) -
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("ids", [["Solana", "BNB Chain"], "solana , bnb_chain"])
+@pytest.mark.parametrize("ids", [["Ethereum", " solana", "TRON"], "ethereum , Solana,tron"])
 async def test_chains_are_compared_by_folded_ids(httpx_mock, ids) -> None:
     _output(await _call(httpx_mock, "compare_stats_records", {"tab": "chains", "ids": ids},
                         _ts_envelope("compare_chains")))
     request = httpx_mock.get_request()
     assert request.url.path == "/v1/stats/compare"
-    assert dict(request.url.params) == {"tab": "chains", "ids": "solana,bnb-chain"}
+    assert dict(request.url.params) == {"tab": "chains", "ids": "ethereum,solana,tron"}
 
 
 @pytest.mark.asyncio
