@@ -288,6 +288,17 @@ async def test_measure_must_match_the_strict_pattern(httpx_mock, measure) -> Non
         ({"tab": "vaults", "measure": "rate_paid", "kind": "eth"}, stats.KIND_NOT_FOR_MEASURE),
         ({"tab": "exchanges", "measure": "real_cost_buy_1000", "kind": "swap"}, stats.KIND_NOT_FOR_MEASURE),
         ({"tab": "vaults", "measure": "money_put_in", "kind": "centralised"}, stats.KIND_NOT_FOR_MEASURE),
+        # 0.9.0: the five chain measures belong to the chains tab and take no kind.
+        *[({"tab": other, "measure": m}, stats.MEASURE_OTHER_TAB)
+          for m in ("tvl", "stops_12m", "longest_stop_min", "funds_frozen", "history_rewound")
+          for other in ("exchanges", "vaults", "yields")],
+        *[({"tab": "chains", "measure": m, "kind": k}, stats.KIND_NOT_FOR_MEASURE)
+          for m in ("tvl", "stops_12m", "longest_stop_min", "funds_frozen", "history_rewound")
+          for k in ("centralised", "swap", "leveraged", "dollar", "eth")],
+        ({"tab": "chains", "measure": "checks_passed"}, stats.MEASURE_OTHER_TAB),
+        ({"tab": "chains", "measure": "rate_paid"}, stats.MEASURE_OTHER_TAB),
+        ({"tab": "chains", "measure": "yield_rate_paid"}, stats.MEASURE_OTHER_TAB),
+        ({"tab": "chains", "kind": "dollar"}, stats.KIND_NOT_FOR_MEASURE),
     ],
 )
 async def test_a_known_measure_of_the_other_tab_is_refused(httpx_mock, args, sentence) -> None:
@@ -350,6 +361,116 @@ async def test_a_fact_being_checked_reaches_the_model_with_no_answer_and_no_link
             assert all(s["source_url"].startswith("<<outside:%s>>https://" % MARK) for s in fact["sources"])
     assert "Not checked yet." not in json.dumps(out)
     assert out["meta"]["status"] == "partial"
+
+
+# --- the Chains tab (0.9.0) ---------------------------------------------------------------
+
+CHAIN_MEASURES = ("tvl", "stops_12m", "longest_stop_min", "funds_frozen", "history_rewound")
+
+
+def _ts_envelope(call: str) -> Any:
+    return json.loads((FIXTURES.parent / "stats_api_ts" / "answers" / f"{call}.json").read_text("utf-8"))["envelope"]
+
+
+def test_the_five_chain_measures_are_known_with_no_kinds() -> None:
+    for measure in CHAIN_MEASURES:
+        assert stats.KNOWN_MEASURES[measure] == ("chains", (), True), measure
+    assert "chains" not in stats.TAB_KINDS
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("measure", CHAIN_MEASURES)
+async def test_each_chain_measure_is_sent_in_the_chains_tab(httpx_mock, measure) -> None:
+    body = _ts_envelope("rank_chains_tvl" if measure == "tvl" else "rank_chains_stops")
+    args = {"tab": "chains", "measure": measure, "order": "bottom", "limit": 3, "offset": 3, "as_of": "2026-11-24"}
+    _output(await _call(httpx_mock, "rank_stats", args, body))
+    request = httpx_mock.get_request()
+    assert request.url.path == "/v1/stats/rank"
+    assert dict(request.url.params) == {"tab": "chains", "measure": measure, "order": "bottom", "limit": "3",
+                                        "offset": "3", "as_of": "2026-11-24"}
+
+
+@pytest.mark.asyncio
+async def test_chains_with_no_measure_come_in_tvl_order(httpx_mock) -> None:
+    _output(await _call(httpx_mock, "rank_stats", {"tab": "chains"}, _ts_envelope("rank_chains_tvl")))
+    assert dict(httpx_mock.get_request().url.params) == {"tab": "chains", "order": "top", "limit": "20", "offset": "0"}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "typed,sent",
+    [("Solana", "solana"), (" TRON ", "tron"), ("BNB Chain", "bnb-chain"), ("bnb_chain", "bnb-chain"),
+     ("OP.Mainnet", "op-mainnet")],
+)
+async def test_a_chain_id_is_folded_like_an_exchange_id(httpx_mock, typed, sent) -> None:
+    _output(await _call(httpx_mock, "get_stats_record", {"tab": "chains", "id": typed},
+                        _ts_envelope("record_chain_solana")))
+    assert httpx_mock.get_request().url.path == "/v1/stats/chains/" + sent
+
+
+@pytest.mark.asyncio
+async def test_an_address_in_the_chains_tab_and_an_empty_id_are_refused(httpx_mock) -> None:
+    err = await _refused(httpx_mock, "get_stats_record", {"tab": "chains", "id": "0x" + "ab" * 20})
+    assert err["message"] == f"Invalid arguments for get_stats_record: {stats.ADDRESS_NOT_AN_EXCHANGE_ID}"
+    assert "chain id" in stats.ADDRESS_NOT_AN_EXCHANGE_ID
+    err = await _refused(httpx_mock, "get_stats_record", {"tab": "chains", "id": "solana 0X" + "AB" * 20})
+    assert stats.ADDRESS_NOT_AN_EXCHANGE_ID in err["message"]
+    err = await _refused(httpx_mock, "get_stats_record", {"tab": "chains", "id": "--"})
+    assert "chain id" in err["message"]
+
+
+@pytest.mark.asyncio
+async def test_a_chain_s_incidents_are_quoted_and_its_tvl_source_and_page_link_are_ours(httpx_mock, fixed_ids) -> None:
+    out = _output(await _call(httpx_mock, "get_stats_record", {"tab": "chains", "id": "solana"},
+                              _ts_envelope("record_chain_solana")))
+    record = out["data"]["record"]
+    assert record["record_state"] == "confirmed" and record["incidents"]
+    for incident in record["incidents"]:
+        assert incident["kind"] in ("stop", "freeze", "rewind")
+        assert re.fullmatch(r"<<outside:%s>>.+<</outside:%s>>" % (MARK, MARK), incident["text_as_published"])
+        assert re.fullmatch(r"<<outside:%s>>.+<</outside:%s>>" % (MARK, MARK), incident["source_name"])
+        assert incident["sources"]
+        for source in incident["sources"]:
+            assert source["source_url"].startswith("<<outside:%s>>https://" % MARK)
+            assert "outside" not in source["source_domain"]
+    assert record["tvl"] == {"usd": 4698633260, "source": "DefiLlama", "read_on": "2026-11-24"}
+    # The page link sits under the site prefix the package already allows: no new prefix is needed.
+    assert record["page_url"] == "https://blockchainacademics.com/stats/chains/solana"
+    assert [c["cite_url"] for c in out["attribution"]["citations"]] == [
+        "https://data.blockchainacademics.com/chains/v1/list.json",
+        "https://blockchainacademics.com/stats/chains/solana",
+    ]
+    assert out["meta"]["status"] == "complete"
+
+
+@pytest.mark.asyncio
+async def test_an_unconfirmed_chain_reaches_the_model_as_being_checked(httpx_mock, fixed_ids) -> None:
+    out = _output(await _call(httpx_mock, "get_stats_record", {"tab": "chains", "id": "tron"},
+                              _ts_envelope("record_chain_waiting")))
+    record = out["data"]["record"]
+    assert record["record_state"] == "being_checked" and record["incidents"] == []
+    for key in ("stops_12m", "stops_by_month", "longest_stop_min", "funds_frozen", "history_rewound"):
+        assert record[key] is None, key
+    assert isinstance(record["tvl"]["usd"], int)
+    assert out["meta"]["status"] == "partial"
+    assert out["meta"]["diagnostic"]["missing"] == ["tron"]
+
+
+@pytest.mark.asyncio
+async def test_an_incident_measure_lists_the_unconfirmed_chains_apart(httpx_mock, fixed_ids) -> None:
+    out = _output(await _call(httpx_mock, "rank_stats", {"tab": "chains", "measure": "stops_12m"},
+                              _ts_envelope("rank_chains_stops")))
+    rows = out["data"]["results"]
+    ranked = [r for r in rows if r["rank_state"] == "ranked"]
+    apart = [r for r in rows if r["rank_state"] == "being_checked"]
+    assert rows == ranked + apart
+    assert [r["rank"] for r in ranked] == list(range(1, len(ranked) + 1))
+    for a, b in zip(ranked, ranked[1:]):
+        assert a["value"] <= b["value"]
+        if a["value"] == b["value"]:
+            assert a["tvl_usd"] >= b["tvl_usd"]  # a tie keeps the TVL order
+    assert all(r["rank"] is None and r["value"] is None and r["last_incident"] is None for r in apart)
+    assert all("outside" not in r["name"] for r in rows)  # a chain name is ours
 
 
 @pytest.mark.asyncio
@@ -1194,7 +1315,7 @@ async def test_the_defaults_are_sent(httpx_mock) -> None:
 DESCRIPTION_STARTS = {
     "search_stats": "Search Blockchain Academics Stats by name: the 8 centralised exchanges it lists",
     "list_stats_measures": "List every measure Blockchain Academics Stats ranks by:",
-    "rank_stats": "Rank the 8 centralised exchanges, the Hyperliquid vaults or the yield products of Blockchain Academics Stats",
+    "rank_stats": "Rank the 8 centralised exchanges, Hyperliquid vaults, yield products or chains of Blockchain Academics Stats",
     "get_stats_record": "Get one record from Blockchain Academics Stats:",
     "compare_stats_records": "Compare 2 to 5 of the 8 centralised exchanges, 2 to 5 Hyperliquid vaults, or 2 to 5",
     "lookup_stats_wallet": "Look up what one wallet address took out of the Hyperliquid vaults",
@@ -1203,17 +1324,17 @@ DESCRIPTION_STARTS = {
 }
 ARGUMENTS = {
     ("search_stats", "query"): "A name, 2 to 64 characters. Not an address.",
-    ("search_stats", "tab"): "exchanges, vaults or yields. Every open tab when left out.",
+    ("search_stats", "tab"): "exchanges, vaults, yields or chains. Every open tab when left out.",
     ("search_stats", "limit"): "Rows to return, 1 to 20 (default 10).",
-    ("rank_stats", "tab"): "exchanges, vaults or yields.",
+    ("rank_stats", "tab"): "exchanges, vaults, yields or chains.",
     ("rank_stats", "measure"): "A measure id from the list of measures. It must belong to the tab. The tab's own order when left out.",
     ("rank_stats", "kind"): "The kind: centralised, swap or leveraged for the exchanges tab, dollar or eth for the yields tab. The measure's own kind when left out.",
     ("rank_stats", "order"): "top reads the list from its top, bottom from its other end. The rank numbers stay the same (default top).",
     ("rank_stats", "limit"): "Rows to return, 1 to 50 (default 20).",
     ("rank_stats", "offset"): "Rows to skip, for paging: the next_offset of the page before (default 0).",
     ("rank_stats", "as_of"): "The as_of of the page before, YYYY-MM-DD. A page of another data day is refused, so two days are never mixed.",
-    ("get_stats_record", "tab"): "exchanges, vaults or yields.",
-    ("get_stats_record", "id"): "An exchange id or name (for example kraken or Crypto.com), a vault address (0x and 40 hex characters), or a yield product id or name (for example lido-wsteth).",
+    ("get_stats_record", "tab"): "exchanges, vaults, yields or chains.",
+    ("get_stats_record", "id"): "An exchange id or name (for example kraken or Crypto.com), a vault address (0x and 40 hex characters), a yield product id or name (for example lido-wsteth), or a chain id or name (for example solana or BNB Chain).",
     ("compare_stats_records", "tab"): "exchanges, vaults or yields.",
     ("compare_stats_records", "ids"): "2 to 5 ids with no repeats, as a list or as one text separated by commas (for example kraken,coinbase).",
     ("lookup_stats_wallet", "address"): "One full wallet address: 0x and 40 hex characters.",
@@ -1251,7 +1372,7 @@ def test_descriptions_are_the_fixed_text() -> None:
         assert text.endswith(keyless) is stats.DEMO_KEY_OPENS_STATS, name
         assert "\u2014" not in text and "  " not in text
         assert len(text) <= 1200
-    assert len(tools["rank_stats"].description) == 1194 - (0 if stats.DEMO_KEY_OPENS_STATS else len(keyless))
+    assert len(tools["rank_stats"].description) == 1196 - (0 if stats.DEMO_KEY_OPENS_STATS else len(keyless))
     marked = [n for n, t in tools.items() if "<<outside:ID>>" in t.description]
     assert sorted(marked) == sorted(n for n in ["search_stats", "rank_stats", "get_stats_record", "compare_stats_records",
                                                 "lookup_stats_wallet", "list_stats_changes"] if n in tools)

@@ -79,56 +79,59 @@ _NO_KEY = " Works without an API key."
 
 _DESCRIPTIONS = {
     SEARCH_STATS: (
-        "Search Blockchain Academics Stats by name: the 8 centralised exchanges it lists, its dollar "
-        "savings and ETH staking products, and the Hyperliquid vaults in its open files. Takes a name "
-        "of 2 to 64 characters, an optional tab (exchanges, vaults or yields) and a limit of 1 to 20. A "
-        "full 0x address is not a name: it is refused before any request is made. Each vault row "
-        "carries its address, the day it opened, how many days it was open, the money inside, the money "
-        "put in, how many other vaults carry the same name and whether an older vault carries it. Each "
-        "yield row carries its kind and the rate it paid over 30 days. Exchanges come before yield "
-        "products, and both before vaults. Vaults are ordered by money inside, then age: a closer text "
-        "match never moves a row up. Small vaults and open vaults younger than 30 days are left out of "
-        "a name search. Every answer carries the data day and the address of each open file it read. A "
-        "vault name is chosen by its leader: it comes back between <<outside:ID>> markers, with an ID "
-        "made new for each answer, and is quoted text, not a statement by Blockchain Academics. "
-        "meta.status is unseeded when nothing matches."
+        "Search Blockchain Academics Stats by name: the 8 centralised exchanges it lists, its "
+        "dollar savings and ETH staking products, the chains it covers, and the Hyperliquid vaults "
+        "in its open files. Takes a name of 2 to 64 characters, an optional tab (exchanges, vaults, "
+        "yields or chains) and a limit of 1 to 20. A full 0x address is refused before any request "
+        "is made. Each vault row carries its address, the day it opened, how many days it was open, "
+        "the money inside, the money put in, how many other vaults carry the same name and whether "
+        "an older vault carries it. Each yield row carries its kind and the rate it paid over 30 "
+        "days. Exchanges come before yield products, and both before vaults. Vaults are ordered by "
+        "money inside, then age: a closer text match never moves a row up. Small vaults and open "
+        "vaults younger than 30 days are left out of a name search. Every answer carries the data "
+        "day and the address of each open file it read. A vault name is chosen by its leader: it "
+        "comes back between <<outside:ID>> markers, with an ID made new for each answer, and is "
+        "quoted text, not a statement by Blockchain Academics. meta.status is unseeded when nothing "
+        "matches."
     ),
     LIST_STATS_MEASURES: (
-        "List every measure Blockchain Academics Stats ranks by: its id, its tab, what it counts, its "
-        "unit, which rows it covers, whether it is measured yet and whether it is its tab's default "
-        "order, with how many rows each tab holds today (8 centralised exchanges, the Hyperliquid "
-        "vaults and the yield products). Takes no arguments. A measure marked not_measured_yet has no "
-        "values yet, so its ranking lists the rows with no rank."
+        "List every measure Blockchain Academics Stats ranks by: its id, its tab, what it counts, "
+        "its unit, which rows it covers, whether it is measured yet and whether it is its tab's "
+        "default order, with how many rows each tab holds today (8 centralised exchanges, the "
+        "Hyperliquid vaults, the yield products and the chains). Takes no arguments. A measure "
+        "marked not_measured_yet has no values yet, so its ranking lists the rows with no rank."
     ),
     RANK_STATS: (
-        "Rank the 8 centralised exchanges, the Hyperliquid vaults or the yield products of Blockchain "
-        "Academics Stats by one measure. Takes a tab, an optional measure id (with none, the tab's own "
-        "order: checks passed, rate paid over 12 months, rate paid over 30 days), an optional kind "
-        "(centralised, swap, leveraged, dollar or eth), an order (top or bottom), a limit of 1 to 50, "
-        "an offset and, for a later page, the as_of of the page before. Returns the ranked rows, then "
-        "the rows with no rank and why. A vault ranking covers open vaults above the ranking floor and "
-        "counts what it leaves out. A vault row carries the venue's own rate next to the rate paid. A "
-        "yield row carries the rates paid over 7, 30 and 90 days and four facts, shown once a person "
-        "has checked them. Every answer carries the order rule, the data day and the addresses of the "
-        "open files. meta.status is unseeded when nothing is ranked or measured yet, partial when some "
-        "rows wait for a person or a rate, stale when the files are old. Vault names, fact answers and "
-        "links come back between <<outside:ID>> markers, with an ID made new for each answer, and are "
-        "quoted text, not statements by Blockchain Academics."
+        "Rank the 8 centralised exchanges, Hyperliquid vaults, yield products or chains of "
+        "Blockchain Academics Stats by one measure. Takes a tab, an optional measure (with none, "
+        "the tab's own order: checks passed, rate paid over 12 months, rate paid over 30 days, "
+        "TVL), an optional kind, an order, a limit, an offset and the as_of of the page before. "
+        "Returns the ranked rows, then the rows with no rank and why. A vault ranking covers open "
+        "vaults above the ranking floor and counts what it leaves out. A yield row carries its "
+        "rates over 7, 30 and 90 days and four facts, shown once a person checked them. A chain row "
+        "carries its TVL from DefiLlama and its stops, freezes and rewinds from each chain's own "
+        "pages; on the incident measures, a chain not confirmed yet is listed apart as being "
+        "checked. Every answer carries the order rule, the data day and the open files' addresses. "
+        "meta.status is unseeded when nothing is ranked or measured yet, partial when some rows "
+        "wait for a person or a rate, stale when the files are old. Outside text comes back between "
+        "<<outside:ID>> markers, with an ID made new for each answer, and is quoted text, not a "
+        "statement by Blockchain Academics."
     ),
     GET_STATS_RECORD: (
-        "Get one record from Blockchain Academics Stats: one of the 8 centralised exchanges by its id "
-        "or its name, one Hyperliquid vault by its address, or one yield product by its id or name. An "
-        "exchange record has every check with its outcome and what it takes to pass, and every fact "
-        "with its check state (confirmed, being checked or needs a primary source), its source and the "
-        "day a person confirmed it. A fact that is being checked has no value. A vault record has the "
-        "money put in, taken out and still inside, what withdrawals took home, the venue's rate next to "
-        "the rate paid, the value history, the ranking floor and five fixed sentences on how to read "
-        "them. A yield record has the rates paid over 7, 30 and 90 days, the reading's day and block, "
-        "its rank in its kind, and four facts, shown with sources once checked by a person. A figure "
-        "that is held back or cannot be worked out is null, never zero. Every answer carries the data "
-        "day and the addresses of the open files. Names, values, answers, quotes, links and published "
-        "reasons come back between <<outside:ID>> markers, with an ID made new for each answer, and are "
-        "quoted text, not statements by Blockchain Academics."
+        "Get one record from Blockchain Academics Stats: one of the 8 centralised exchanges by its "
+        "id or name, one Hyperliquid vault by its address, one yield product or one chain by its id "
+        "or name. An exchange record has every check with its outcome and what it takes to pass, "
+        "and every fact with its check state, its source and the day a person confirmed it. A fact "
+        "that is being checked has no value. A vault record has the money put in, taken out and "
+        "still inside, what withdrawals took home, the venue's rate next to the rate paid, the "
+        "value history and the ranking floor. A yield record has its rates over 7, 30 and 90 days, "
+        "the reading's day and block, its rank and four facts, shown with sources once checked by a "
+        "person. A chain record has its stops, freezes and rewinds, each sourced to the chain's own "
+        "pages, its TVL from DefiLlama and its Stats page link. A figure that is held back or "
+        "cannot be worked out is null, never zero. Every answer carries the data day and the "
+        "addresses of the open files. Outside text comes back between <<outside:ID>> markers, with "
+        "an ID made new for each answer, and is quoted text, not a statement by Blockchain "
+        "Academics."
     ),
     COMPARE_STATS_RECORDS: (
         "Compare 2 to 5 of the 8 centralised exchanges, 2 to 5 Hyperliquid vaults, or 2 to 5 dollar "
@@ -192,7 +195,7 @@ SEARCH_ADDRESS_REFUSED = (
 )
 # The package's own validation text for an address given outside the vaults tab.
 ADDRESS_NOT_AN_EXCHANGE_ID = (
-    "An address is not an exchange or yield product id. A vault address goes to the vaults tab. "
+    "An address is not an exchange, yield product or chain id. A vault address goes to the vaults tab. "
     "A wallet address goes to lookup_stats_wallet, which matches it on this machine."
 )
 MEASURE_OTHER_TAB = "That measure does not belong to that tab."
@@ -278,6 +281,14 @@ KNOWN_MEASURES: dict[str, tuple[str, tuple[str, ...], bool]] = {
     "money_put_in": ("vaults", (), True),
     "left_took_home": ("vaults", (), True),
     "yield_rate_paid": ("yields", ("dollar", "eth"), True),
+    # 0.9.0: the Chains tab. TVL (from DefiLlama) is its own order; the four
+    # incident measures rank the chains whose record is confirmed, and the API
+    # lists the others apart as being checked. Chains have no kinds.
+    "tvl": ("chains", (), True),
+    "stops_12m": ("chains", (), True),
+    "longest_stop_min": ("chains", (), True),
+    "funds_frozen": ("chains", (), True),
+    "history_rewound": ("chains", (), True),
 }
 # The kinds of each tab that has kinds. With no measure named, a kind is checked against its tab.
 TAB_KINDS: dict[str, tuple[str, ...]] = {
@@ -351,7 +362,7 @@ class SearchStatsInput(_Args):
         default=None,
         pattern=_NAME_PATTERN,
         max_length=40,
-        description="exchanges, vaults or yields. Every open tab when left out.",
+        description="exchanges, vaults, yields or chains. Every open tab when left out.",
     )
     limit: int = Field(default=10, ge=1, le=20, description="Rows to return, 1 to 20 (default 10).")
 
@@ -379,7 +390,7 @@ class ListStatsMeasuresInput(_Args):
 
 
 class RankStatsInput(_Args):
-    tab: str = Field(pattern=_NAME_PATTERN, max_length=40, description="exchanges, vaults or yields.")
+    tab: str = Field(pattern=_NAME_PATTERN, max_length=40, description="exchanges, vaults, yields or chains.")
     measure: Optional[str] = Field(
         default=None,
         pattern=_NAME_PATTERN,
@@ -440,14 +451,15 @@ class RankStatsInput(_Args):
 
 
 class GetStatsRecordInput(_Args):
-    tab: str = Field(pattern=_NAME_PATTERN, max_length=40, description="exchanges, vaults or yields.")
+    tab: str = Field(pattern=_NAME_PATTERN, max_length=40, description="exchanges, vaults, yields or chains.")
     id: str = Field(
         min_length=1,
         max_length=64,
         pattern=_NO_CONTROL_PATTERN,
         description=(
             "An exchange id or name (for example kraken or Crypto.com), a vault address "
-            "(0x and 40 hex characters), or a yield product id or name (for example lido-wsteth)."
+            "(0x and 40 hex characters), a yield product id or name (for example lido-wsteth), "
+            "or a chain id or name (for example solana or BNB Chain)."
         ),
     )
 
@@ -467,7 +479,7 @@ class GetStatsRecordInput(_Args):
 
 def _record_id(tab: str, text: str) -> str:
     """One id in the form the API is sent: a vault address in lower case, or
-    an exchange or yield product id folded to a slug.
+    an exchange, yield product or chain id folded to a slug.
 
     Outside the vaults tab an id goes into the request path as a slug, and an
     address is never one: a wallet address sent there would land in the
@@ -484,6 +496,8 @@ def _record_id(tab: str, text: str) -> str:
     if slug is None or len(slug) > 64:
         if tab == "yields":
             raise ValueError("a yield product id is a slug or a name, such as lido-wsteth or Lido wstETH")
+        if tab == "chains":
+            raise ValueError("a chain id is a slug or a name, such as solana or BNB Chain")
         raise ValueError("an exchange id is a slug or a name, such as kraken or Crypto.com")
     return slug
 

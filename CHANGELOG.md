@@ -4,6 +4,22 @@ All notable changes to `bca-mcp` are documented here.
 
 This project follows [Semantic Versioning](https://semver.org/) and [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.9.0] (2026-11-27)
+
+The Stats tools take the Chains tab, in lockstep with @blockchainacademics/mcp 0.9.0. Same 113 tools, the same eight Stats tools.
+
+### Added
+
+- The Chains tab: each chain's stops, freezes and rewinds, each with sources on the chain's own pages (its team, foundation, status page or validators), its TVL from DefiLlama and the link to its Stats page, `https://blockchainacademics.com/stats/chains/{id}`. `tab` takes `chains` in `search_stats`, `rank_stats` and `get_stats_record`; `get_stats_record` reads `GET /v1/stats/chains/{id}`. A chain id is folded like an exchange id (`BNB Chain` reaches `bnb-chain`), and an address is refused in that tab before any request.
+- Five known chain measures with no kinds: `tvl` (highest at the top, the tab's own order when `rank_stats` names no measure), `stops_12m`, `longest_stop_min`, `funds_frozen` and `history_rewound` (fewest or shortest at the top). A tie keeps the TVL order. On the four incident measures, a chain whose record is not confirmed yet is listed apart as being checked. A chain measure asked for another tab, or with a kind, is refused before any request.
+
+### Changed
+
+- Four descriptions and three argument texts name the Chains tab (`search_stats`, `list_stats_measures`, `rank_stats`, `get_stats_record`), word for word as in the TypeScript package, each at 1,200 characters or under. `compare_stats_records`, `get_stats_method` and `list_stats_changes` do not take chains and are unchanged. The error for an address outside the vaults tab reads "An address is not an exchange, yield product or chain id."
+- No new link prefix: the chain page link sits under `https://blockchainacademics.com/`, which a Stats answer may already carry, and a test shows it kept. No new outside text key: an incident's text, its source's name and each link come back between the markers, and the schema stays `bca.stats/1`.
+- Version 0.9.0 in pyproject, `__version__` and the User-Agent. The parity fixtures are `tests/fixtures/ts_tools_0_9_0.json` (the tools/list of the TypeScript 0.9.0 build at commit `c7dd602`) and `tests/fixtures/ts_demo_banner_0_9_0.ts` (unchanged since 0.7.0). `tests/fixtures/stats_api_ts` holds the TypeScript package's 53 recorded answers: 34 from the API's dump at commit `41b64a2`, and six Chains stand-ins built from the live Chains file of 2026-11-27, until the API's dump holds chain calls.
+- The port to mcp 2.x stays planned for a later release: 0.9.0 changes the Stats tools alone and still needs `mcp>=1.21.1,<2.0.0`.
+
 ## [0.8.0] (unreleased)
 
 The Stats tools follow the site's changes of 2026-11-26, in lockstep with @blockchainacademics/mcp 0.8.0. Same 113 tools, the same eight Stats tools.

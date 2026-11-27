@@ -56,7 +56,7 @@ def test_the_copied_files_match_their_checksums() -> None:
     assert set(listed) == on_disk
     for path, digest in listed.items():
         assert hashlib.sha256((FIXTURES / path).read_bytes()).hexdigest() == digest, path
-    assert len(CALLS) == 47  # 38 in 0.7.0, and the 9 yield and rate paid calls of 0.8.0
+    assert len(CALLS) == 53  # 38 in 0.7.0, the 9 yield and rate paid calls of 0.8.0, the 6 chain calls of 0.9.0
     assert {_read(f"answers/{c}.json")["tool"] for c in CALLS} == {
         "search_stats", "list_stats_measures", "rank_stats", "get_stats_record", "compare_stats_records",
         "lookup_stats_wallet", "get_stats_method", "list_stats_changes",
