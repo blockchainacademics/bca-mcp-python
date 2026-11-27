@@ -1,7 +1,7 @@
 The TypeScript package's recorded Stats answers, for the parity test of this
 package (tests/test_stats_ts_answers.py).
 
-These files are bca-mcp-ts test/fixtures/stats_api as of its commit c7dd602
+These files are bca-mcp-ts test/fixtures/stats_api as of its commit 6da48cf
 (0.9.0), copied unchanged: answers/, expected_outputs/, shards/, SHA256SUMS
 and README.md. 34 of the 53 calls come from the API's dump
 (scripts/dump_stats_answers.py at API commit 41b64a2, on the API's

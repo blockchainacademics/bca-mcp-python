@@ -424,7 +424,7 @@ async def test_a_chain_s_incidents_are_quoted_and_its_tvl_source_and_page_link_a
     out = _output(await _call(httpx_mock, "get_stats_record", {"tab": "chains", "id": "solana"},
                               _ts_envelope("record_chain_solana")))
     record = out["data"]["record"]
-    assert record["record_state"] == "confirmed" and record["incidents"]
+    assert record["check_state"] == "confirmed" and record["incidents"]
     for incident in record["incidents"]:
         assert incident["kind"] in ("stop", "freeze", "rewind")
         assert re.fullmatch(r"<<outside:%s>>.+<</outside:%s>>" % (MARK, MARK), incident["text_as_published"])
@@ -433,7 +433,8 @@ async def test_a_chain_s_incidents_are_quoted_and_its_tvl_source_and_page_link_a
         for source in incident["sources"]:
             assert source["source_url"].startswith("<<outside:%s>>https://" % MARK)
             assert "outside" not in source["source_domain"]
-    assert record["tvl"] == {"usd": 4698633260, "source": "DefiLlama", "read_on": "2026-11-24"}
+    assert record["tvl_usd"] == 4698633260
+    assert out["data"]["tvl"] == {"source": "DefiLlama", "read_on": "2026-11-24"}
     # The page link sits under the site prefix the package already allows: no new prefix is needed.
     assert record["page_url"] == "https://blockchainacademics.com/stats/chains/solana"
     assert [c["cite_url"] for c in out["attribution"]["citations"]] == [
@@ -448,10 +449,10 @@ async def test_an_unconfirmed_chain_reaches_the_model_as_being_checked(httpx_moc
     out = _output(await _call(httpx_mock, "get_stats_record", {"tab": "chains", "id": "tron"},
                               _ts_envelope("record_chain_waiting")))
     record = out["data"]["record"]
-    assert record["record_state"] == "being_checked" and record["incidents"] == []
+    assert record["check_state"] == "being_checked" and record["incidents"] == []
     for key in ("stops_12m", "stops_by_month", "longest_stop_min", "funds_frozen", "history_rewound"):
         assert record[key] is None, key
-    assert isinstance(record["tvl"]["usd"], int)
+    assert isinstance(record["tvl_usd"], int)
     assert out["meta"]["status"] == "partial"
     assert out["meta"]["diagnostic"]["missing"] == ["tron"]
 

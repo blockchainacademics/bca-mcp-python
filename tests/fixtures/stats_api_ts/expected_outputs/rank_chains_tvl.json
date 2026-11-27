@@ -57,9 +57,60 @@
     "id": "ethereum",
     "name": "Ethereum",
     "is_new": false,
-    "record_state": "confirmed",
+    "check_state": "confirmed",
     "tvl_usd": 37229981131,
+    "tvl_rank": 1,
     "stops_12m": 0,
+    "stops_by_month": [
+     {
+      "month": "2025-12",
+      "stops": 0
+     },
+     {
+      "month": "2026-01",
+      "stops": 0
+     },
+     {
+      "month": "2026-02",
+      "stops": 0
+     },
+     {
+      "month": "2026-03",
+      "stops": 0
+     },
+     {
+      "month": "2026-04",
+      "stops": 0
+     },
+     {
+      "month": "2026-05",
+      "stops": 0
+     },
+     {
+      "month": "2026-06",
+      "stops": 0
+     },
+     {
+      "month": "2026-07",
+      "stops": 0
+     },
+     {
+      "month": "2026-08",
+      "stops": 0
+     },
+     {
+      "month": "2026-09",
+      "stops": 0
+     },
+     {
+      "month": "2026-10",
+      "stops": 0
+     },
+     {
+      "month": "2026-11",
+      "stops": 0
+     }
+    ],
     "longest_stop_min": 0,
     "funds_frozen": {
      "times": 0,
@@ -81,6 +132,8 @@
      ]
     },
     "read_on": "2026-11-24",
+    "vaults_tracked": 0,
+    "updated_on": "2026-11-24",
     "page_url": "https://blockchainacademics.com/stats/chains/ethereum"
    },
    {
@@ -90,9 +143,60 @@
     "id": "base",
     "name": "Base",
     "is_new": false,
-    "record_state": "confirmed",
+    "check_state": "confirmed",
     "tvl_usd": 4711513615,
+    "tvl_rank": 2,
     "stops_12m": 2,
+    "stops_by_month": [
+     {
+      "month": "2025-12",
+      "stops": 0
+     },
+     {
+      "month": "2026-01",
+      "stops": 0
+     },
+     {
+      "month": "2026-02",
+      "stops": 0
+     },
+     {
+      "month": "2026-03",
+      "stops": 0
+     },
+     {
+      "month": "2026-04",
+      "stops": 0
+     },
+     {
+      "month": "2026-05",
+      "stops": 0
+     },
+     {
+      "month": "2026-06",
+      "stops": 2
+     },
+     {
+      "month": "2026-07",
+      "stops": 0
+     },
+     {
+      "month": "2026-08",
+      "stops": 0
+     },
+     {
+      "month": "2026-09",
+      "stops": 0
+     },
+     {
+      "month": "2026-10",
+      "stops": 0
+     },
+     {
+      "month": "2026-11",
+      "stops": 0
+     }
+    ],
     "longest_stop_min": 116,
     "funds_frozen": {
      "times": 0,
@@ -118,6 +222,8 @@
      ]
     },
     "read_on": "2026-11-24",
+    "vaults_tracked": 0,
+    "updated_on": "2026-11-24",
     "page_url": "https://blockchainacademics.com/stats/chains/base"
    },
    {
@@ -127,9 +233,60 @@
     "id": "solana",
     "name": "Solana",
     "is_new": false,
-    "record_state": "confirmed",
+    "check_state": "confirmed",
     "tvl_usd": 4698633260,
+    "tvl_rank": 3,
     "stops_12m": 0,
+    "stops_by_month": [
+     {
+      "month": "2025-12",
+      "stops": 0
+     },
+     {
+      "month": "2026-01",
+      "stops": 0
+     },
+     {
+      "month": "2026-02",
+      "stops": 0
+     },
+     {
+      "month": "2026-03",
+      "stops": 0
+     },
+     {
+      "month": "2026-04",
+      "stops": 0
+     },
+     {
+      "month": "2026-05",
+      "stops": 0
+     },
+     {
+      "month": "2026-06",
+      "stops": 0
+     },
+     {
+      "month": "2026-07",
+      "stops": 0
+     },
+     {
+      "month": "2026-08",
+      "stops": 0
+     },
+     {
+      "month": "2026-09",
+      "stops": 0
+     },
+     {
+      "month": "2026-10",
+      "stops": 0
+     },
+     {
+      "month": "2026-11",
+      "stops": 0
+     }
+    ],
     "longest_stop_min": 0,
     "funds_frozen": {
      "times": 0,
@@ -155,6 +312,8 @@
      ]
     },
     "read_on": "2026-11-24",
+    "vaults_tracked": 0,
+    "updated_on": "2026-11-24",
     "page_url": "https://blockchainacademics.com/stats/chains/solana"
    },
    {
@@ -164,14 +323,18 @@
     "id": "tron",
     "name": "Tron",
     "is_new": false,
-    "record_state": "being_checked",
+    "check_state": "being_checked",
     "tvl_usd": 4359701190,
+    "tvl_rank": 4,
     "stops_12m": null,
+    "stops_by_month": null,
     "longest_stop_min": null,
     "funds_frozen": null,
     "history_rewound": null,
     "last_incident": null,
     "read_on": "2026-11-24",
+    "vaults_tracked": 0,
+    "updated_on": "2026-11-24",
     "page_url": "https://blockchainacademics.com/stats/chains/tron"
    },
    {
@@ -181,9 +344,60 @@
     "id": "bnb-chain",
     "name": "BNB Chain",
     "is_new": false,
-    "record_state": "confirmed",
+    "check_state": "confirmed",
     "tvl_usd": 4359466742,
+    "tvl_rank": 5,
     "stops_12m": 0,
+    "stops_by_month": [
+     {
+      "month": "2025-12",
+      "stops": 0
+     },
+     {
+      "month": "2026-01",
+      "stops": 0
+     },
+     {
+      "month": "2026-02",
+      "stops": 0
+     },
+     {
+      "month": "2026-03",
+      "stops": 0
+     },
+     {
+      "month": "2026-04",
+      "stops": 0
+     },
+     {
+      "month": "2026-05",
+      "stops": 0
+     },
+     {
+      "month": "2026-06",
+      "stops": 0
+     },
+     {
+      "month": "2026-07",
+      "stops": 0
+     },
+     {
+      "month": "2026-08",
+      "stops": 0
+     },
+     {
+      "month": "2026-09",
+      "stops": 0
+     },
+     {
+      "month": "2026-10",
+      "stops": 0
+     },
+     {
+      "month": "2026-11",
+      "stops": 0
+     }
+    ],
     "longest_stop_min": 0,
     "funds_frozen": {
      "times": 1,
@@ -205,15 +419,21 @@
      ]
     },
     "read_on": "2026-11-24",
+    "vaults_tracked": 0,
+    "updated_on": "2026-11-24",
     "page_url": "https://blockchainacademics.com/stats/chains/bnb-chain"
    }
   ],
   "what_is_missing": [
    "4 of 15 chains have a record a person has not confirmed yet. Their stops, freezes and rewinds are not shown."
   ],
-  "record_states": {
-   "confirmed": "a person checked the chain's record against its own pages and the owner accepted it",
-   "being_checked": "the record is not confirmed yet, so no incident and no count is shown"
+  "tvl": {
+   "source": "DefiLlama",
+   "read_on": "2026-11-24"
+  },
+  "check_states": {
+   "confirmed": "the owner has accepted the chain's record, so its counts and its incidents are shown",
+   "being_checked": "the owner has not accepted the chain's record yet, so its TVL is shown and no count or incident is"
   },
   "trimmed": false,
   "next_offset": 5
@@ -237,7 +457,7 @@
    "endCursor": null
   },
   "diagnostic": {
-   "reason": "some chains in this answer have a record a person has not confirmed yet",
+   "reason": "some chains in this answer are being checked, or have no TVL reading yet",
    "missing": [
     "tron"
    ]

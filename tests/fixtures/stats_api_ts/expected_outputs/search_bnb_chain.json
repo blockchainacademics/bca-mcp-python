@@ -37,8 +37,11 @@
     "record_type": "chain",
     "id": "bnb-chain",
     "name": "BNB Chain",
-    "record_state": "confirmed",
+    "is_new": false,
+    "check_state": "confirmed",
     "tvl_usd": 4359466742,
+    "tvl_rank": 5,
+    "stops_12m": 0,
     "page_url": "https://blockchainacademics.com/stats/chains/bnb-chain"
    }
   ],
@@ -51,7 +54,7 @@
    "chains": 15,
    "vaults_with_a_name": 0
   },
-  "order": "Exchanges come before yield products and chains, and all three before vaults, each A to Z. A closer text match never moves a row up.",
+  "order": "Exchanges come before yield products, yield products before chains, and all three before vaults. A closer text match never moves a row up.",
   "more": null
  },
  "attribution": {
